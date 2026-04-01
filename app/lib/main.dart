@@ -6,6 +6,9 @@ import 'core/theme/app_theme.dart';
 import 'core/constants/app_constants.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  PaintingBinding.instance.imageCache.maximumSizeBytes = 1024 * 1024 * 100; // 100MB
+  PaintingBinding.instance.imageCache.maximumSize = 200; // max 200 images
   runApp(
     const ProviderScope(
       child: SwiftMartApp(),
