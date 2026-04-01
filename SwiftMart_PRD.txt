@@ -1,0 +1,316 @@
+
+
+
+
+SWIFTMART
+Grocery & Daily Essentials Delivery App
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Product Requirements Document (PRD)
+Version 1.0  •  2025
+
+
+
+1. Project Overview
+SwiftMart is a next-generation grocery and daily essentials delivery app inspired by Zepto and Blinkit. It focuses on sub-30-minute delivery, a beautiful immersive UI with a deep violet-teal color theme, server-driven dynamic screens, and a zero-code admin experience so non-technical staff can manage products, offers, and banners in real time.
+
+1.1 App Name & Branding
+
+
+
+
+
+
+
+
+
+1.2 Goals
+Deliver groceries and daily essentials in under 30 minutes
+Provide a stunning, animated, modern UI that stands out from competitors
+Enable server-driven UI so home screen layout changes without an app update
+Allow admin staff to add products, run promotions, and change banners from a web panel — no code required
+Support coupons, flash deals, combo offers, cashback, and daily discounts
+Implement smart recommendations (frequently bought together, personalized picks)
+Use free/open-source tech stack so the entire MVP can be tested at zero cost
+
+1.3 Free Tech Stack (Full Details)
+
+2. Screen Architecture & Animations
+Every screen has a defined entry animation, interactive micro-animations, and exit transitions. All animations use Flutter's built-in AnimationController + Curves, and the flutter_animate package (free).
+
+2.1 Screen Map
+
+2.2 Global Animation Rules
+Duration: Fast = 200ms, Medium = 400ms, Slow = 600-800ms
+Curves: elasticOut for bouncy (logo, buttons), easeInOutCubic for smooth transitions, springSimulation for sheet modals
+Never block UI — all animations run on the UI isolate, heavy data fetching on separate isolate
+Respect reduced-motion accessibility setting: wrap all AnimationControllers with MediaQuery.reduceMotion check
+Loading state: Every API call shows a Shimmer skeleton (shimmer package, free)
+
+3. Feature Specifications
+3.1 Home Screen — Server-Driven UI (SDUI)
+The home screen layout is fully controlled by the server. The app fetches a JSON config on every launch and renders components in the order specified. No app update is needed to rearrange, add, or remove sections.
+
+How SDUI Works
+Backend serves GET /api/v1/home-config endpoint
+JSON contains an ordered array of 'components' with type + data fields
+App has pre-built widget for each component type: banner_carousel, category_row, flash_deals_row, product_grid, promo_strip, combo_section
+To reorder the home screen, admin changes the JSON on the server — zero app update
+
+SDUI JSON Example Structure
+{ "components": [ { "type": "banner_carousel", "data": { "banners": [...] } }, { "type": "flash_deals_row", "data": { "title": "Flash Sale", "ends_at": "2025-12-31T18:00:00Z" } }, { "type": "category_row" }, { "type": "product_grid", "data": { "title": "Daily Essentials", "filter": "essentials" } } ] }
+
+3.2 Dynamic Banners (Without App Update)
+Banner images are stored on Cloudinary (URL managed in Firebase Remote Config)
+Admin opens Firebase console → Remote Config → updates banner_1_url key → publishes
+App fetches Remote Config on launch (cached, refreshed every 30 min)
+New banner appears within 30 minutes with zero app store update
+Banners support: image-only, image + CTA button, countdown timer overlay, badge text
+
+3.3 Flash Deals
+Time-limited product discounts shown on Home and dedicated Flash Deals screen
+Admin sets: start time, end time, discount %, max quantity, eligible products
+Countdown timer in app uses server time (not device time) to prevent cheating
+Timer animation: flip-card style digit animation (HH:MM:SS)
+When deal expires: card shows EXPIRED badge, product reverts to original price automatically (backend cron job)
+Fire/flame particle animation on Flash Deals screen entry (flutter_animate + Lottie)
+
+3.4 Coupons System (Full Feature)
+
+Coupon UX Flow
+User taps 'Apply Coupon' on Cart screen
+Animated coupon list slides up (sheet modal)
+Available coupons shown with savings amount highlighted in teal
+User taps Apply — coupon card flips, checkmark draws in, price updates with animated number counter
+Invalid coupon: card shakes (error animation), reason shown in red
+
+3.5 Combo Offers
+Frequently bought together bundles (e.g., Bread + Butter + Eggs = save 15%)
+Displayed as a horizontal card on Product Detail screen and Home
+Admin creates combo: select products + set bundle price + set image + set validity
+Combo cards have a pulsing glow animation to draw attention
+
+3.6 Cashback Offers
+User earns wallet credits after order delivery (not at order time, to prevent fraud)
+Cashback % or fixed amount defined per product / category / order total tier
+In-app wallet shows balance, transaction history, and expiry dates
+Wallet balance can be used on next order (partial or full payment)
+Animated wallet fill animation when cashback is credited
+
+3.7 Daily Essentials Discounts
+A curated section of 20-50 essential products always discounted (managed by admin)
+Refreshes every day at midnight — admin sets the daily essentials list from CMS
+Shown as a dedicated row on Home screen with green 'DAILY DEAL' badge
+Firebase Remote Config key daily_deals_refresh_time controls when it refreshes
+
+3.8 Festive / Seasonal Offers (Without App Update)
+Firebase Remote Config stores: is_festive_mode (bool), festive_theme_color, festive_banner_url, festive_discount_label
+App detects is_festive_mode = true and switches to festive color overlay on home banner
+Festive discount ribbon appears on eligible products (controlled by tag in CMS)
+All changes via Firebase console — no deployment, no app update
+
+4. Product Management — Zero-Code Admin Flow
+The goal: any non-technical staff member can add, edit, or remove products using the Admin Panel web app, and changes appear in the customer app within 60 seconds.
+
+4.1 Add Product Flow (Step by Step)
+Staff opens Admin Panel at admin.swiftmart.app (React.js web app)
+Clicks 'Add Product' — a clean form opens
+Fills: Product Name, Category, Brand, MRP, Sale Price, Unit (500g / 1L / piece), Stock Quantity
+Uploads product image — auto-uploaded to Cloudinary, URL saved to DB
+Toggles: Is Daily Essential, Is Featured, Is Flash Deal (with deal time pickers)
+Clicks Save — API call to POST /api/v1/admin/products
+Product is live in the customer app within ~60 seconds (Redis cache TTL)
+
+4.2 Strapi CMS Integration
+Strapi is installed on the same server as the Node.js backend
+Non-technical admins use Strapi's built-in UI for: Products, Categories, Banners, Combos, Coupons
+The Node.js backend reads from Strapi's API (or directly from PostgreSQL — same DB)
+No code writing required — Strapi generates the admin forms automatically from content type definitions
+
+4.3 Inventory Management
+Each product has a stock_quantity field, updated after every order
+When stock drops below low_stock_threshold: admin gets push notification + red badge in panel
+When stock = 0: product automatically shows 'Out of Stock' badge in app, cannot be added to cart
+Admin can do bulk stock update via CSV upload
+
+5. Admin Panel — Full Feature List
+5.1 Dashboard
+Live order count (today vs yesterday comparison)
+Revenue chart (daily / weekly / monthly) — Chart.js animated
+Top selling products widget
+Active delivery partners map (OpenStreetMap embed)
+Low stock alerts panel
+Pending orders queue with 30-second auto-refresh
+
+5.2 Product Management
+Add / Edit / Delete products with image upload
+Bulk import via CSV / Excel
+Category management (create, rename, reorder, set icon)
+Set product tags: featured, daily-essential, flash-deal, new-arrival, bestseller
+Price history log
+
+5.3 Order Management
+View all orders: Pending, Confirmed, Packing, Out for Delivery, Delivered, Cancelled
+Order detail view: items, user info, address, payment mode, timestamps
+Assign delivery partner to order (dropdown of available partners)
+Mark order status manually (or auto-updated via delivery partner app)
+Cancel order with reason and auto-trigger refund to wallet
+
+5.4 Delivery Partner Management
+Add / remove delivery partners (name, phone, vehicle, area zone)
+View partner availability status (online / offline / on-delivery)
+View partner order history and rating
+Assign zone (each partner assigned to a delivery zone polygon)
+
+5.5 Promotions Management
+Create / edit / delete coupons (all types described in Section 3.4)
+Create flash deals with time pickers
+Create combo offers
+Manage banners (upload image, set CTA link, set display dates)
+Push festive mode toggle + set festive banner URL
+
+6. Smart & AI Features
+6.1 Product Recommendations
+Algorithm: Collaborative filtering (users who bought X also bought Y)
+Displayed on: Home screen ('Recommended for You'), Cart page ('You might need'), Product Detail ('Similar Products')
+Cold start (new users): show bestsellers in user's pincode area
+Data stored in PostgreSQL, recommendation job runs every hour (Node.js cron)
+Free implementation: no paid ML service needed — SQL-based co-occurrence matrix
+
+6.2 Frequently Bought Together
+Shown on Product Detail screen as a bundle card
+Auto-generated from order history: products that appear in same order > N times
+Admin can also manually set FBT pairs from Admin Panel
+Tap bundle card to add all items to cart in one tap (satisfying add animation)
+
+6.3 Smart Search
+Full-text search using PostgreSQL pg_trgm extension (free, built-in)
+Handles typos: 'milkk' finds 'milk', 'tomatoe' finds 'tomato'
+Search suggestions appear as user types (debounced at 300ms)
+Recent searches stored locally (Hive local DB in Flutter)
+Voice search using Flutter's speech_to_text package (free)
+
+7. Performance Architecture
+7.1 Caching Strategy (Redis)
+
+7.2 Fast API Design
+Pagination: all list endpoints use cursor-based pagination (not offset — faster at scale)
+Gzip compression on all API responses (Express middleware)
+Database connection pooling: pg-pool (max 20 connections)
+Query optimization: all filter columns indexed in PostgreSQL
+Target: p95 API response time < 200ms
+
+7.3 Flutter App Performance
+Use const constructors everywhere possible to reduce widget rebuilds
+Lazy load images with cached_network_image (Flutter package, free)
+Infinite scroll uses ListView.builder — only renders visible items
+Riverpod for selective widget rebuilds (only affected widgets re-render)
+App bundle size target: under 25MB
+
+8. Logistics & Delivery
+8.1 Delivery Architecture
+Delivery zones defined as polygons (latitude/longitude arrays stored in PostgreSQL with PostGIS extension, free)
+On order placement: backend finds all available delivery partners in the order's zone
+Assignment: auto-assign to nearest available partner, or admin can manual-assign
+
+8.2 Route Optimization
+Uses OSRM (Open Source Routing Machine) — 100% free, self-hostable
+For delivery batching: OSRM Matrix API calculates travel time between all pending orders
+Delivery partner app shows optimized route order for multiple deliveries
+
+8.3 Delivery Batching
+If 3+ orders are within 500m of each other, they can be batched to one partner
+Batching is optional — partner can accept or decline batch
+Each order in batch gets its own ETA shown to customer
+
+8.4 Real-Time Order Tracking
+Delivery partner's app sends GPS coordinates every 5 seconds via WebSocket
+Customer app receives live location via Socket.io room (room = order_id)
+Map widget: flutter_map (free, OpenStreetMap-based) shows animated delivery pin
+ETA updated in real time based on current location vs destination
+
+9. Scaling & Advanced Architecture
+9.1 Phase 1 (MVP) — Monolith
+Single Node.js Express app handles all routes
+Single PostgreSQL database
+Single Redis instance
+Deployed on Railway.app or Render.com (free tier)
+Handles up to ~1,000 concurrent users
+
+9.2 Phase 2 — Horizontal Scaling
+Add a load balancer (Nginx, free) in front of 2-3 Node.js instances
+Sticky sessions via Redis (connect-redis session store)
+Database read replicas for GET-heavy routes
+CDN for images: Cloudinary CDN is already included in the free tier
+
+9.3 Phase 3 — Microservices
+
+9.4 WebSocket Architecture
+Socket.io server runs as a separate process (can be clustered with Redis adapter)
+Rooms: order:{order_id} for order tracking, admin:orders for admin live feed
+Events: location_update, order_status_change, new_order (admin), stock_alert (admin)
+
+10. Database Schema (Core Tables)
+
+11. Key API Endpoints
+
+12. Project Folder Structure
+12.1 Flutter App
+lib/
+main.dart — App entry, Firebase init, Riverpod ProviderScope
+app/ — MaterialApp, ThemeData (violet-teal theme), routes
+core/ — constants (colors, sizes), network (Dio client), utils
+features/
+  auth/ — login, signup, OTP screens + Riverpod providers
+  home/ — HomeScreen, SDUI widget renderer, banner carousel
+  products/ — CategoryList, ProductGrid, ProductDetail, SearchScreen
+  cart/ — CartScreen, CartNotifier, coupon application
+  orders/ — CheckoutScreen (mock pay), OrderTracking, OrderHistory
+  flash_deals/ — FlashDealsScreen, countdown widget, deals grid
+  offers/ — OffersScreen, coupon list, cashback wallet
+  profile/ — ProfileScreen, address management, settings
+  admin_mobile/ — Light admin view for mobile (optional)
+shared/ — reusable widgets (ProductCard, ShimmerLoader, AnimatedCounter, AppButton)
+services/ — ApiService, RemoteConfigService, NotificationService, StorageService
+
+12.2 Backend (Node.js)
+src/
+  routes/ — products, orders, coupons, flashDeals, admin, sdui, auth
+  controllers/ — one per resource
+  services/ — business logic (pricing, coupon validation, recommendation engine)
+  models/ — Sequelize/Prisma ORM models
+  middleware/ — auth (JWT verify), rateLimiter, errorHandler
+  sockets/ — Socket.io event handlers (orderTracking, adminFeed)
+  jobs/ — cron jobs (expireFlashDeals, refreshRecommendations, stockAlerts)
+  config/ — db.js, redis.js, firebase.js, cloudinary.js
+  utils/ — pagination, apiResponse formatter, logger
+
+12.3 Admin Panel (React.js)
+src/
+  pages/ — Dashboard, Products, Orders, DeliveryPartners, Promotions, Banners, Settings
+  components/ — DataTable, ProductForm, CouponForm, BannerUploader, OrderDetailModal
+  hooks/ — useProducts, useOrders, useSocket
+  services/ — api.js (Axios instance with auth interceptor)
+  context/ — AuthContext, NotificationContext
+
+13. Mock Payment Flow
+Payment integration is excluded from MVP. A mock payment system simulates real payment UX for testing.
+
+13.1 Mock Payment Screen
+User reaches Checkout, taps 'Pay Rs. X'
+Payment method selection UI shown: UPI (mocked), Card (mocked), Cash on Delivery
+For UPI/Card: animated loading spinner for 2 seconds
+Success state: green checkmark draws in, confetti burst animation, 'Order Placed!' message
+Failure state (optional toggle in dev mode): red X shake animation, retry button
+
+13.2 How to Swap to Real Payment Later
+Replace MockPaymentService with RazorpayService (India) or StripeService
+All other order logic remains unchanged — payment is a single service layer
+Estimated time to integrate real payment: 1-2 days
+
+14. Development Timeline (MVP)
+
+15. Feature Completion Checklist
+
+
+
+SwiftMart PRD v1.0  —  All rights reserved

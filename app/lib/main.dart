@@ -1,0 +1,30 @@
+import 'package:flutter/material.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+
+import 'app/routes/app_router.dart';
+import 'core/theme/app_theme.dart';
+import 'core/constants/app_constants.dart';
+
+void main() {
+  runApp(
+    const ProviderScope(
+      child: SwiftMartApp(),
+    ),
+  );
+}
+
+class SwiftMartApp extends HookConsumerWidget {
+  const SwiftMartApp({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final router = ref.watch(routerProvider);
+
+    return MaterialApp.router(
+      title: AppConstants.appName,
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.lightTheme,
+      routerConfig: router,
+    );
+  }
+}
