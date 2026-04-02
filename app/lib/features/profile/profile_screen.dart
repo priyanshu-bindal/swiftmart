@@ -27,7 +27,7 @@ class ProfileScreen extends HookConsumerWidget {
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
             child: AppBar(
-              backgroundColor: AppColors.background.withOpacity(0.75),
+              backgroundColor: AppColors.background.withValues(alpha: 0.75),
               elevation: 0,
               centerTitle: true,
               scrolledUnderElevation: 0,
@@ -35,7 +35,7 @@ class ProfileScreen extends HookConsumerWidget {
                 preferredSize: const Size.fromHeight(1),
                 child: Container(
                   height: 1,
-                  color: Colors.white.withOpacity(0.2),
+                  color: Colors.white.withValues(alpha: 0.2),
                 ),
               ),
               leading: IconButton(
@@ -150,7 +150,7 @@ class ProfileScreen extends HookConsumerWidget {
                     iconColor: AppColors.primary,
                     iconBg: AppColors.primaryFixed,
                     label: 'My Orders',
-                    onTap: () {},
+                    onTap: () => context.push('/order-history'),
                   ),
                 ),
                 const SizedBox(width: 20),
@@ -205,7 +205,7 @@ class ProfileScreen extends HookConsumerWidget {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primary.withOpacity(0.3),
+                    color: AppColors.primary.withValues(alpha: 0.3),
                     blurRadius: 24,
                     offset: const Offset(0, 8),
                   ),
@@ -222,7 +222,7 @@ class ProfileScreen extends HookConsumerWidget {
                       height: 160,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: Colors.white.withOpacity(0.1),
+                        color: Colors.white.withValues(alpha: 0.1),
                       ),
                     ),
                   ),
@@ -239,7 +239,7 @@ class ProfileScreen extends HookConsumerWidget {
                                 fontSize: 12,
                                 fontWeight: FontWeight.w800,
                                 letterSpacing: 2,
-                                color: AppColors.primaryFixed.withOpacity(0.9),
+                                color: AppColors.primaryFixed.withValues(alpha: 0.9),
                               ),
                             ),
                             const SizedBox(height: 8),
@@ -259,7 +259,7 @@ class ProfileScreen extends HookConsumerWidget {
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
+                          color: Colors.white.withValues(alpha: 0.2),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
@@ -341,7 +341,7 @@ class ProfileScreen extends HookConsumerWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 24),
                 decoration: BoxDecoration(
-                  color: AppColors.errorContainer.withOpacity(0.5),
+                  color: AppColors.errorContainer.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(24),
                 ),
                 alignment: Alignment.center,
@@ -396,7 +396,7 @@ class _QuickActionCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: AppColors.onBackground.withOpacity(0.04),
+              color: AppColors.onBackground.withValues(alpha: 0.04),
               blurRadius: 32,
               offset: const Offset(0, 16),
             ),
@@ -448,7 +448,7 @@ class _SettingsSection extends StatelessWidget {
               fontSize: 12,
               fontWeight: FontWeight.w900,
               letterSpacing: 2,
-              color: AppColors.outline.withOpacity(0.8),
+              color: AppColors.outline.withValues(alpha: 0.8),
             ),
           ),
         ),

@@ -8,8 +8,8 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../cart/providers/cart_provider.dart';
-import 'repositories/product_repository.dart';
-import 'models/product.dart';
+import '../../repositories/product_repository.dart';
+import '../../models/product.dart';
 
 // Dummy Hardcoded Product for matching the exact HTML requirement
 // This will be replaced by real API data later.
@@ -17,17 +17,18 @@ final dummyProduct = Product(
   id: 'str123',
   name: 'Lush Organic Strawberries',
   imagePath: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDKML3FZgtmkH51qd_K5JTSfQcqKD_XbMZA3-a4_phZ9vUbLs99yLR94aps-Pa84st8tQJbQxBi9JD_lU5sCRMDBrRLpb09tnAjBOLuaYkBoDARNs0jrSxZhl148SoGoRBRNxHLS1aZZxiwDSLuEAiL3rpPtg1Z33RFPGm0hnOTzIuDjgP4KUg80_pvKPZTY684BgSplSZOVzz6UMDJQTaDDMGwKAeGczrh53RH8AcoehPuVJlBT0XCSw2ec2QahbhsR1TZVb6WDEGS',
-  price: 240,
+  price: 300,
+  discountedPrice: 240,
   unit: '1 box',
   brand: 'Farm Fresh Collective',
   isOrganic: true,
-  rating: 4.5,
-  reviewCount: 128,
-  originalPrice: 300,
-  discountPercentage: 20,
   cashback: 20,
   description: 'Our premium organic strawberries are hand-picked at peak ripeness. They are grown without synthetic pesticides, ensuring a sweeter, more intense flavor and vibrant natural color. Perfect for breakfast bowls or healthy snacking.',
 );
+
+final productDetailProvider = FutureProvider.family<Product?, String>((ref, id) {
+  return ref.read(productRepositoryProvider).fetchProductById(id);
+});
 
 class ProductDetailScreen extends HookConsumerWidget {
   final String productId;
@@ -40,10 +41,11 @@ class ProductDetailScreen extends HookConsumerWidget {
     final localCount = useState(1);
     
     // Fetch right Product from repo or fallback to dummy
-    final product = ref.read(productRepositoryProvider).getProductById(productId) ?? dummyProduct;
+    final productAsync = ref.watch(productDetailProvider(productId));
+    final product = productAsync.value ?? dummyProduct;
 
     final cartItemCount = ref.watch(cartProvider.select((items) => items.fold(0, (sum, i) => sum + i.quantity)));
-    final cartTotal = ref.watch(cartProvider.select((items) => items.fold(0.0, (sum, i) => sum + (i.product.price * i.quantity))));
+    final cartTotal = ref.watch(cartProvider.select((items) => items.fold(0.0, (sum, i) => sum + ((i.product.discountedPrice ?? i.product.price) * i.quantity))));
 
     return Scaffold(
       backgroundColor: AppColors.surface,
@@ -162,18 +164,27 @@ class ProductDetailScreen extends HookConsumerWidget {
                           clipBehavior: Clip.antiAlias,
                           child: Hero(
                             tag: 'product-${product.id}',
-                            child: CachedNetworkImage(
-                              imageUrl: product.imagePath,
-                              fit: BoxFit.cover,
-                              fadeInDuration: const Duration(milliseconds: 200),
-                              memCacheWidth: 800,
-                              placeholder: (context, url) => Container(
-                                color: AppColors.surfaceContainerLow,
-                                child: const Center(
-                                  child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
-                                ),
-                              ),
-                            ),
+                            child: product.imagePath.isEmpty
+                                ? Container(
+                                    color: AppColors.surfaceContainerLow,
+                                    child: const Center(child: Icon(Icons.image_not_supported, color: AppColors.outline, size: 48)),
+                                  )
+                                : CachedNetworkImage(
+                                    imageUrl: product.imagePath,
+                                    fit: BoxFit.cover,
+                                    fadeInDuration: const Duration(milliseconds: 200),
+                                    memCacheWidth: 800,
+                                    placeholder: (context, url) => Container(
+                                      color: AppColors.surfaceContainerLow,
+                                      child: const Center(
+                                        child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                                      ),
+                                    ),
+                                    errorWidget: (context, url, error) => Container(
+                                      color: AppColors.surfaceContainerLow,
+                                      child: const Center(child: Icon(Icons.error, color: AppColors.outline, size: 48)),
+                                    ),
+                                  ),
                           ),
                         ),
                         if (product.isOrganic)
@@ -218,7 +229,7 @@ class ProductDetailScreen extends HookConsumerWidget {
                               ],
                             ),
                             const SizedBox(width: 8),
-                            Text('(${product.reviewCount} reviews)', style: const TextStyle(color: AppColors.onSurfaceVariant, fontSize: 14, fontWeight: FontWeight.w500)),
+                            const Text('(128 reviews)', style: TextStyle(color: AppColors.onSurfaceVariant, fontSize: 14, fontWeight: FontWeight.w500)),
                           ],
                         ),
 
@@ -227,21 +238,21 @@ class ProductDetailScreen extends HookConsumerWidget {
                           crossAxisAlignment: CrossAxisAlignment.baseline,
                           textBaseline: TextBaseline.alphabetic,
                           children: [
-                            Text('₹${product.price.toInt()}', style: GoogleFonts.manrope(fontSize: 32, fontWeight: FontWeight.w900, color: AppColors.onSurface)),
+                            Text('₹${(product.discountedPrice ?? product.price).toInt()}', style: GoogleFonts.manrope(fontSize: 32, fontWeight: FontWeight.w900, color: AppColors.onSurface)),
                             const SizedBox(width: 12),
-                            if (product.originalPrice != null)
-                              Text('₹${product.originalPrice!.toInt()}', style: const TextStyle(fontSize: 18, color: AppColors.onSurfaceVariant, decoration: TextDecoration.lineThrough)),
+                            if (product.discountedPrice != null)
+                              Text('₹${product.price.toInt()}', style: const TextStyle(fontSize: 18, color: AppColors.onSurfaceVariant, decoration: TextDecoration.lineThrough)),
                             const SizedBox(width: 12),
-                            if (product.discountPercentage != null)
+                            if (product.discountedPrice != null && product.price > 0)
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                 decoration: BoxDecoration(color: AppColors.errorContainer, borderRadius: BorderRadius.circular(6)),
-                                child: Text('-${product.discountPercentage}% OFF', style: const TextStyle(color: AppColors.onErrorContainer, fontSize: 10, fontWeight: FontWeight.bold)),
+                                child: Text('-${(((product.price - product.discountedPrice!) / product.price) * 100).toInt()}% OFF', style: const TextStyle(color: AppColors.onErrorContainer, fontSize: 10, fontWeight: FontWeight.bold)),
                               )
                           ],
                         ),
 
-                        if (product.cashback != null)
+                        if (product.cashback > 0)
                           Padding(
                             padding: const EdgeInsets.only(top: 16.0),
                             child: Container(

@@ -6,7 +6,7 @@ import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/theme/app_spacing.dart';
 import 'package:skeletonizer/skeletonizer.dart';
-import '../../features/products/models/product.dart';
+import '../../models/product.dart';
 
 class ProductCard extends HookConsumerWidget {
   final Product product;
@@ -27,20 +27,26 @@ class ProductCard extends HookConsumerWidget {
           Expanded(
             child: ClipRRect(
               borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
-              child: CachedNetworkImage(
-                imageUrl: product.imagePath,
-                fit: BoxFit.cover,
-                width: double.infinity,
-                placeholder: (context, url) => const Skeletonizer(
-                  enabled: true,
-                  child: Bone.square(size: 400),
-                ),
-                errorWidget: (context, url, error) => Container(
-                  color: AppColors.outlineVariant,
-                  child: const Center(child: Icon(Icons.error, color: AppColors.outline)),
-                ),
-              ),
+              child: product.imagePath.isEmpty 
+                  ? Container(
+                      color: AppColors.outlineVariant,
+                      child: const Center(child: Icon(Icons.image_not_supported, color: AppColors.outline)),
+                    )
+                  : CachedNetworkImage(
+                      imageUrl: product.imagePath,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      placeholder: (context, url) => const Skeletonizer(
+                        enabled: true,
+                        child: Bone.square(size: 400),
+                      ),
+                      errorWidget: (context, url, error) => Container(
+                        color: AppColors.outlineVariant,
+                        child: const Center(child: Icon(Icons.error, color: AppColors.outline)),
+                      ),
+                    ),
             ),
+
           ),
           Padding(
             padding: const EdgeInsets.all(AppSpacing.sm),
@@ -55,7 +61,7 @@ class ProductCard extends HookConsumerWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  product.unit,
+                  product.unit ?? '',
                   style: AppTextStyles.caption,
                 ),
                 const SizedBox(height: AppSpacing.sm),

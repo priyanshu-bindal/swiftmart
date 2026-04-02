@@ -5,8 +5,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:go_router/go_router.dart';
 
-import '../features/products/models/product.dart';
-import '../features/cart/providers/cart_provider.dart';
+import '../models/product.dart';
+import '../providers/cart_provider.dart';
 
 class ProductCard extends ConsumerWidget {
   final Product product;
@@ -71,7 +71,7 @@ class ProductCard extends ConsumerWidget {
                             style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12, height: 1.3, color: Color(0xFF1E1E1E)),
                           ),
                           const SizedBox(height: 4),
-                          Text(product.unit, style: const TextStyle(color: Color(0xFF7A869A), fontSize: 9, fontWeight: FontWeight.w600)),
+                          Text(product.unit ?? '', style: const TextStyle(color: Color(0xFF7A869A), fontSize: 9, fontWeight: FontWeight.w600)),
                           const Spacer(),
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.end,
@@ -80,12 +80,12 @@ class ProductCard extends ConsumerWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    '\$${product.price.toStringAsFixed(2)}',
+                                    '\$${(product.discountedPrice ?? product.price).toStringAsFixed(2)}',
                                     style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: Color(0xFF6C3CE1)),
                                   ),
-                                  if (product.originalPrice != null)
+                                  if (product.discountedPrice != null && product.discountedPrice! > 0)
                                     Text(
-                                      '\$${product.originalPrice!.toStringAsFixed(2)}',
+                                      '\$${product.price.toStringAsFixed(2)}',
                                       style: const TextStyle(color: Color(0xFF9E9CA7), fontSize: 9, decoration: TextDecoration.lineThrough, fontWeight: FontWeight.bold),
                                     ),
                                 ],

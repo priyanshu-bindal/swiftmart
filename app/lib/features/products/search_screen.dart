@@ -4,20 +4,18 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:skeletonizer/skeletonizer.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/local_storage/database_helper.dart';
 import '../../widgets/product_card.dart';
-import 'models/product.dart';
-import 'repositories/product_repository.dart';
-import '../cart/providers/cart_provider.dart';
+import '../../models/product.dart';
+import '../../repositories/product_repository.dart';
 
 final searchResultsProvider = FutureProvider.family<List<Product>, String>((ref, query) async {
   if (query.trim().isEmpty) return [];
   final repo = ref.read(productRepositoryProvider);
-  return repo.searchProducts(query);
+  return repo.fetchProducts(search: query);
 });
 
 class SearchScreen extends HookConsumerWidget {
@@ -382,8 +380,6 @@ class SearchScreen extends HookConsumerWidget {
       price: 9.99,
       unit: '500 g',
       isOrganic: false,
-      rating: 4.0,
-      reviewCount: 0,
     ));
   }
 }

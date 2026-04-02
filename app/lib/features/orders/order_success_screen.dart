@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
@@ -143,7 +142,7 @@ class OrderSuccessScreen extends HookWidget {
                               gradient: const LinearGradient(colors: [AppColors.secondaryContainer, AppColors.secondary]),
                               shape: BoxShape.circle,
                               boxShadow: [
-                                BoxShadow(color: AppColors.secondary.withOpacity(0.3), blurRadius: 24, offset: const Offset(0, 12))
+                                BoxShadow(color: AppColors.secondary.withValues(alpha: 0.3), blurRadius: 24, offset: const Offset(0, 12))
                               ],
                             ),
                             child: const Icon(LucideIcons.check, color: AppColors.onSecondary, size: 50),
@@ -201,7 +200,7 @@ class OrderSuccessScreen extends HookWidget {
                             color: AppColors.surfaceContainerLowest,
                             borderRadius: BorderRadius.circular(20),
                             boxShadow: [
-                              BoxShadow(color: AppColors.primary.withOpacity(0.04), blurRadius: 16, offset: const Offset(0, 8))
+                              BoxShadow(color: AppColors.primary.withValues(alpha: 0.04), blurRadius: 16, offset: const Offset(0, 8))
                             ],
                           ),
                           child: Row(
@@ -249,7 +248,7 @@ class OrderSuccessScreen extends HookWidget {
                 Column(
                   children: [
                     InkWell(
-                      onTap: () {},
+                      onTap: () => context.push('/order-tracking'),
                       borderRadius: BorderRadius.circular(28),
                       child: Container(
                         height: 56,
@@ -257,7 +256,7 @@ class OrderSuccessScreen extends HookWidget {
                           gradient: const LinearGradient(colors: [AppColors.primary, AppColors.secondary]),
                           borderRadius: BorderRadius.circular(28),
                           boxShadow: [
-                            BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 16, offset: const Offset(0, 8))
+                            BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 16, offset: const Offset(0, 8))
                           ],
                         ),
                         child: const Row(
@@ -275,7 +274,7 @@ class OrderSuccessScreen extends HookWidget {
                       style: TextButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-                        backgroundColor: AppColors.surfaceContainerHigh.withOpacity(0.5),
+                        backgroundColor: AppColors.surfaceContainerHigh.withValues(alpha: 0.5),
                         minimumSize: const Size(double.infinity, 56),
                       ),
                       onPressed: () => context.go('/'),
@@ -298,7 +297,7 @@ class OrderSuccessScreen extends HookWidget {
         color: AppColors.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
-          BoxShadow(color: AppColors.primary.withOpacity(0.04), blurRadius: 16, offset: const Offset(0, 8))
+          BoxShadow(color: AppColors.primary.withValues(alpha: 0.04), blurRadius: 16, offset: const Offset(0, 8))
         ],
       ),
       child: Column(
@@ -330,7 +329,7 @@ class OrderSuccessScreen extends HookWidget {
             width: (index % 3 == 0) ? 6 : 8,
             height: (index % 3 == 0) ? 6 : 8,
             decoration: BoxDecoration(
-              color: index % 2 == 0 ? AppColors.primary.withOpacity(0.4) : AppColors.secondary.withOpacity(0.4),
+              color: index % 2 == 0 ? AppColors.primary.withValues(alpha: 0.4) : AppColors.secondary.withValues(alpha: 0.4),
               shape: index % 4 == 0 ? BoxShape.rectangle : BoxShape.circle,
             ),
           ).animate(delay: (400 + index * 20).ms).fadeIn(duration: 600.ms).slideY(begin: 0.2, curve: Curves.easeOut),

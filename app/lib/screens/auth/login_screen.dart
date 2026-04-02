@@ -179,7 +179,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Image.network(
                     'https://cdn-icons-png.flaticon.com/512/4645/4645948.png',
                     fit: BoxFit.contain,
-                    errorBuilder: (_, __, ___) => const Icon(Icons.storefront, size: 64, color: _violet),
+                    errorBuilder: (_, _, _) => const Icon(Icons.storefront, size: 64, color: _violet),
                   ),
                 ),
               ),
@@ -321,7 +321,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/120px-Google_%22G%22_logo.svg.png',
                               width: 22,
                               height: 22,
-                              errorBuilder: (_, __, ___) => const Icon(Icons.g_mobiledata, size: 22),
+                              errorBuilder: (_, _, _) => const Icon(Icons.g_mobiledata, size: 22),
                             ),
                             const SizedBox(width: 12),
                             Text(

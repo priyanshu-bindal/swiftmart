@@ -1,5 +1,5 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import '../../products/models/product.dart';
+import '../../../models/product.dart';
 import '../../../core/local_storage/database_helper.dart';
 
 class CartItem {

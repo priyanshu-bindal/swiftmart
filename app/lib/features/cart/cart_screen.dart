@@ -98,7 +98,7 @@ class CartScreen extends HookConsumerWidget {
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.02),
+                            color: Colors.black.withValues(alpha: 0.02),
                             blurRadius: 8,
                             offset: const Offset(0, 4),
                           )
@@ -137,7 +137,7 @@ class CartScreen extends HookConsumerWidget {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  item.product.unit,
+                                  item.product.unit ?? '',
                                   style: const TextStyle(
                                     fontSize: 12,
                                     color: AppColors.onSurfaceVariant,
@@ -262,7 +262,7 @@ class CartScreen extends HookConsumerWidget {
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
                     color: AppColors.surfaceContainerLowest,
-                    border: Border.all(color: AppColors.outlineVariant.withOpacity(0.3)),
+                    border: Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.3)),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Row(
@@ -333,7 +333,7 @@ class CartScreen extends HookConsumerWidget {
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: AppColors.surfaceContainerLow.withOpacity(0.5),
+                    color: AppColors.surfaceContainerLow.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Column(
@@ -397,8 +397,8 @@ class CartScreen extends HookConsumerWidget {
         color: isSelected ? AppColors.primary : AppColors.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(12),
         boxShadow: isSelected 
-            ? [BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 4))] 
-            : [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 4)],
+            ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 4))] 
+            : [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 4)],
       ),
       child: Row(
         children: [
@@ -417,10 +417,10 @@ class CartScreen extends HookConsumerWidget {
         child: Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: AppColors.surfaceContainerLowest.withOpacity(0.8),
+            color: AppColors.surfaceContainerLowest.withValues(alpha: 0.8),
             boxShadow: [
               BoxShadow(
-                color: AppColors.primary.withOpacity(0.08),
+                color: AppColors.primary.withValues(alpha: 0.08),
                 blurRadius: 32,
                 offset: const Offset(0, -8),
               )
@@ -452,7 +452,7 @@ class CartScreen extends HookConsumerWidget {
                         gradient: const LinearGradient(colors: [AppColors.primary, AppColors.secondary]),
                         borderRadius: BorderRadius.circular(28),
                         boxShadow: [
-                          BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 16, offset: const Offset(0, 4))
+                          BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 16, offset: const Offset(0, 4))
                         ],
                       ),
                       child: const Row(

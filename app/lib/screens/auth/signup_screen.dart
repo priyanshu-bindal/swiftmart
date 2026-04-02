@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../providers/location_provider.dart';
+import '../../repositories/user_repository.dart';
 
 const Color _violet = Color(0xFF6C3CE1);
 const Color _teal = Color(0xFF00D4AA);
@@ -90,6 +91,12 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       // Update display name
       await FirebaseAuth.instance.currentUser
           ?.updateDisplayName(_nameCtrl.text.trim());
+
+      // Create Supabase Profile
+      await ref.read(userRepositoryProvider).createProfile(
+        name: _nameCtrl.text.trim(),
+        email: _emailCtrl.text.trim(),
+      );
 
       if (!mounted) return;
 
@@ -201,7 +208,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                   child: Image.network(
                     'https://cdn-icons-png.flaticon.com/512/4645/4645948.png',
                     fit: BoxFit.contain,
-                    errorBuilder: (_, __, ___) => const Icon(Icons.storefront, size: 56, color: _violet),
+                    errorBuilder: (_, _, _) => const Icon(Icons.storefront, size: 56, color: _violet),
                   ),
                 ),
               ),

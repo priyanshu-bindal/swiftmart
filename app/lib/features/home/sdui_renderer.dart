@@ -5,8 +5,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_colors.dart';
-import '../cart/providers/cart_provider.dart';
-import '../../features/products/models/product.dart';
+import '../../providers/cart_provider.dart';
+import '../../models/product.dart';
 import 'models/sdui_models.dart';
 import 'widgets/unknown_component_widget.dart';
 import 'widgets/animated_search_bar.dart';
@@ -88,46 +88,54 @@ class SduiRenderer {
       {'icon': Icons.local_bar, 'label': 'Beverages', 'bg': const Color(0xFFF3E8FF), 'color': const Color(0xFF9333EA)},
     ];
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text('Browse Categories', style: GoogleFonts.manrope(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.onSurface)),
-              const Text('View All', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 14)),
-            ],
-          ),
-          const SizedBox(height: 24),
-          SizedBox(
-            height: 100,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              clipBehavior: Clip.none,
-              itemCount: categories.length,
-              separatorBuilder: (_, _) => const SizedBox(width: 24),
-              itemBuilder: (context, index) {
-                final cat = categories[index];
-                return Column(
-                  children: [
-                    Container(
-                      width: 64,
-                      height: 64,
-                      decoration: BoxDecoration(shape: BoxShape.circle, color: cat['bg'] as Color, boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4)]),
-                      child: Icon(cat['icon'] as IconData, color: cat['color'] as Color, size: 32),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(cat['label'] as String, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.onSurfaceVariant))
-                  ],
-                );
-              },
+    return Builder(
+      builder: (context) => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text('Browse Categories', style: GoogleFonts.manrope(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.onSurface)),
+                GestureDetector(
+                  onTap: () => context.push('/browse_categories'),
+                  child: const Text('View All', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 14)),
+                ),
+              ],
             ),
-          )
-        ],
-      )
+            const SizedBox(height: 24),
+            SizedBox(
+              height: 100,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                clipBehavior: Clip.none,
+                itemCount: categories.length,
+                separatorBuilder: (_, _) => const SizedBox(width: 24),
+                itemBuilder: (context, index) {
+                  final cat = categories[index];
+                  return GestureDetector(
+                    onTap: () => context.push('/category', extra: {'name': cat['label']}),
+                    child: Column(
+                      children: [
+                        Container(
+                          width: 64,
+                          height: 64,
+                          decoration: BoxDecoration(shape: BoxShape.circle, color: cat['bg'] as Color, boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4)]),
+                          child: Icon(cat['icon'] as IconData, color: cat['color'] as Color, size: 32),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(cat['label'] as String, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.onSurfaceVariant))
+                      ],
+                    ),
+                  );
+                },
+              ),
+            )
+          ],
+        )
+      ),
     );
   }
 
