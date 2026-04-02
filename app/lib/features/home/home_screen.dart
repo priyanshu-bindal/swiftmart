@@ -7,6 +7,8 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_colors.dart';
 import '../cart/providers/cart_provider.dart';
+import '../../providers/location_provider.dart';
+import '../../providers/auth_provider.dart';
 import 'models/sdui_models.dart';
 import 'sdui_renderer.dart';
 
@@ -35,6 +37,7 @@ class HomeScreen extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final sduiState = ref.watch(sduiConfigProvider);
+    final userLocation = ref.watch(locationProvider);
     final cartItemCount = ref.watch(cartProvider.select((items) => items.fold(0, (sum, i) => sum + i.quantity)));
     final cartTotal = ref.watch(cartProvider.select((items) => items.fold(0.0, (sum, i) => sum + (i.product.price * i.quantity))));
 
@@ -53,31 +56,74 @@ class HomeScreen extends HookConsumerWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: [
-                      const Icon(Icons.location_on, color: AppColors.primary, size: 24),
-                      const SizedBox(width: 8),
-                      Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('DELIVER TO', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1.2, color: AppColors.outline)),
-                          const Text('Manhattan, NY', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.onSurface)),
-                        ],
-                      ),
-                    ],
+                  GestureDetector(
+                    onTap: userLocation == 'Set location'
+                        ? () async {
+                            await _showLocationSheet(context, ref);
+                          }
+                        : null,
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.location_on,
+                          color: userLocation == 'Set location' ? Colors.amber : AppColors.primary,
+                          size: 24,
+                        ),
+                        const SizedBox(width: 8),
+                        Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('DELIVER TO', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1.2, color: AppColors.outline)),
+                            Text(
+                              userLocation,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: userLocation == 'Set location' ? Colors.amber.shade700 : AppColors.onSurface,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                   Text('SwiftMart', style: GoogleFonts.manrope(fontWeight: FontWeight.w900, color: AppColors.primary, fontSize: 28, letterSpacing: -1.0)),
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: AppColors.primaryContainer.withValues(alpha: 0.2), width: 2),
-                      image: const DecorationImage(
-                        image: NetworkImage('https://lh3.googleusercontent.com/aida-public/AB6AXuDOc_mAO8ASyMs13CHxcMjGiCAleZ0ALNsOIZj0xlUP0LIxd8rnUDVHuG02uqEMj0fDK34Dpz7Ead1C-iHezUSW8ETWIb750a0O_YevabiMixjw00pjvSXwzMspyIslFJdWHk7RUv7hR1r-N3wSQnVdxegCY69iEd0EsLbxcGclF300wwMdfjb_Z_hMCThmY5le0k2QOxdI7ZbbHnsi9IMvlnMNH7DRjeLdCylXCCzmzLUlwORjMmvlkPXbvFRr2vL61ShbvdTnp9a5'), // Profile Image
-                        fit: BoxFit.cover,
-                      )
+                  GestureDetector(
+                    onTap: () => context.push('/profile'),
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF6C3CE1), Color(0xFF00D4AA)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        border: Border.all(color: AppColors.primaryContainer.withValues(alpha: 0.3), width: 2),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        (() {
+                          // Show initial of display name or email
+                          try {
+                            final user = ref.read(authProvider).user;
+                            if (user?.displayName?.isNotEmpty == true) {
+                              return user!.displayName![0].toUpperCase();
+                            }
+                            if (user?.email?.isNotEmpty == true) {
+                              return user!.email![0].toUpperCase();
+                            }
+                          } catch (_) {}
+                          return '?';
+                        })(),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 16,
+                        ),
+                      ),
                     ),
                   )
                 ],
@@ -209,6 +255,23 @@ class HomeScreen extends HookConsumerWidget {
     );
   }
 
+  Future<void> _showLocationSheet(BuildContext context, WidgetRef ref) async {
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _HomeLocationSheet(
+        onUseLocation: () async {
+          Navigator.pop(context);
+          await ref.read(locationProvider.notifier).requestAndUpdate();
+        },
+        onSkip: () {
+          Navigator.pop(context);
+        },
+      ),
+    );
+  }
+
   Widget _buildNavIcon(IconData icon, String label, bool isActive, {VoidCallback? onTap}) {
     return GestureDetector(
       onTap: onTap,
@@ -223,6 +286,91 @@ class HomeScreen extends HookConsumerWidget {
             const SizedBox(height: 4),
             Container(width: 4, height: 4, decoration: const BoxDecoration(color: AppColors.secondary, shape: BoxShape.circle)),
           ]
+        ],
+      ),
+    );
+  }
+}
+
+
+// ─── Location Bottom Sheet (used from HomeScreen AppBar) ──────────────────────
+
+class _HomeLocationSheet extends StatelessWidget {
+  final VoidCallback onUseLocation;
+  final VoidCallback onSkip;
+
+  const _HomeLocationSheet({required this.onUseLocation, required this.onSkip});
+
+  @override
+  Widget build(BuildContext context) {
+    const violet = Color(0xFF6C3CE1);
+    const teal = Color(0xFF00D4AA);
+
+    return Container(
+      margin: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(28),
+      ),
+      padding: const EdgeInsets.all(28),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 40, height: 4,
+            decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)),
+          ),
+          const SizedBox(height: 24),
+          Container(
+            width: 72, height: 72,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(colors: [violet, teal], begin: Alignment.topLeft, end: Alignment.bottomRight),
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [BoxShadow(color: violet.withValues(alpha: 0.3), blurRadius: 16, offset: const Offset(0, 6))],
+            ),
+            child: const Icon(Icons.location_on_rounded, color: Colors.white, size: 36),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            'Where should we deliver?',
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF1A1B21)),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'SwiftMart needs your location to show nearby stores and deliver in under 30 minutes.',
+            style: TextStyle(fontSize: 14, color: Colors.grey.shade600, height: 1.5),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 28),
+          GestureDetector(
+            onTap: onUseLocation,
+            child: Container(
+              width: double.infinity, height: 52,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(colors: [violet, teal]),
+                borderRadius: BorderRadius.circular(50),
+                boxShadow: [BoxShadow(color: violet.withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 4))],
+              ),
+              alignment: Alignment.center,
+              child: const Text('Use My Location', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Colors.white)),
+            ),
+          ),
+          const SizedBox(height: 12),
+          GestureDetector(
+            onTap: onSkip,
+            child: Container(
+              width: double.infinity, height: 52,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(50),
+                border: Border.all(color: violet.withValues(alpha: 0.4), width: 1.5),
+              ),
+              alignment: Alignment.center,
+              child: const Text('Skip for now', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: violet)),
+            ),
+          ),
+          const SizedBox(height: 8),
         ],
       ),
     );
