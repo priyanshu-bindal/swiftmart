@@ -3,18 +3,53 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../core/services/remote_config_service.dart';
 import '../../providers/cart_provider.dart';
 import '../../models/product.dart';
 import 'models/sdui_models.dart';
 import 'widgets/unknown_component_widget.dart';
 import 'widgets/animated_search_bar.dart';
 
+// Provider to fetch banners prioritising Supabase, falling back to Remote Config
+final bannerImagesProvider = FutureProvider<List<String>>((ref) async {
+  final supabase = Supabase.instance.client;
+  var urls = <String>[];
+  
+  try {
+    final response = await supabase
+        .from('banners')
+        .select('image_url')
+        .eq('is_active', true);
+        
+    urls = (response as List).map((row) => row['image_url'] as String).toList();
+  } catch (e) {
+    debugPrint('Supabase banners error: \$e');
+  }
+  
+  if (urls.isEmpty) {
+    // Fallback to remote config if table empty or query failed
+    final rcConfig = ref.read(remoteConfigServiceProvider);
+    final b1 = rcConfig.getString('banner_1_url');
+    final b2 = rcConfig.getString('banner_2_url');
+    if (b1.isNotEmpty) urls.add(b1);
+    if (b2.isNotEmpty) urls.add(b2);
+  }
+  
+  // If remote config is ALSO empty, use a hardcoded default just so UI doesn't break
+  if (urls.isEmpty) {
+    urls.add('https://lh3.googleusercontent.com/aida-public/AB6AXuDN_2nMM0DkQphowgWh53jH1J7rxY7RrNeSzvQQDNyYYJzb4XZE9TJLEduHEU6jOLJYTbenpHFD17W0Sm62JsWru9RISGuJHztUiAyzEC313jTwKCqnywDAz_VqDOZWkPCWkkyrK4kRwZf6aa2m612fuxw53JigIJ2r6fiEvhKwXYp-R8SPEXAoti8umKgZDW2QyD0J251mRXUYXH-z-opkdfL2xjgNZuea5zsPOstyQ02ZbHc7u1IF_8SfsMzEIuir-KhrZvOFwJV5');
+  }
+  
+  return urls;
+});
+
 class SduiRenderer {
   static Widget render(SduiComponent component) {
     if (component.type == 'search_bar') return _buildSearchBar();
-    if (component.type == 'banner_carousel') return _buildBannerCarousel();
+    if (component.type == 'banner_carousel') return const _BannerCarouselWidget();
     if (component.type == 'category_row') return _buildCategoryRow();
     if (component.type == 'flash_deals_row') return _buildFlashDealsRow();
     if (component.type == 'value_combos') return _buildValueCombos();
@@ -28,62 +63,10 @@ class SduiRenderer {
     return const AnimatedSearchBar();
   }
 
-  static Widget _buildBannerCarousel() {
-    return Container(
-      height: 200,
-      margin: const EdgeInsets.symmetric(horizontal: 24.0),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(colors: [AppColors.primary, AppColors.primaryContainer]),
-        borderRadius: BorderRadius.circular(24),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Stack(
-        children: [
-          Positioned(
-            right: 0,
-            top: 0,
-            bottom: 0,
-            width: 180,
-            child: ClipRRect(
-              borderRadius: const BorderRadius.only(topLeft: Radius.circular(24), bottomLeft: Radius.circular(24)),
-              child: CachedNetworkImage(
-                imageUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDN_2nMM0DkQphowgWh53jH1J7rxY7RrNeSzvQQDNyYYJzb4XZE9TJLEduHEU6jOLJYTbenpHFD17W0Sm62JsWru9RISGuJHztUiAyzEC313jTwKCqnywDAz_VqDOZWkPCWkkyrK4kRwZf6aa2m612fuxw53JigIJ2r6fiEvhKwXYp-R8SPEXAoti8umKgZDW2QyD0J251mRXUYXH-z-opkdfL2xjgNZuea5zsPOstyQ02ZbHc7u1IF_8SfsMzEIuir-KhrZvOFwJV5',
-                fit: BoxFit.cover,
-              )
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  decoration: BoxDecoration(color: AppColors.secondaryContainer, borderRadius: BorderRadius.circular(16)),
-                  child: const Text('FLASH SALE', style: TextStyle(color: AppColors.onSecondaryContainer, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
-                ),
-                const SizedBox(height: 12),
-                Text('Flat 40% OFF\non Organic Greens', style: GoogleFonts.manrope(color: AppColors.onPrimary, fontSize: 24, fontWeight: FontWeight.w900, height: 1.1)),
-                const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  decoration: BoxDecoration(color: AppColors.surfaceContainerLowest, borderRadius: BorderRadius.circular(8), boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 4))]),
-                  child: const Text('Shop Now', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w900, fontSize: 12)),
-                )
-              ],
-            ),
-          )
-        ],
-      ),
-    );
-  }
-
   static Widget _buildCategoryRow() {
     final categories = [
-      {'icon': Icons.apple, 'label': 'Fruits', 'bg': const Color(0xFFFFEDD5), 'color': const Color(0xFFEA580C)},
-      {'icon': Icons.eco, 'label': 'Vegetables', 'bg': const Color(0xFFDCFCE7), 'color': const Color(0xFF16A34A)},
-      {'icon': Icons.water_drop, 'label': 'Dairy', 'bg': const Color(0xFFDBEAFE), 'color': const Color(0xFF2563EB)},
+      {'icon': Icons.apple, 'label': 'Fruits', 'bg': const Color(0xFFDCFCE7), 'color': const Color(0xFF16A34A)},
+      {'icon': Icons.egg, 'label': 'Dairy', 'bg': const Color(0xFFDBEAFE), 'color': const Color(0xFF2563EB)},
       {'icon': Icons.cookie, 'label': 'Snacks', 'bg': const Color(0xFFFEF9C3), 'color': const Color(0xFFCA8A04)},
       {'icon': Icons.local_bar, 'label': 'Beverages', 'bg': const Color(0xFFF3E8FF), 'color': const Color(0xFF9333EA)},
     ];
@@ -149,13 +132,25 @@ class SduiRenderer {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  const Icon(Icons.bolt, color: AppColors.tertiary, size: 32),
-                  const SizedBox(width: 8),
-                  Text('Flash Deals', style: GoogleFonts.manrope(fontSize: 22, fontWeight: FontWeight.w900, color: AppColors.onTertiaryFixedVariant)),
-                ],
+              Expanded(
+                child: Builder(
+                  builder: (context) => GestureDetector(
+                    onTap: () => context.push('/flash-deals'),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.bolt, color: AppColors.tertiary, size: 28),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text('Flash Deals', style: GoogleFonts.manrope(fontSize: 20, fontWeight: FontWeight.w900, color: AppColors.onTertiaryFixedVariant), maxLines: 1, overflow: TextOverflow.ellipsis),
+                        ),
+                        const SizedBox(width: 4),
+                        const Icon(Icons.arrow_forward_ios, size: 14, color: AppColors.tertiary),
+                      ],
+                    ),
+                  ),
+                ),
               ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(color: AppColors.onTertiaryFixedVariant.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(16)),
@@ -315,8 +310,11 @@ class SduiRenderer {
   }
 
   static Widget _buildCouponStrip() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 24),
+    return Builder(
+      builder: (context) => GestureDetector(
+        onTap: () => context.push('/coupons'),
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 24),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.primary.withValues(alpha: 0.05),
@@ -345,6 +343,8 @@ class SduiRenderer {
           ),
           const Text('APPLY', style: TextStyle(color: AppColors.secondary, fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 1.0))
         ],
+      ),
+        ),
       ),
     );
   }
@@ -449,6 +449,88 @@ class _DailyEssentialsWidget extends HookConsumerWidget {
         ],
       ),
     ),
+    );
+  }
+}
+
+class _BannerCarouselWidget extends HookConsumerWidget {
+  const _BannerCarouselWidget();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final bannersState = ref.watch(bannerImagesProvider);
+
+    return bannersState.when(
+      data: (urls) {
+        if (urls.isEmpty) return const SizedBox();
+
+        // Standardizing simple display of the very first banner for the carousel placeholder
+        // and optionally wrapping in a PageView if multiple
+        final url = urls.first;
+
+        return Container(
+          height: 200,
+          margin: const EdgeInsets.symmetric(horizontal: 24.0),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(colors: [AppColors.primary, AppColors.primaryContainer]),
+            borderRadius: BorderRadius.circular(24),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Stack(
+            children: [
+              Positioned(
+                right: 0,
+                top: 0,
+                bottom: 0,
+                width: 180,
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.only(topLeft: Radius.circular(24), bottomLeft: Radius.circular(24)),
+                  child: CachedNetworkImage(
+                    imageUrl: url,
+                    fit: BoxFit.cover,
+                  )
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                      decoration: BoxDecoration(color: AppColors.secondaryContainer, borderRadius: BorderRadius.circular(16)),
+                      child: const Text('FLASH SALE', style: TextStyle(color: AppColors.onSecondaryContainer, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
+                    ),
+                    const SizedBox(height: 12),
+                    Text('Flat 40% OFF\non Organic Greens', style: GoogleFonts.manrope(color: AppColors.onPrimary, fontSize: 24, fontWeight: FontWeight.w900, height: 1.1)),
+                    const SizedBox(height: 16),
+                    GestureDetector(
+                      onTap: () => context.push('/flash-deals'),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        decoration: BoxDecoration(color: AppColors.surfaceContainerLowest, borderRadius: BorderRadius.circular(8), boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 4))]),
+                        child: const Text('Shop Now', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w900, fontSize: 12)),
+                      ),
+                    )
+                  ],
+                ),
+              )
+            ],
+          ),
+        );
+      },
+      loading: () => Container(
+        height: 200,
+        margin: const EdgeInsets.symmetric(horizontal: 24.0),
+        decoration: BoxDecoration(
+           color: AppColors.surfaceContainerHigh,
+           borderRadius: BorderRadius.circular(24),
+        ),
+        alignment: Alignment.center,
+        child: const CircularProgressIndicator(),
+      ),
+      error: (_, _) => const SizedBox(),
     );
   }
 }

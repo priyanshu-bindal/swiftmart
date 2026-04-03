@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:io';
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   // If you're going to use other Firebase services in the background, such as Firestore,
@@ -23,6 +26,23 @@ class FcmService {
       debugPrint('User granted permission');
     } else {
       debugPrint('User declined or has not accepted permission');
+    }
+
+    try {
+      final token = await _fcm.getToken();
+      if (token != null) {
+        final fAuth = FirebaseAuth.instance.currentUser;
+        if (fAuth != null) {
+          await Supabase.instance.client.from('user_fcm_tokens').upsert({
+             'user_id': fAuth.uid,
+             'token': token,
+             'platform': Platform.isAndroid ? 'android' : 'ios',
+             'updated_at': DateTime.now().toIso8601String(),
+          }, onConflict: 'user_id,platform');
+        }
+      }
+    } catch (e) {
+      debugPrint('Failed to save FCM token: \$e');
     }
 
     // Set the background messaging handler early on, as a top-level function
@@ -72,7 +92,7 @@ class _FancyNotificationBanner extends StatefulWidget {
   final String? title;
   final String? body;
 
-  const _FancyNotificationBanner({super.key, this.title, this.body});
+  const _FancyNotificationBanner({this.title, this.body});
 
   @override
   __FancyNotificationBannerState createState() => __FancyNotificationBannerState();

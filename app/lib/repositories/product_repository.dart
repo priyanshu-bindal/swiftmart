@@ -23,7 +23,7 @@ class ProductRepository {
     var baseQuery = supabase
         .from('products')
         .select('*, categories(name)')
-        .eq('is_available', true);
+        .eq('is_active', true);
 
     if (categoryId != null) {
       baseQuery = baseQuery.eq('category_id', categoryId);
@@ -31,8 +31,8 @@ class ProductRepository {
     if (search != null && search.isNotEmpty) {
       baseQuery = baseQuery.ilike('name', '%$search%');
     }
-    if (isOrganic != null) {
-      baseQuery = baseQuery.eq('is_organic', isOrganic);
+    if (isOrganic != null && isOrganic) {
+      baseQuery = baseQuery.contains('tags', ['organic']);
     }
     
     PostgrestTransformBuilder<PostgrestList> finalQuery;
@@ -41,7 +41,7 @@ class ProductRepository {
     } else if (sort == 'price_desc') {
       finalQuery = baseQuery.order('price', ascending: false);
     } else {
-      finalQuery = baseQuery.order('created_at', ascending: false);
+      finalQuery = baseQuery.order('id', ascending: false);
     }
 
     final response = await finalQuery;

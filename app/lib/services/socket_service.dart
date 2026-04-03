@@ -1,16 +1,16 @@
-import 'package:socket_io_client/socket_io_client.dart' as IO;
+import 'package:socket_io_client/socket_io_client.dart' as io_client;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/order_provider.dart';
 import '../models/order_model.dart';
 
 class SocketService {
-  late IO.Socket socket;
+  late io_client.Socket socket;
   final Ref ref;
 
   SocketService(this.ref);
 
   void connect(String serverUrl, String orderId) {
-    socket = IO.io(serverUrl, <String, dynamic>{
+    socket = io_client.io(serverUrl, <String, dynamic>{
       'transports': ['websocket'],
       'autoConnect': false,
     });

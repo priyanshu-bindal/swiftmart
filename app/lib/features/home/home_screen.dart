@@ -1,10 +1,11 @@
+import 'dart:convert';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../core/constants/app_constants.dart';
+
 import '../../core/theme/app_colors.dart';
 import '../cart/providers/cart_provider.dart';
 import '../../providers/location_provider.dart';
@@ -12,23 +13,40 @@ import '../../providers/auth_provider.dart';
 import 'models/sdui_models.dart';
 import 'sdui_renderer.dart';
 
-// Mock Future Provider for 1s delay mimicking an API call
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+// Future Provider for fetching SDUI config from Supabase
 final sduiConfigProvider = FutureProvider<SduiConfig>((ref) async {
-  await Future.delayed(const Duration(milliseconds: AppConstants.mockNetworkDelayMs));
+  final supabase = Supabase.instance.client;
+  final response = await supabase
+      .from('home_config')
+      .select()
+      .eq('is_active', true)
+      .maybeSingle();
+
+  var configData = response?['config'];
   
-  final mockJson = <String, dynamic>{
-    "components": [
-      { "type": "search_bar", "data": <String, dynamic>{} },
-      { "type": "banner_carousel", "data": <String, dynamic>{} },
-      { "type": "category_row", "data": <String, dynamic>{} },
-      { "type": "flash_deals_row", "data": <String, dynamic>{} },
-      { "type": "value_combos", "data": <String, dynamic>{} },
-      { "type": "coupon_strip", "data": <String, dynamic>{} },
-      { "type": "product_grid", "data": <String, dynamic>{} },
-    ]
-  };
-  
-  return SduiConfig.fromJson(mockJson);
+  if (configData is String) {
+    try {
+      configData = jsonDecode(configData);
+    } catch (_) {}
+  }
+
+  if (configData == null || configData is! Map<String, dynamic>) {
+    // Fallback if nothing found
+    configData = {
+      "sections": [
+        {"type": "search_bar", "visible": true},
+        {"type": "banner_carousel", "visible": true},
+        {"type": "category_row", "title": "Shop by Category", "visible": true},
+        {"type": "flash_deals_row", "title": "Flash Deals", "visible": true},
+        {"type": "coupon_strip", "visible": true},
+        {"type": "product_grid", "title": "Featured Products", "visible": true}
+      ]
+    };
+  }
+
+  return SduiConfig.fromJson(configData);
 });
 
 class HomeScreen extends HookConsumerWidget {

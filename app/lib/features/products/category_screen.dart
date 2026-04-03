@@ -21,16 +21,32 @@ typedef CategoryFilterArgs = ({String category, String filter});
 final categoryProductsProvider = FutureProvider.autoDispose.family<List<Product>, CategoryFilterArgs>((ref, args) async {
   final supabase = Supabase.instance.client;
   
-  var query = supabase.from('products').select().eq('is_active', true);
-  
-  if (args.filter == 'All') {
-    query = query.eq('category', args.category);
-  } else {
-    query = query.eq('category', args.category).eq('subcategory', args.filter);
+  try {
+    // 1. Get the category ID first to avoid complex inner join syntax issues
+    final categoryResp = await supabase
+        .from('categories')
+        .select('id')
+        .eq('name', args.category)
+        .maybeSingle();
+        
+    if (categoryResp == null) return [];
+    
+    // 2. Fetch products for this category using reliable category_id filter
+    var query = supabase.from('products')
+        .select('*, categories(*)')
+        .eq('is_active', true)
+        .eq('category_id', categoryResp['id']);
+    
+    if (args.filter != 'All') {
+      query = query.contains('tags', [args.filter.toLowerCase()]);
+    }
+    
+    final response = await query;
+    return (response as List).map((json) => Product.fromJson(json)).toList();
+  } catch (e) {
+    // If anything fails, throw it clearly so Riverpod triggers the error state instead of hanging
+    throw Exception('Failed to load products: \$e');
   }
-  
-  final response = await query;
-  return (response as List).map((json) => Product.fromJson(json)).toList();
 });
 
 class CategoryScreen extends HookConsumerWidget {

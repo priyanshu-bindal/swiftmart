@@ -4,8 +4,8 @@ class SduiConfig {
   SduiConfig({required this.components});
 
   factory SduiConfig.fromJson(Map<String, dynamic> json) {
-    if (json['components'] == null) return SduiConfig(components: []);
-    final list = json['components'] as List;
+    final list = (json['components'] ?? json['sections']) as List?;
+    if (list == null) return SduiConfig(components: []);
     return SduiConfig(
       components: list.map((e) => SduiComponent.fromJson(Map<String, dynamic>.from(e as Map))).toList(),
     );
