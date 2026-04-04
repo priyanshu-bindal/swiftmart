@@ -16,13 +16,17 @@ class CouponCard extends StatefulWidget {
   State<CouponCard> createState() => _CouponCardState();
 }
 
-class _CouponCardState extends State<CouponCard> with SingleTickerProviderStateMixin {
+class _CouponCardState extends State<CouponCard>
+    with SingleTickerProviderStateMixin {
   late AnimationController _shimmerController;
 
   @override
   void initState() {
     super.initState();
-    _shimmerController = AnimationController(vsync: this, duration: const Duration(milliseconds: 600));
+    _shimmerController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
   }
 
   @override
@@ -46,9 +50,13 @@ class _CouponCardState extends State<CouponCard> with SingleTickerProviderStateM
   @override
   Widget build(BuildContext context) {
     final isPercent = widget.coupon.discountType == 'percent';
-    final stripColor = isPercent ? const Color(0xFF6C3CE1) : const Color(0xFF00D4AA);
-    
-    final formattedDate = DateFormat('dd MMM yyyy').format(widget.coupon.validUntil);
+    final stripColor = isPercent
+        ? const Color(0xFF6C3CE1)
+        : const Color(0xFF00D4AA);
+
+    final formattedDate = DateFormat(
+      'dd MMM yyyy',
+    ).format(widget.coupon.validUntil);
 
     return Container(
       decoration: BoxDecoration(
@@ -56,10 +64,10 @@ class _CouponCardState extends State<CouponCard> with SingleTickerProviderStateM
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             offset: const Offset(0, 4),
             blurRadius: 10,
-          )
+          ),
         ],
       ),
       clipBehavior: Clip.antiAlias,
@@ -90,9 +98,14 @@ class _CouponCardState extends State<CouponCard> with SingleTickerProviderStateM
                           ),
                         ),
                         CustomPaint(
-                          painter: DashedBorderPainter(color: AppColors.outline),
+                          painter: DashedBorderPainter(
+                            color: AppColors.outline,
+                          ),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
                             child: Text(
                               widget.coupon.code,
                               style: const TextStyle(
@@ -104,13 +117,16 @@ class _CouponCardState extends State<CouponCard> with SingleTickerProviderStateM
                               ),
                             ),
                           ),
-                        )
+                        ),
                       ],
                     ),
                     const SizedBox(height: 8),
                     Text(
                       'Min order ₹${widget.coupon.minOrderValue.toInt()}',
-                      style: const TextStyle(fontSize: 12, color: AppColors.outline),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.outline,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     Divider(color: Colors.grey.shade200),
@@ -120,7 +136,10 @@ class _CouponCardState extends State<CouponCard> with SingleTickerProviderStateM
                       children: [
                         Text(
                           'Valid till $formattedDate',
-                          style: const TextStyle(fontSize: 11, color: AppColors.outline),
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: AppColors.outline,
+                          ),
                         ),
                         GestureDetector(
                           onTap: _handleTap,
@@ -128,24 +147,34 @@ class _CouponCardState extends State<CouponCard> with SingleTickerProviderStateM
                             animation: _shimmerController,
                             builder: (context, child) {
                               return Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                decoration: BoxDecoration(
-                                  color: stripColor.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Text(
-                                  widget.fromCart ? 'APPLY' : 'COPY CODE',
-                                  style: TextStyle(
-                                    color: stripColor,
-                                    fontWeight: FontWeight.w900,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ).animate(controller: _shimmerController, autoPlay: false)
-                               .shimmer(color: Colors.white, duration: 600.ms);
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 8,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: stripColor.withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Text(
+                                      widget.fromCart ? 'APPLY' : 'COPY CODE',
+                                      style: TextStyle(
+                                        color: stripColor,
+                                        fontWeight: FontWeight.w900,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  )
+                                  .animate(
+                                    controller: _shimmerController,
+                                    autoPlay: false,
+                                  )
+                                  .shimmer(
+                                    color: Colors.white,
+                                    duration: 600.ms,
+                                  );
                             },
                           ),
-                        )
+                        ),
                       ],
                     ),
                   ],
@@ -173,28 +202,36 @@ class DashedBorderPainter extends CustomPainter {
 
     const dashWidth = 4.0;
     const dashSpace = 4.0;
-    
+
     // Top border
     var startX = 0.0;
     while (startX < size.width) {
       canvas.drawLine(Offset(startX, 0), Offset(startX + dashWidth, 0), paint);
       startX += dashWidth + dashSpace;
     }
-    
+
     // Right border
     var startY = 0.0;
     while (startY < size.height) {
-      canvas.drawLine(Offset(size.width, startY), Offset(size.width, startY + dashWidth), paint);
+      canvas.drawLine(
+        Offset(size.width, startY),
+        Offset(size.width, startY + dashWidth),
+        paint,
+      );
       startY += dashWidth + dashSpace;
     }
-    
+
     // Bottom border
     startX = size.width;
     while (startX > 0) {
-      canvas.drawLine(Offset(startX, size.height), Offset(startX - dashWidth, size.height), paint);
+      canvas.drawLine(
+        Offset(startX, size.height),
+        Offset(startX - dashWidth, size.height),
+        paint,
+      );
       startX -= dashWidth + dashSpace;
     }
-    
+
     // Left border
     startY = size.height;
     while (startY > 0) {

@@ -7,34 +7,34 @@ class AppTextStyles {
     fontWeight: FontWeight.bold,
     color: AppColors.onSurface,
   );
-  
+
   static const TextStyle h2 = TextStyle(
     fontSize: 24,
     fontWeight: FontWeight.bold,
     color: AppColors.onSurface,
   );
-  
+
   static const TextStyle h3 = TextStyle(
     fontSize: 20,
     fontWeight: FontWeight.w600,
     color: AppColors.onSurface,
   );
-  
+
   static const TextStyle bodyLarge = TextStyle(
     fontSize: 16,
     color: AppColors.onSurface,
   );
-  
+
   static const TextStyle bodyMedium = TextStyle(
     fontSize: 14,
     color: AppColors.outline,
   );
-  
+
   static const TextStyle caption = TextStyle(
     fontSize: 12,
     color: AppColors.outline,
   );
-  
+
   static const TextStyle button = TextStyle(
     fontSize: 16,
     fontWeight: FontWeight.w600,

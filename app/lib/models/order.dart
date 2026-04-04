@@ -40,9 +40,14 @@ class Order {
       deliveryLng: (json['delivery_lng'] as num?)?.toDouble(),
       paymentMethod: json['payment_method'] as String? ?? 'cod',
       estimatedMinutes: json['estimated_minutes'] as int? ?? 28,
-      placedAt: json['placed_at'] != null ? DateTime.parse(json['placed_at']) : null,
-      deliveredAt: json['delivered_at'] != null ? DateTime.parse(json['delivered_at']) : null,
-      items: (json['order_items'] as List<dynamic>?)
+      placedAt: json['placed_at'] != null
+          ? DateTime.parse(json['placed_at'])
+          : null,
+      deliveredAt: json['delivered_at'] != null
+          ? DateTime.parse(json['delivered_at'])
+          : null,
+      items:
+          (json['order_items'] as List<dynamic>?)
               ?.map((e) => OrderItem.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],

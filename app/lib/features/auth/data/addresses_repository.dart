@@ -23,7 +23,7 @@ class AddressesRepository {
     // Override user id
     final data = address.toJson();
     data['user_id'] = userId;
-    
+
     // Remove if empty since it's auto generated
     if (data['id'] == '') {
       data.remove('id');

@@ -16,16 +16,14 @@ class HomeConfig {
       id: json['id'] as String,
       components: json['components'] as List<dynamic>? ?? [],
       isActive: json['is_active'] as bool? ?? true,
-      updatedAt: json['updated_at'] != null ? DateTime.parse(json['updated_at']) : null,
+      updatedAt: json['updated_at'] != null
+          ? DateTime.parse(json['updated_at'])
+          : null,
     );
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'components': components,
-      'is_active': isActive,
-    };
+    return {'id': id, 'components': components, 'is_active': isActive};
   }
 
   HomeConfig copyWith({

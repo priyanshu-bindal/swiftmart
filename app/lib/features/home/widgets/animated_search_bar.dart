@@ -10,7 +10,8 @@ class AnimatedSearchBar extends HookWidget {
   @override
   Widget build(BuildContext context) {
     // Style Constants matching prompt exactly
-    const Color bgSurface = Colors.white; // Changed from bgLavender to give it high contrast
+    const Color bgSurface =
+        Colors.white; // Changed from bgLavender to give it high contrast
     const Color primaryViolet = Color(0xFF6C3CE1);
     const Color accentTeal = Color(0xFF00D4AA);
 
@@ -23,15 +24,17 @@ class AnimatedSearchBar extends HookWidget {
       return 'Late night cravings? Order now 🌙';
     });
 
-    final placeholders = useMemoized(() => [
-          timeContext,
-          'Search for milk, bread, eggs...',
-          'Find fruits, vegetables, snacks...',
-          'Order fresh groceries in minutes ⚡',
-          'Get daily essentials fast',
-          'Search & save with coupons 🎉',
-          'Flash deals ending soon 🔥',
-        ]);
+    final placeholders = useMemoized(
+      () => [
+        timeContext,
+        'Search for milk, bread, eggs...',
+        'Find fruits, vegetables, snacks...',
+        'Order fresh groceries in minutes ⚡',
+        'Get daily essentials fast',
+        'Search & save with coupons 🎉',
+        'Flash deals ending soon 🔥',
+      ],
+    );
 
     // Hooks State
     final currentIndex = useState(0);
@@ -41,24 +44,32 @@ class AnimatedSearchBar extends HookWidget {
     // Controllers
     final focusNode = useFocusNode();
     final textController = useTextEditingController();
-    final scaleController = useAnimationController(duration: const Duration(milliseconds: 150));
-    final scaleAnimation = Tween<double>(begin: 1.0, end: 0.98).animate(CurvedAnimation(parent: scaleController, curve: Curves.easeOut));
+    final scaleController = useAnimationController(
+      duration: const Duration(milliseconds: 150),
+    );
+    final scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 0.98,
+    ).animate(CurvedAnimation(parent: scaleController, curve: Curves.easeOut));
 
     // Listeners and Timers
     useEffect(() {
       void focusListener() {
         isFocused.value = focusNode.hasFocus;
       }
+
       focusNode.addListener(focusListener);
 
       void textListener() {
         hasText.value = textController.text.isNotEmpty;
       }
+
       textController.addListener(textListener);
 
       // Loop Timer for 3 seconds interval
       Timer? timer;
-      if (!isFocused.value) { // Pause animation on focus
+      if (!isFocused.value) {
+        // Pause animation on focus
         timer = Timer.periodic(const Duration(seconds: 3), (t) {
           currentIndex.value = (currentIndex.value + 1) % placeholders.length;
         });
@@ -89,23 +100,30 @@ class AnimatedSearchBar extends HookWidget {
               color: bgSurface,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: isFocused.value ? primaryViolet.withValues(alpha: 0.6) : Colors.grey.withValues(alpha: 0.1),
-                width: isFocused.value ? 2 : 1, // Glow effect simulation via border
+                color: isFocused.value
+                    ? primaryViolet.withValues(alpha: 0.6)
+                    : Colors.grey.withValues(alpha: 0.1),
+                width: isFocused.value
+                    ? 2
+                    : 1, // Glow effect simulation via border
               ),
               boxShadow: [
                 BoxShadow(
-                  color: isFocused.value 
-                      ? primaryViolet.withValues(alpha: 0.25) 
+                  color: isFocused.value
+                      ? primaryViolet.withValues(alpha: 0.25)
                       : Colors.black.withValues(alpha: 0.08),
                   blurRadius: isFocused.value ? 20 : 12,
                   spreadRadius: isFocused.value ? 2 : 0,
                   offset: const Offset(0, 6),
                 ),
-              ]
+              ],
             ),
             child: Row(
               children: [
-                Icon(Icons.search, color: isFocused.value ? primaryViolet : Colors.grey.shade500),
+                Icon(
+                  Icons.search,
+                  color: isFocused.value ? primaryViolet : Colors.grey.shade500,
+                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Stack(
@@ -117,28 +135,35 @@ class AnimatedSearchBar extends HookWidget {
                           duration: const Duration(milliseconds: 400),
                           switchInCurve: Curves.easeOut,
                           switchOutCurve: Curves.easeIn,
-                          transitionBuilder: (Widget child, Animation<double> animation) {
-                            // Slide from bottom-up effect coupled with Fade
-                            return FadeTransition(
-                              opacity: animation,
-                              child: SlideTransition(
-                                position: Tween<Offset>(
-                                  begin: const Offset(0.0, 0.4),
-                                  end: Offset.zero,
-                                ).animate(animation),
-                                child: child,
-                              ),
-                            );
-                          },
+                          transitionBuilder:
+                              (Widget child, Animation<double> animation) {
+                                // Slide from bottom-up effect coupled with Fade
+                                return FadeTransition(
+                                  opacity: animation,
+                                  child: SlideTransition(
+                                    position: Tween<Offset>(
+                                      begin: const Offset(0.0, 0.4),
+                                      end: Offset.zero,
+                                    ).animate(animation),
+                                    child: child,
+                                  ),
+                                );
+                              },
                           child: Text(
                             placeholders[currentIndex.value],
                             key: ValueKey<int>(currentIndex.value),
                             style: GoogleFonts.inter(
-                              color: placeholders[currentIndex.value].startsWith('Trending:') 
-                                  ? primaryViolet 
+                              color:
+                                  placeholders[currentIndex.value].startsWith(
+                                    'Trending:',
+                                  )
+                                  ? primaryViolet
                                   : Colors.grey.shade500,
-                              fontWeight: placeholders[currentIndex.value].startsWith('Trending:') 
-                                  ? FontWeight.bold 
+                              fontWeight:
+                                  placeholders[currentIndex.value].startsWith(
+                                    'Trending:',
+                                  )
+                                  ? FontWeight.bold
                                   : FontWeight.w500,
                               fontSize: 14,
                             ),
@@ -146,7 +171,7 @@ class AnimatedSearchBar extends HookWidget {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                      
+
                       // Actual Input Field (Cursor and typing happen over the placeholder until text is typed)
                       TextField(
                         controller: textController,
@@ -156,7 +181,9 @@ class AnimatedSearchBar extends HookWidget {
                           context.push('/search');
                         },
                         style: GoogleFonts.inter(
-                          color: const Color(0xFF1A1B21), // AppColors.onSurface approximation for standalone
+                          color: const Color(
+                            0xFF1A1B21,
+                          ), // AppColors.onSurface approximation for standalone
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                         ),
@@ -178,7 +205,11 @@ class AnimatedSearchBar extends HookWidget {
                       color: primaryViolet.withValues(alpha: 0.05),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.mic, color: primaryViolet, size: 20),
+                    child: const Icon(
+                      Icons.mic,
+                      color: primaryViolet,
+                      size: 20,
+                    ),
                   )
                 else
                   GestureDetector(
@@ -186,8 +217,12 @@ class AnimatedSearchBar extends HookWidget {
                       textController.clear();
                       focusNode.unfocus();
                     },
-                    child: const Icon(Icons.close, color: Colors.grey, size: 20),
-                  )
+                    child: const Icon(
+                      Icons.close,
+                      color: Colors.grey,
+                      size: 20,
+                    ),
+                  ),
               ],
             ),
           ),

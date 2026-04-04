@@ -37,7 +37,11 @@ class CouponsScreen extends HookConsumerWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.local_activity_outlined, size: 80, color: Colors.grey),
+                  const Icon(
+                    Icons.local_activity_outlined,
+                    size: 80,
+                    color: Colors.grey,
+                  ),
                   const SizedBox(height: 16),
                   Text(
                     'No coupons available right now',
@@ -46,7 +50,7 @@ class CouponsScreen extends HookConsumerWidget {
                       color: Colors.grey.shade600,
                       fontWeight: FontWeight.bold,
                     ),
-                  )
+                  ),
                 ],
               ).animate().fadeIn(duration: 400.ms),
             );

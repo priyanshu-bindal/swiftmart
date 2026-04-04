@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../models/product.dart';
 import '../../models/cart_item.dart';
 import '../../repositories/cart_repository.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 final cartProvider = NotifierProvider<CartNotifier, List<CartItem>>(() {
   return CartNotifier();
@@ -41,8 +41,11 @@ class CartNotifier extends Notifier<List<CartItem>> {
       this.state = [...state];
       _syncItemWithRemote(product.id, state[index].quantity);
     } else {
-      final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
-      this.state = [...state, CartItem(id: '', userId: uid, productId: product.id, product: product)];
+      final uid = Supabase.instance.client.auth.currentUser?.id ?? '';
+      this.state = [
+        ...state,
+        CartItem(id: '', userId: uid, productId: product.id, product: product),
+      ];
       _syncItemWithRemote(product.id, 1);
     }
   }
@@ -53,11 +56,15 @@ class CartNotifier extends Notifier<List<CartItem>> {
 
     if (index != -1) {
       if (state[index].quantity > 1) {
-        state[index] = state[index].copyWith(quantity: state[index].quantity - 1);
+        state[index] = state[index].copyWith(
+          quantity: state[index].quantity - 1,
+        );
         this.state = [...state];
         _syncItemWithRemote(productId, state[index].quantity);
       } else {
-        this.state = state.where((item) => item.product.id != productId).toList();
+        this.state = state
+            .where((item) => item.product.id != productId)
+            .toList();
         _syncItemWithRemote(productId, 0);
       }
     }

@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-
 import '../../core/theme/app_colors.dart';
 import '../cart/providers/cart_provider.dart';
 import '../../providers/location_provider.dart';
@@ -25,7 +24,7 @@ final sduiConfigProvider = FutureProvider<SduiConfig>((ref) async {
       .maybeSingle();
 
   var configData = response?['config'];
-  
+
   if (configData is String) {
     try {
       configData = jsonDecode(configData);
@@ -41,8 +40,8 @@ final sduiConfigProvider = FutureProvider<SduiConfig>((ref) async {
         {"type": "category_row", "title": "Shop by Category", "visible": true},
         {"type": "flash_deals_row", "title": "Flash Deals", "visible": true},
         {"type": "coupon_strip", "visible": true},
-        {"type": "product_grid", "title": "Featured Products", "visible": true}
-      ]
+        {"type": "product_grid", "title": "Featured Products", "visible": true},
+      ],
     };
   }
 
@@ -56,8 +55,8 @@ class HomeScreen extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final sduiState = ref.watch(sduiConfigProvider);
     final userLocation = ref.watch(locationProvider);
-    final cartItemCount = ref.watch(cartProvider.select((items) => items.fold(0, (sum, i) => sum + i.quantity)));
-    final cartTotal = ref.watch(cartProvider.select((items) => items.fold(0.0, (sum, i) => sum + (i.product.price * i.quantity))));
+    final cartItemCount = ref.watch(cartItemCountProvider);
+    final cartTotal = ref.watch(cartTotalProvider);
 
     return Scaffold(
       extendBody: true,
@@ -69,7 +68,12 @@ class HomeScreen extends HookConsumerWidget {
             filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
             child: Container(
               color: AppColors.background.withValues(alpha: 0.7),
-              padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top, left: 24, right: 24, bottom: 16),
+              padding: EdgeInsets.only(
+                top: MediaQuery.of(context).padding.top,
+                left: 24,
+                right: 24,
+                bottom: 16,
+              ),
               alignment: Alignment.center,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -84,7 +88,9 @@ class HomeScreen extends HookConsumerWidget {
                       children: [
                         Icon(
                           Icons.location_on,
-                          color: userLocation == 'Set location' ? Colors.amber : AppColors.primary,
+                          color: userLocation == 'Set location'
+                              ? Colors.amber
+                              : AppColors.primary,
                           size: 24,
                         ),
                         const SizedBox(width: 8),
@@ -92,13 +98,23 @@ class HomeScreen extends HookConsumerWidget {
                           mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('DELIVER TO', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1.2, color: AppColors.outline)),
+                            Text(
+                              'DELIVER TO',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1.2,
+                                color: AppColors.outline,
+                              ),
+                            ),
                             Text(
                               userLocation,
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
-                                color: userLocation == 'Set location' ? Colors.amber.shade700 : AppColors.onSurface,
+                                color: userLocation == 'Set location'
+                                    ? Colors.amber.shade700
+                                    : AppColors.onSurface,
                               ),
                             ),
                           ],
@@ -106,7 +122,15 @@ class HomeScreen extends HookConsumerWidget {
                       ],
                     ),
                   ),
-                  Text('SwiftMart', style: GoogleFonts.manrope(fontWeight: FontWeight.w900, color: AppColors.primary, fontSize: 28, letterSpacing: -1.0)),
+                  Text(
+                    'SwiftMart',
+                    style: GoogleFonts.manrope(
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.primary,
+                      fontSize: 28,
+                      letterSpacing: -1.0,
+                    ),
+                  ),
                   GestureDetector(
                     onTap: () => context.push('/profile'),
                     child: Container(
@@ -119,7 +143,12 @@ class HomeScreen extends HookConsumerWidget {
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
-                        border: Border.all(color: AppColors.primaryContainer.withValues(alpha: 0.3), width: 2),
+                        border: Border.all(
+                          color: AppColors.primaryContainer.withValues(
+                            alpha: 0.3,
+                          ),
+                          width: 2,
+                        ),
                       ),
                       alignment: Alignment.center,
                       child: Text(
@@ -127,11 +156,11 @@ class HomeScreen extends HookConsumerWidget {
                           // Show initial of display name or email
                           try {
                             final user = ref.read(authProvider).user;
-                            if (user?.displayName?.isNotEmpty == true) {
-                              return user!.displayName![0].toUpperCase();
+                            if (user != null && user.displayName.isNotEmpty) {
+                              return user.displayName[0].toUpperCase();
                             }
-                            if (user?.email?.isNotEmpty == true) {
-                              return user!.email![0].toUpperCase();
+                            if (user != null && (user.email?.isNotEmpty ?? false)) {
+                              return user.email![0].toUpperCase();
                             }
                           } catch (_) {}
                           return '?';
@@ -143,7 +172,7 @@ class HomeScreen extends HookConsumerWidget {
                         ),
                       ),
                     ),
-                  )
+                  ),
                 ],
               ),
             ),
@@ -167,7 +196,9 @@ class HomeScreen extends HookConsumerWidget {
             ),
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator(color: AppColors.primary)),
+        loading: () => const Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
         error: (err, stack) => Center(child: Text('Error: $err')),
       ),
       bottomNavigationBar: Stack(
@@ -183,24 +214,50 @@ class HomeScreen extends HookConsumerWidget {
                 height: 96,
                 padding: const EdgeInsets.symmetric(horizontal: 32),
                 decoration: BoxDecoration(
-                  color: AppColors.surfaceContainerLowest.withValues(alpha: 0.7),
+                  color: AppColors.surfaceContainerLowest.withValues(
+                    alpha: 0.7,
+                  ),
                   boxShadow: [
-                    BoxShadow(color: AppColors.onSurface.withValues(alpha: 0.08), offset: const Offset(0, -16), blurRadius: 32),
+                    BoxShadow(
+                      color: AppColors.onSurface.withValues(alpha: 0.08),
+                      offset: const Offset(0, -16),
+                      blurRadius: 32,
+                    ),
                   ],
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _buildNavIcon(Icons.auto_awesome, 'Atelier', true, onTap: () {}),
-                    _buildNavIcon(Icons.search, 'Search', false, onTap: () => context.push('/search')),
-                    _buildNavIcon(Icons.shopping_bag_outlined, 'Cart', false, onTap: () => context.push('/cart')),
-                    _buildNavIcon(Icons.receipt_long, 'Orders', false, onTap: () {}),
+                    _buildNavIcon(
+                      Icons.auto_awesome,
+                      'Atelier',
+                      true,
+                      onTap: () {},
+                    ),
+                    _buildNavIcon(
+                      Icons.search,
+                      'Search',
+                      false,
+                      onTap: () => context.push('/search'),
+                    ),
+                    _buildNavIcon(
+                      Icons.shopping_bag_outlined,
+                      'Cart',
+                      false,
+                      onTap: () => context.push('/cart'),
+                    ),
+                    _buildNavIcon(
+                      Icons.receipt_long,
+                      'Orders',
+                      false,
+                      onTap: () {},
+                    ),
                   ],
                 ),
               ),
             ),
           ),
-          
+
           // Floating Cart Status
           if (cartItemCount > 0)
             Positioned(
@@ -213,11 +270,17 @@ class HomeScreen extends HookConsumerWidget {
                   height: 64,
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(colors: [AppColors.primary, AppColors.secondary]),
+                    gradient: const LinearGradient(
+                      colors: [AppColors.primary, AppColors.secondary],
+                    ),
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
-                      BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), offset: const Offset(0, 8), blurRadius: 16),
-                    ]
+                      BoxShadow(
+                        color: AppColors.primary.withValues(alpha: 0.3),
+                        offset: const Offset(0, 8),
+                        blurRadius: 16,
+                      ),
+                    ],
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -227,18 +290,32 @@ class HomeScreen extends HookConsumerWidget {
                           Stack(
                             clipBehavior: Clip.none,
                             children: [
-                              const Icon(Icons.shopping_bag, color: AppColors.onPrimary, size: 32),
+                              const Icon(
+                                Icons.shopping_bag,
+                                color: AppColors.onPrimary,
+                                size: 32,
+                              ),
                               Positioned(
                                 right: -4,
                                 top: -4,
                                 child: Container(
                                   width: 20,
                                   height: 20,
-                                  decoration: const BoxDecoration(color: AppColors.secondaryContainer, shape: BoxShape.circle),
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.secondaryContainer,
+                                    shape: BoxShape.circle,
+                                  ),
                                   alignment: Alignment.center,
-                                  child: Text('$cartItemCount', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppColors.onSecondaryContainer)),
+                                  child: Text(
+                                    '$cartItemCount',
+                                    style: const TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w900,
+                                      color: AppColors.onSecondaryContainer,
+                                    ),
+                                  ),
                                 ),
-                              )
+                              ),
                             ],
                           ),
                           const SizedBox(width: 16),
@@ -246,28 +323,61 @@ class HomeScreen extends HookConsumerWidget {
                             mainAxisAlignment: MainAxisAlignment.center,
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('$cartItemCount ITEMS', style: TextStyle(color: AppColors.onPrimary.withValues(alpha: 0.8), fontSize: 12, fontWeight: FontWeight.bold)),
-                              Text('\$${cartTotal.toStringAsFixed(2)}', style: const TextStyle(color: AppColors.onPrimary, fontSize: 18, fontWeight: FontWeight.w900)),
+                              Text(
+                                '$cartItemCount ITEMS',
+                                style: TextStyle(
+                                  color: AppColors.onPrimary.withValues(
+                                    alpha: 0.8,
+                                  ),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                '₹${cartTotal.toStringAsFixed(0)}',
+                                style: const TextStyle(
+                                  color: AppColors.onPrimary,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
                             ],
-                          )
+                          ),
                         ],
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                        decoration: BoxDecoration(color: AppColors.onPrimary, borderRadius: BorderRadius.circular(8)),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.onPrimary,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                         child: const Row(
                           children: [
-                            Text('VIEW CART', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w900, fontSize: 12)),
+                            Text(
+                              'VIEW CART',
+                              style: TextStyle(
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.w900,
+                                fontSize: 12,
+                              ),
+                            ),
                             SizedBox(width: 4),
-                            Icon(Icons.arrow_forward, color: AppColors.primary, size: 16)
+                            Icon(
+                              Icons.arrow_forward,
+                              color: AppColors.primary,
+                              size: 16,
+                            ),
                           ],
                         ),
-                      )
+                      ),
                     ],
                   ),
                 ),
               ),
-            )
+            ),
         ],
       ),
     );
@@ -290,26 +400,48 @@ class HomeScreen extends HookConsumerWidget {
     );
   }
 
-  Widget _buildNavIcon(IconData icon, String label, bool isActive, {VoidCallback? onTap}) {
+  Widget _buildNavIcon(
+    IconData icon,
+    String label,
+    bool isActive, {
+    VoidCallback? onTap,
+  }) {
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, color: isActive ? AppColors.primary : Colors.grey.shade400),
+          Icon(
+            icon,
+            color: isActive ? AppColors.primary : Colors.grey.shade400,
+          ),
           const SizedBox(height: 4),
-          Text(label.toUpperCase(), style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 1.2, color: isActive ? AppColors.primary : Colors.grey.shade400)),
+          Text(
+            label.toUpperCase(),
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 1.2,
+              color: isActive ? AppColors.primary : Colors.grey.shade400,
+            ),
+          ),
           if (isActive) ...[
             const SizedBox(height: 4),
-            Container(width: 4, height: 4, decoration: const BoxDecoration(color: AppColors.secondary, shape: BoxShape.circle)),
-          ]
+            Container(
+              width: 4,
+              height: 4,
+              decoration: const BoxDecoration(
+                color: AppColors.secondary,
+                shape: BoxShape.circle,
+              ),
+            ),
+          ],
         ],
       ),
     );
   }
 }
-
 
 // ─── Location Bottom Sheet (used from HomeScreen AppBar) ──────────────────────
 
@@ -335,57 +467,109 @@ class _HomeLocationSheet extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 40, height: 4,
-            decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)),
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade300,
+              borderRadius: BorderRadius.circular(2),
+            ),
           ),
           const SizedBox(height: 24),
           Container(
-            width: 72, height: 72,
+            width: 72,
+            height: 72,
             decoration: BoxDecoration(
-              gradient: const LinearGradient(colors: [violet, teal], begin: Alignment.topLeft, end: Alignment.bottomRight),
+              gradient: const LinearGradient(
+                colors: [violet, teal],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
               borderRadius: BorderRadius.circular(20),
-              boxShadow: [BoxShadow(color: violet.withValues(alpha: 0.3), blurRadius: 16, offset: const Offset(0, 6))],
+              boxShadow: [
+                BoxShadow(
+                  color: violet.withValues(alpha: 0.3),
+                  blurRadius: 16,
+                  offset: const Offset(0, 6),
+                ),
+              ],
             ),
-            child: const Icon(Icons.location_on_rounded, color: Colors.white, size: 36),
+            child: const Icon(
+              Icons.location_on_rounded,
+              color: Colors.white,
+              size: 36,
+            ),
           ),
           const SizedBox(height: 20),
           Text(
             'Where should we deliver?',
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF1A1B21)),
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w900,
+              color: Color(0xFF1A1B21),
+            ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 10),
           Text(
             'SwiftMart needs your location to show nearby stores and deliver in under 30 minutes.',
-            style: TextStyle(fontSize: 14, color: Colors.grey.shade600, height: 1.5),
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey.shade600,
+              height: 1.5,
+            ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 28),
           GestureDetector(
             onTap: onUseLocation,
             child: Container(
-              width: double.infinity, height: 52,
+              width: double.infinity,
+              height: 52,
               decoration: BoxDecoration(
                 gradient: const LinearGradient(colors: [violet, teal]),
                 borderRadius: BorderRadius.circular(50),
-                boxShadow: [BoxShadow(color: violet.withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 4))],
+                boxShadow: [
+                  BoxShadow(
+                    color: violet.withValues(alpha: 0.3),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
               alignment: Alignment.center,
-              child: const Text('Use My Location', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Colors.white)),
+              child: const Text(
+                'Use My Location',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                ),
+              ),
             ),
           ),
           const SizedBox(height: 12),
           GestureDetector(
             onTap: onSkip,
             child: Container(
-              width: double.infinity, height: 52,
+              width: double.infinity,
+              height: 52,
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(50),
-                border: Border.all(color: violet.withValues(alpha: 0.4), width: 1.5),
+                border: Border.all(
+                  color: violet.withValues(alpha: 0.4),
+                  width: 1.5,
+                ),
               ),
               alignment: Alignment.center,
-              child: const Text('Skip for now', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: violet)),
+              child: const Text(
+                'Skip for now',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: violet,
+                ),
+              ),
             ),
           ),
           const SizedBox(height: 8),

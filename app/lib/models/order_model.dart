@@ -27,11 +27,13 @@ class OrderModel {
       userId: json['user_id'] ?? '',
       totalAmount: double.tryParse(json['total_amount'].toString()) ?? 0.0,
       deliveryFee: double.tryParse(json['delivery_fee'].toString()) ?? 0.0,
-      discountAmount: double.tryParse(json['discount_amount'].toString()) ?? 0.0,
+      discountAmount:
+          double.tryParse(json['discount_amount'].toString()) ?? 0.0,
       status: json['status'] ?? 'PENDING',
       paymentMethod: json['payment_method'] ?? 'COD',
       createdAt: DateTime.tryParse(json['created_at'] ?? '') ?? DateTime.now(),
-      items: (json['items'] as List<dynamic>?)
+      items:
+          (json['items'] as List<dynamic>?)
               ?.map((e) => OrderItemModel.fromJson(e))
               .toList() ??
           [],

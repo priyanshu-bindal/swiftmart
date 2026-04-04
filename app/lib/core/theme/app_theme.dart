@@ -30,22 +30,44 @@ class AppTheme {
         ),
       ),
       textTheme: GoogleFonts.interTextTheme().copyWith(
-        displayLarge: GoogleFonts.manrope(fontWeight: FontWeight.w800, color: AppColors.onSurface),
-        displayMedium: GoogleFonts.manrope(fontWeight: FontWeight.w800, color: AppColors.onSurface),
-        displaySmall: GoogleFonts.manrope(fontWeight: FontWeight.w800, color: AppColors.onSurface),
-        headlineLarge: GoogleFonts.manrope(fontWeight: FontWeight.w800, color: AppColors.onSurface),
-        headlineMedium: GoogleFonts.manrope(fontWeight: FontWeight.bold, color: AppColors.onSurface),
-        headlineSmall: GoogleFonts.manrope(fontWeight: FontWeight.bold, color: AppColors.onSurface),
-        titleLarge: GoogleFonts.manrope(fontWeight: FontWeight.bold, color: AppColors.onSurface),
-        titleMedium: GoogleFonts.manrope(fontWeight: FontWeight.bold, color: AppColors.onSurface),
+        displayLarge: GoogleFonts.manrope(
+          fontWeight: FontWeight.w800,
+          color: AppColors.onSurface,
+        ),
+        displayMedium: GoogleFonts.manrope(
+          fontWeight: FontWeight.w800,
+          color: AppColors.onSurface,
+        ),
+        displaySmall: GoogleFonts.manrope(
+          fontWeight: FontWeight.w800,
+          color: AppColors.onSurface,
+        ),
+        headlineLarge: GoogleFonts.manrope(
+          fontWeight: FontWeight.w800,
+          color: AppColors.onSurface,
+        ),
+        headlineMedium: GoogleFonts.manrope(
+          fontWeight: FontWeight.bold,
+          color: AppColors.onSurface,
+        ),
+        headlineSmall: GoogleFonts.manrope(
+          fontWeight: FontWeight.bold,
+          color: AppColors.onSurface,
+        ),
+        titleLarge: GoogleFonts.manrope(
+          fontWeight: FontWeight.bold,
+          color: AppColors.onSurface,
+        ),
+        titleMedium: GoogleFonts.manrope(
+          fontWeight: FontWeight.bold,
+          color: AppColors.onSurface,
+        ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
           foregroundColor: AppColors.onPrimary,
-          shape: RoundedRectangleBorder(
-            borderRadius: AppRadius.circularMd,
-          ),
+          shape: RoundedRectangleBorder(borderRadius: AppRadius.circularMd),
           elevation: 0,
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
         ),
@@ -53,9 +75,7 @@ class AppTheme {
       cardTheme: CardThemeData(
         color: AppColors.surfaceContainerLowest,
         elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: AppRadius.circularLg,
-        ),
+        shape: RoundedRectangleBorder(borderRadius: AppRadius.circularLg),
       ),
       fontFamily: GoogleFonts.inter().fontFamily,
     );

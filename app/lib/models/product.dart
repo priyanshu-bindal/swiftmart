@@ -19,7 +19,7 @@ class Product {
   final bool isAvailable;
   final int stockCount;
   final DateTime? createdAt;
-  
+
   // Fake for UI for now
   final double rating;
   final int reviewCount;
@@ -55,7 +55,9 @@ class Product {
       description: json['description']?.toString() ?? '',
       imagePath: json['image_url']?.toString() ?? '',
       categoryId: json['category_id']?.toString(),
-      category: json['categories'] != null ? Category.fromJson(json['categories']) : null,
+      category: json['categories'] != null
+          ? Category.fromJson(json['categories'])
+          : null,
       categoryName: json['category']?.toString(),
       subcategory: json['subcategory']?.toString(),
       tag: json['tag']?.toString(),
@@ -64,9 +66,14 @@ class Product {
       cashback: (json['cashback'] ?? 0).toDouble(),
       unit: json['unit_size']?.toString() ?? json['unit']?.toString(),
       isOrganic: json['is_organic'] == true,
-      isAvailable: json['is_available'] == null || json['is_available'] == true || json['is_active'] == true,
+      isAvailable:
+          json['is_available'] == null ||
+          json['is_available'] == true ||
+          json['is_active'] == true,
       stockCount: int.tryParse(json['stock_count']?.toString() ?? '') ?? 100,
-      createdAt: json['created_at'] != null ? DateTime.tryParse(json['created_at'].toString()) : null,
+      createdAt: json['created_at'] != null
+          ? DateTime.tryParse(json['created_at'].toString())
+          : null,
       rating: 4.5, // Mock value
       reviewCount: 120, // Mock value
     );
@@ -127,7 +134,8 @@ class Product {
       price: price ?? this.price,
       discountedPrice: discountedPrice ?? this.discountedPrice,
       cashback: cashback ?? this.cashback,
-      unit: unit ?? this.unit, // Use the new unit if provided, otherwise existing
+      unit:
+          unit ?? this.unit, // Use the new unit if provided, otherwise existing
       isOrganic: isOrganic ?? this.isOrganic,
       isAvailable: isAvailable ?? this.isAvailable,
       stockCount: stockCount ?? this.stockCount,

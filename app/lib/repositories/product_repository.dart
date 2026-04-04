@@ -34,7 +34,7 @@ class ProductRepository {
     if (isOrganic != null && isOrganic) {
       baseQuery = baseQuery.contains('tags', ['organic']);
     }
-    
+
     PostgrestTransformBuilder<PostgrestList> finalQuery;
     if (sort == 'price_asc') {
       finalQuery = baseQuery.order('price', ascending: true);
@@ -45,20 +45,28 @@ class ProductRepository {
     }
 
     final response = await finalQuery;
-    return (response as List<dynamic>).map((e) => Product.fromJson(e as Map<String, dynamic>)).toList();
+    return (response as List<dynamic>)
+        .map((e) => Product.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
   Future<Product?> fetchProductById(String id) async {
-    try {
-      final response = await supabase.from('products').select().eq('id', id).single();
-      return Product.fromJson(response);
-    } catch (_) {
-      return null;
-    }
+    final response = await supabase
+        .from('products')
+        .select('*, categories(name)')
+        .eq('id', id)
+        .maybeSingle();
+    if (response == null) return null;
+    return Product.fromJson(response);
   }
 
   Future<List<Category>> fetchCategories() async {
-    final response = await supabase.from('categories').select().order('sort_order', ascending: true);
-    return (response as List<dynamic>).map((e) => Category.fromJson(e as Map<String, dynamic>)).toList();
+    final response = await supabase
+        .from('categories')
+        .select()
+        .order('sort_order', ascending: true);
+    return (response as List<dynamic>)
+        .map((e) => Category.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 }

@@ -1,303 +1,464 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:flutter_animate/flutter_animate.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../core/theme/app_colors.dart';
 
 class OrderSuccessScreen extends HookWidget {
-  const OrderSuccessScreen({super.key});
+  final String? orderId;
+
+  const OrderSuccessScreen({super.key, this.orderId});
 
   @override
   Widget build(BuildContext context) {
-    // Current step 1: Confirming, 2: Completed, 3: Final
+    // 3-step animation sequence: confirming → check → full screen
     final step = useState(1);
+    final showTrackPulse = useState(false);
 
     useEffect(() {
-      Future.delayed(const Duration(milliseconds: 1500), () {
-        if (context.mounted) step.value = 2; // Move to Completed
+      Future.delayed(const Duration(milliseconds: 1200), () {
+        if (context.mounted) step.value = 2;
       });
-      Future.delayed(const Duration(milliseconds: 3500), () {
-        if (context.mounted) step.value = 3; // Move to Final
+      Future.delayed(const Duration(milliseconds: 2800), () {
+        if (context.mounted) step.value = 3;
+      });
+      Future.delayed(const Duration(milliseconds: 6000), () {
+        if (context.mounted) showTrackPulse.value = true;
       });
       return null;
     }, const []);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF9F7FF), // Soft lavender gradient background
-      body: Center(
-        child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 500),
-          switchInCurve: Curves.easeOut,
-          switchOutCurve: Curves.easeIn,
-          child: _buildCurrentStep(context, step.value),
-        ),
+      backgroundColor: const Color(0xFFF9F7FF),
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 500),
+        switchInCurve: Curves.easeOutCubic,
+        switchOutCurve: Curves.easeIn,
+        child: switch (step.value) {
+          1 => _buildConfirming(),
+          2 => _buildCheckmark(),
+          _ => _buildSuccessScreen(
+            context,
+            orderId: orderId,
+            showTrackPulse: showTrackPulse.value,
+          ),
+        },
       ),
     );
   }
 
-  Widget _buildCurrentStep(BuildContext context, int step) {
-    switch (step) {
-      case 1:
-        return _buildStep1()
-            .animate()
-            .fadeIn(duration: 400.ms)
-            .scale(begin: const Offset(0.95, 0.95), curve: Curves.easeOutQuad);
-      case 2:
-        return _buildStep2()
-            .animate()
-            .fadeIn(duration: 400.ms)
-            .scale(begin: const Offset(0.8, 0.8), curve: Curves.elasticOut);
-      case 3:
-      default:
-        return _buildStep3(context)
-            .animate()
-            .fadeIn(duration: 600.ms)
-            .slideY(begin: 0.1, curve: Curves.easeOutQuad);
-    }
-  }
-
-  Widget _buildStep1() {
-    return Column(
+  Widget _buildConfirming() {
+    return SizedBox.expand(
       key: const ValueKey('step1'),
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        const CircularProgressIndicator(
-          valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
-          strokeWidth: 3,
-        ),
-        const SizedBox(height: 24),
-        const Text(
-          'Confirming your order...',
-          style: TextStyle(
-            fontFamily: 'Manrope',
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-            color: AppColors.primary,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const SizedBox(
+            width: 56,
+            height: 56,
+            child: CircularProgressIndicator(
+              strokeWidth: 4,
+              color: AppColors.primary,
+            ),
           ),
-        ),
-      ],
+          const SizedBox(height: 28),
+          const Text(
+            'Confirming your order…',
+            style: TextStyle(
+              fontFamily: 'Manrope',
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+              color: AppColors.primary,
+            ),
+          ).animate().fadeIn(duration: 300.ms),
+        ],
+      ).animate().fadeIn(duration: 400.ms),
     );
   }
 
-  Widget _buildStep2() {
-    return Column(
+  Widget _buildCheckmark() {
+    return SizedBox.expand(
       key: const ValueKey('step2'),
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Container(
-          width: 80,
-          height: 80,
-          decoration: const BoxDecoration(
-            color: AppColors.secondary,
-            shape: BoxShape.circle,
-          ),
-          child: const Icon(LucideIcons.check, color: AppColors.onSecondary, size: 40),
-        ).animate().scale(curve: Curves.elasticOut, duration: 800.ms),
-        const SizedBox(height: 24),
-        const Text(
-          'Order Completed!',
-          style: TextStyle(
-            fontFamily: 'Manrope',
-            fontWeight: FontWeight.bold,
-            fontSize: 22,
-            color: AppColors.onSurface,
-          ),
-        ).animate().fade(delay: 200.ms).slideY(begin: 0.2),
-      ],
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+                width: 90,
+                height: 90,
+                decoration: const BoxDecoration(
+                  color: AppColors.secondary,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  LucideIcons.check,
+                  color: Colors.white,
+                  size: 44,
+                ),
+              )
+              .animate()
+              .scale(
+                begin: const Offset(0.3, 0.3),
+                curve: Curves.elasticOut,
+                duration: 800.ms,
+              )
+              .fadeIn(duration: 200.ms),
+          const SizedBox(height: 24),
+          const Text(
+            'Order Confirmed!',
+            style: TextStyle(
+              fontFamily: 'Manrope',
+              fontWeight: FontWeight.bold,
+              fontSize: 22,
+              color: AppColors.onSurface,
+            ),
+          ).animate(delay: 300.ms).fadeIn().slideY(begin: 0.2),
+        ],
+      ),
     );
   }
 
-  Widget _buildStep3(BuildContext context) {
-    return Stack(
+  Widget _buildSuccessScreen(
+    BuildContext context, {
+    String? orderId,
+    bool showTrackPulse = false,
+  }) {
+    return SizedBox.expand(
       key: const ValueKey('step3'),
-      children: [
-        // Confetti could be added here. We'll simulate with animated scattered dots back.
-        Positioned.fill(
-          child: IgnorePointer(
-            child: _buildConfetti(),
-          ),
-        ),
-        SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
-            child: Column(
-              children: [
-                Expanded(
-                  child: SingleChildScrollView(
-                    physics: const BouncingScrollPhysics(),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const SizedBox(height: 40),
-                        // Big Circular Check
-                        Center(
-                          child: Container(
-                            width: 100,
-                            height: 100,
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(colors: [AppColors.secondaryContainer, AppColors.secondary]),
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(color: AppColors.secondary.withValues(alpha: 0.3), blurRadius: 24, offset: const Offset(0, 12))
-                              ],
-                            ),
-                            child: const Icon(LucideIcons.check, color: AppColors.onSecondary, size: 50),
-                          ).animate().scale(curve: Curves.elasticOut, duration: 1.seconds),
-                        ),
-                        const SizedBox(height: 32),
-                        const Text(
-                          'Order Placed!',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontFamily: 'Manrope',
-                            fontWeight: FontWeight.w900,
-                            fontSize: 28,
-                            color: AppColors.onSurface,
-                          ),
-                        ).animate().fade(delay: 200.ms).slideY(begin: 0.2),
-                        const SizedBox(height: 8),
-                        const Text(
-                          'Your groceries are on the way!',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: AppColors.onSurfaceVariant,
-                          ),
-                        ).animate().fade(delay: 300.ms).slideY(begin: 0.2),
-                        const SizedBox(height: 48),
+      child: Stack(
+        children: [
+          // ── Flutter-animate confetti particles ───────────────────────
+          _ConfettiLayer(),
 
-                        // Info Cards Row
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildInfoCard(
-                                LucideIcons.receipt,
-                                'Order ID',
-                                '#SM82910',
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: _buildInfoCard(
-                                LucideIcons.clock,
-                                'ETA',
-                                '25 mins',
-                              ),
-                            ),
-                          ],
-                        ).animate().fade(delay: 500.ms).slideY(begin: 0.1),
-
-                        const SizedBox(height: 24),
-
-                        // Delivery Info Card
-                        Container(
-                          padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            color: AppColors.surfaceContainerLowest,
-                            borderRadius: BorderRadius.circular(20),
-                            boxShadow: [
-                              BoxShadow(color: AppColors.primary.withValues(alpha: 0.04), blurRadius: 16, offset: const Offset(0, 8))
-                            ],
-                          ),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 56,
-                                height: 56,
-                                decoration: const BoxDecoration(shape: BoxShape.circle),
-                                clipBehavior: Clip.antiAlias,
-                                child: CachedNetworkImage(
-                                  imageUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB3jEqrR8k1j08E9IXXl0l3Zk2XjJv02-O5rW2rJ0I9_F9e6Jv_eD_nL5l1lW0uJbZ0D8L5nI_k0sR4iF9Ew9M0F12eI_g0i9k-W7YxH8H7L6M7h0dY14x0H9E8U6tI0N0K3s0j7xL5eWxN0l4gH1wQ0uD2M4tH8L7C4y9Q9Y7E0W3k_W8g0L0x6W9T',
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text('Alex is picking up your items', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.onSurface)),
-                                    const SizedBox(height: 4),
-                                    Row(
-                                      children: [
-                                        const Icon(LucideIcons.star, color: Colors.amber, size: 14),
-                                        const SizedBox(width: 4),
-                                        const Text('4.9', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                                        const SizedBox(width: 4),
-                                        Text('Top Rated Partner', style: TextStyle(fontSize: 10, color: AppColors.outline, fontWeight: FontWeight.w600)),
-                                      ],
+          // ── Main content ─────────────────────────────────────────────
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+              child: Column(
+                children: [
+                  Expanded(
+                    child: SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          const SizedBox(height: 32),
+                          // Animated checkmark
+                          Container(
+                                width: 110,
+                                height: 110,
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    colors: [
+                                      AppColors.secondaryContainer,
+                                      AppColors.secondary,
+                                    ],
+                                  ),
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: AppColors.secondary.withValues(
+                                        alpha: 0.35,
+                                      ),
+                                      blurRadius: 28,
+                                      offset: const Offset(0, 14),
                                     ),
                                   ],
                                 ),
+                                child: const Icon(
+                                  LucideIcons.check,
+                                  color: Colors.white,
+                                  size: 52,
+                                ),
+                              )
+                              .animate()
+                              .scale(
+                                begin: const Offset(0.6, 0.6),
+                                curve: Curves.elasticOut,
+                                duration: 900.ms,
+                              )
+                              .fadeIn(duration: 300.ms),
+
+                          const SizedBox(height: 28),
+
+                          const Text(
+                            'Order Placed! 🎉',
+                            style: TextStyle(
+                              fontFamily: 'Manrope',
+                              fontWeight: FontWeight.w900,
+                              fontSize: 30,
+                              color: AppColors.onSurface,
+                            ),
+                          ).animate(delay: 200.ms).fadeIn().slideY(begin: 0.2),
+
+                          const SizedBox(height: 8),
+
+                          const Text(
+                            'Your groceries are on the way!',
+                            style: TextStyle(
+                              fontSize: 15,
+                              color: AppColors.onSurfaceVariant,
+                              height: 1.5,
+                            ),
+                          ).animate(delay: 300.ms).fadeIn().slideY(begin: 0.2),
+
+                          const SizedBox(height: 36),
+
+                          // Info cards row
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _InfoCard(
+                                  icon: LucideIcons.receipt,
+                                  title: 'Order ID',
+                                  value: orderId != null
+                                      ? '#${orderId.substring(0, min(8, orderId.length)).toUpperCase()}'
+                                      : '#—',
+                                ),
                               ),
-                              const Icon(LucideIcons.phone, color: AppColors.primary),
+                              const SizedBox(width: 14),
+                              const Expanded(
+                                child: _InfoCard(
+                                  icon: LucideIcons.clock,
+                                  title: 'Estimated',
+                                  value: '20-30 min',
+                                ),
+                              ),
                             ],
-                          ),
-                        ).animate().fade(delay: 600.ms).slideY(begin: 0.1),
-                      ],
+                          ).animate(delay: 450.ms).fadeIn().slideY(begin: 0.1),
+
+                          const SizedBox(height: 20),
+
+                          // Delivery blurb card
+                          Container(
+                            padding: const EdgeInsets.all(18),
+                            decoration: BoxDecoration(
+                              color: AppColors.surfaceContainerLowest,
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.primary.withValues(
+                                    alpha: 0.05,
+                                  ),
+                                  blurRadius: 16,
+                                  offset: const Offset(0, 8),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.primaryFixed,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    LucideIcons.bike,
+                                    color: AppColors.primary,
+                                    size: 22,
+                                  ),
+                                ),
+                                const SizedBox(width: 14),
+                                const Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Delivery partner assigned',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13,
+                                          color: AppColors.onSurface,
+                                        ),
+                                      ),
+                                      SizedBox(height: 4),
+                                      Text(
+                                        'Your order is being packed and will be dispatched shortly',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: AppColors.onSurfaceVariant,
+                                          height: 1.4,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ).animate(delay: 600.ms).fadeIn().slideY(begin: 0.1),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                
-                const SizedBox(height: 24),
-                // Buttons
-                Column(
-                  children: [
-                    InkWell(
-                      onTap: () => context.push('/order-tracking'),
-                      borderRadius: BorderRadius.circular(28),
-                      child: Container(
-                        height: 56,
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(colors: [AppColors.primary, AppColors.secondary]),
-                          borderRadius: BorderRadius.circular(28),
-                          boxShadow: [
-                            BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 16, offset: const Offset(0, 8))
-                          ],
-                        ),
-                        child: const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text('Track Order', style: TextStyle(color: AppColors.onPrimary, fontFamily: 'Manrope', fontWeight: FontWeight.w900, fontSize: 18)),
-                            SizedBox(width: 8),
-                            Icon(LucideIcons.mapPin, color: AppColors.onPrimary, size: 20),
-                          ],
-                        ),
-                      ).animate(onPlay: (controller) => controller.repeat(reverse: true)).scaleXY(end: 1.02, duration: 1.5.seconds, curve: Curves.easeInOut),
-                    ),
-                    const SizedBox(height: 16),
-                    TextButton(
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-                        backgroundColor: AppColors.surfaceContainerHigh.withValues(alpha: 0.5),
-                        minimumSize: const Size(double.infinity, 56),
+
+                  const SizedBox(height: 16),
+
+                  // ── Action buttons ────────────────────────────────────
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Track Order (primary) — pulses after 3s
+                      AnimatedBuilder(
+                        animation: const AlwaysStoppedAnimation(0),
+                        builder: (context, _) {
+                          Widget btn = SizedBox(
+                            height: 56,
+                            child: FilledButton.icon(
+                              onPressed: () => context.push('/order-tracking'),
+                              icon: const Icon(LucideIcons.mapPin, size: 18),
+                              label: const Text(
+                                'Track Order',
+                                style: TextStyle(
+                                  fontFamily: 'Manrope',
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(28),
+                                ),
+                              ),
+                            ),
+                          );
+                          if (showTrackPulse) {
+                            btn = btn
+                                .animate(onPlay: (c) => c.repeat(reverse: true))
+                                .scaleXY(
+                                  end: 1.03,
+                                  duration: 1200.ms,
+                                  curve: Curves.easeInOut,
+                                );
+                          }
+                          return btn;
+                        },
                       ),
-                      onPressed: () => context.go('/'),
-                      child: const Text('Back to Home', style: TextStyle(color: AppColors.onSurfaceVariant, fontWeight: FontWeight.bold, fontSize: 16)),
-                    )
-                  ],
-                ).animate().fade(delay: 800.ms).slideY(begin: 0.1),
-              ],
+                      const SizedBox(height: 12),
+                      // Continue Shopping (secondary)
+                      SizedBox(
+                        height: 52,
+                        child: OutlinedButton(
+                          onPressed: () => context.go('/home'),
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(
+                              color: AppColors.outlineVariant,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(28),
+                            ),
+                          ),
+                          child: const Text(
+                            'Continue Shopping',
+                            style: TextStyle(
+                              fontFamily: 'Manrope',
+                              fontWeight: FontWeight.w700,
+                              fontSize: 15,
+                              color: AppColors.onSurfaceVariant,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ).animate(delay: 800.ms).fadeIn().slideY(begin: 0.15),
+
+                  const SizedBox(height: 8),
+                ],
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
+}
 
-  Widget _buildInfoCard(IconData icon, String title, String value) {
+// ── Confetti layer using flutter_animate ─────────────────────────────────────
+
+class _ConfettiLayer extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final rng = Random(42);
+    final colors = [
+      AppColors.primary,
+      AppColors.secondary,
+      const Color(0xFFFBBC04),
+      const Color(0xFFEA4335),
+      const Color(0xFF34A853),
+      const Color(0xFFCEBDFF),
+    ];
+
+    return IgnorePointer(
+      child: Stack(
+        children: List.generate(32, (i) {
+          final x = rng.nextDouble() * 400;
+          final y = rng.nextDouble() * 300 - 60;
+          final size = 6.0 + rng.nextDouble() * 8;
+          final color = colors[i % colors.length];
+          final isSquare = i % 3 == 0;
+          final delayMs = rng.nextInt(600);
+
+          return Positioned(
+            left: x,
+            top: y,
+            child:
+                Container(
+                      width: size,
+                      height: isSquare ? size : size * 0.5,
+                      decoration: BoxDecoration(
+                        color: color.withValues(alpha: 0.75),
+                        borderRadius: isSquare
+                            ? BorderRadius.circular(2)
+                            : BorderRadius.circular(size),
+                      ),
+                    )
+                    .animate(delay: delayMs.ms)
+                    .fadeIn(duration: 400.ms)
+                    .slideY(
+                      begin: -0.5,
+                      end: 1.2,
+                      duration: 1800.ms,
+                      curve: Curves.easeIn,
+                    )
+                    .then()
+                    .fadeOut(duration: 600.ms),
+          );
+        }),
+      ),
+    );
+  }
+}
+
+// ── Info card widget ─────────────────────────────────────────────────────────
+
+class _InfoCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String value;
+
+  const _InfoCard({
+    required this.icon,
+    required this.title,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(18),
         boxShadow: [
-          BoxShadow(color: AppColors.primary.withValues(alpha: 0.04), blurRadius: 16, offset: const Offset(0, 8))
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.04),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
         ],
       ),
       child: Column(
@@ -305,36 +466,31 @@ class OrderSuccessScreen extends HookWidget {
         children: [
           Container(
             padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: AppColors.primaryFixed, shape: BoxShape.circle),
+            decoration: const BoxDecoration(
+              color: AppColors.primaryFixed,
+              shape: BoxShape.circle,
+            ),
             child: Icon(icon, color: AppColors.primary, size: 16),
           ),
-          const SizedBox(height: 12),
-          Text(title, style: const TextStyle(fontSize: 11, color: AppColors.onSurfaceVariant)),
+          const SizedBox(height: 10),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 11,
+              color: AppColors.onSurfaceVariant,
+            ),
+          ),
           const SizedBox(height: 4),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.onSurface)),
+          Text(
+            value,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 15,
+              color: AppColors.onSurface,
+            ),
+          ),
         ],
       ),
-    );
-  }
-
-  Widget _buildConfetti() {
-    return Stack(
-      children: List.generate(20, (index) {
-        final randomX = (index * 20).remainder(100) / 100 * 400 - 50;
-        final randomY = (index * 30).remainder(100) / 100 * 600 - 100;
-        return Positioned(
-          left: randomX,
-          top: randomY,
-          child: Container(
-            width: (index % 3 == 0) ? 6 : 8,
-            height: (index % 3 == 0) ? 6 : 8,
-            decoration: BoxDecoration(
-              color: index % 2 == 0 ? AppColors.primary.withValues(alpha: 0.4) : AppColors.secondary.withValues(alpha: 0.4),
-              shape: index % 4 == 0 ? BoxShape.rectangle : BoxShape.circle,
-            ),
-          ).animate(delay: (400 + index * 20).ms).fadeIn(duration: 600.ms).slideY(begin: 0.2, curve: Curves.easeOut),
-        );
-      }),
     );
   }
 }

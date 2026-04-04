@@ -19,7 +19,9 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen>
   void initState() {
     super.initState();
     _listController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 600));
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
   }
 
   @override
@@ -36,7 +38,10 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen>
     return Scaffold(
       backgroundColor: const Color(0xFF1A1A2E), // Background dark
       appBar: AppBar(
-        title: const Text('Order History', style: TextStyle(color: Colors.white)),
+        title: const Text(
+          'Order History',
+          style: TextStyle(color: Colors.white),
+        ),
         backgroundColor: const Color(0xFF6C3CE1), // Primary Deep Violet
         elevation: 0,
       ),
@@ -44,8 +49,11 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen>
         data: (orders) {
           if (orders.isEmpty) {
             return const Center(
-                child: Text('No orders found.',
-                    style: TextStyle(color: Colors.white70)));
+              child: Text(
+                'No orders found.',
+                style: TextStyle(color: Colors.white70),
+              ),
+            );
           }
 
           if (!disableAnimations) {
@@ -62,20 +70,25 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen>
                 return _buildOrderItem(order, disableAnimations);
               }
 
-              final Animation<double> animation = Tween<double>(begin: 0.0, end: 1.0)
-                  .animate(CurvedAnimation(
-                parent: _listController,
-                curve: Interval(
-                    (index / orders.length).clamp(0.0, 1.0), 1.0,
-                    curve: Curves.easeOut),
-              ));
+              final Animation<double> animation =
+                  Tween<double>(begin: 0.0, end: 1.0).animate(
+                    CurvedAnimation(
+                      parent: _listController,
+                      curve: Interval(
+                        (index / orders.length).clamp(0.0, 1.0),
+                        1.0,
+                        curve: Curves.easeOut,
+                      ),
+                    ),
+                  );
 
               return FadeTransition(
                 opacity: animation,
                 child: SlideTransition(
                   position: Tween<Offset>(
-                          begin: const Offset(0, 0.2), end: Offset.zero)
-                      .animate(animation),
+                    begin: const Offset(0, 0.2),
+                    end: Offset.zero,
+                  ).animate(animation),
                   child: _buildOrderItem(order, disableAnimations),
                 ),
               );
@@ -84,8 +97,11 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen>
         },
         loading: () => _buildShimmer(disableAnimations),
         error: (e, st) => Center(
-            child: Text('Error loading orders: $e',
-                style: const TextStyle(color: Color(0xFFFF6B6B)))),
+          child: Text(
+            'Error loading orders: $e',
+            style: const TextStyle(color: Color(0xFFFF6B6B)),
+          ),
+        ),
       ),
     );
   }
@@ -104,20 +120,30 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Order #${order.id.substring(0, 8)}',
-                  style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold)),
+              Text(
+                'Order #${order.id.substring(0, 8)}',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               AnimatedStatusChip(
-                  status: order.status, disableAnimations: disableAnimations),
+                status: order.status,
+                disableAnimations: disableAnimations,
+              ),
             ],
           ),
           const SizedBox(height: 16),
-          Text('\$${order.totalAmount.toStringAsFixed(2)} • ${order.paymentMethod}',
-              style: const TextStyle(color: Colors.white70)),
+          Text(
+            '\$${order.totalAmount.toStringAsFixed(2)} • ${order.paymentMethod}',
+            style: const TextStyle(color: Colors.white70),
+          ),
           const SizedBox(height: 16),
-          TimelineDots(status: order.status, disableAnimations: disableAnimations),
+          TimelineDots(
+            status: order.status,
+            disableAnimations: disableAnimations,
+          ),
           const SizedBox(height: 12),
           Align(
             alignment: Alignment.centerRight,
@@ -125,7 +151,7 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen>
               _formatDate(order.createdAt),
               style: const TextStyle(color: Colors.white54, fontSize: 12),
             ),
-          )
+          ),
         ],
       ),
     );
@@ -172,8 +198,11 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen>
 class AnimatedStatusChip extends StatelessWidget {
   final String status;
   final bool disableAnimations;
-  const AnimatedStatusChip(
-      {super.key, required this.status, required this.disableAnimations});
+  const AnimatedStatusChip({
+    super.key,
+    required this.status,
+    required this.disableAnimations,
+  });
 
   Color _getStatusColor() {
     switch (status) {
@@ -201,9 +230,13 @@ class AnimatedStatusChip extends StatelessWidget {
           color: _getStatusColor().withValues(alpha: 0.2),
           borderRadius: BorderRadius.circular(20),
         ),
-        child: Text(status,
-            style: TextStyle(
-                color: _getStatusColor(), fontWeight: FontWeight.bold)),
+        child: Text(
+          status,
+          style: TextStyle(
+            color: _getStatusColor(),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       );
     }
     return TweenAnimationBuilder<Color?>(
@@ -217,11 +250,14 @@ class AnimatedStatusChip extends StatelessWidget {
             color: (color ?? _getStatusColor()).withValues(alpha: 0.2),
             borderRadius: BorderRadius.circular(20),
           ),
-          child: Text(status,
-              style: TextStyle(
-                  color: color ?? _getStatusColor(),
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12)),
+          child: Text(
+            status,
+            style: TextStyle(
+              color: color ?? _getStatusColor(),
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
+            ),
+          ),
         );
       },
     );
@@ -231,8 +267,11 @@ class AnimatedStatusChip extends StatelessWidget {
 class TimelineDots extends StatefulWidget {
   final String status;
   final bool disableAnimations;
-  const TimelineDots(
-      {super.key, required this.status, required this.disableAnimations});
+  const TimelineDots({
+    super.key,
+    required this.status,
+    required this.disableAnimations,
+  });
 
   @override
   State<TimelineDots> createState() => _TimelineDotsState();
@@ -247,14 +286,16 @@ class _TimelineDotsState extends State<TimelineDots>
     'CONFIRMED',
     'PREPARING',
     'OUT_FOR_DELIVERY',
-    'DELIVERED'
+    'DELIVERED',
   ];
 
   @override
   void initState() {
     super.initState();
     _dotsController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 800)); // Slow
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    ); // Slow
     if (!widget.disableAnimations) {
       _dotsController.forward();
     }
@@ -306,18 +347,23 @@ class _TimelineDotsState extends State<TimelineDots>
                           ? const Color(0xFF00D4AA)
                           : const Color(0xFF4A4A6A),
                     ),
-                  )
+                  ),
               ],
             ),
           );
         }
 
         final Animation<double> animation = Tween<double>(begin: 0.0, end: 1.0)
-            .animate(CurvedAnimation(
-          parent: _dotsController,
-          curve: Interval((index / _stages.length).clamp(0.0, 1.0), 1.0,
-              curve: Curves.easeOut),
-        ));
+            .animate(
+              CurvedAnimation(
+                parent: _dotsController,
+                curve: Interval(
+                  (index / _stages.length).clamp(0.0, 1.0),
+                  1.0,
+                  curve: Curves.easeOut,
+                ),
+              ),
+            );
 
         return Expanded(
           child: Row(
@@ -334,7 +380,7 @@ class _TimelineDotsState extends State<TimelineDots>
                           : const Color(0xFF4A4A6A),
                     ),
                   ),
-                )
+                ),
             ],
           ),
         );

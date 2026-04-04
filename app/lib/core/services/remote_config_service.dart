@@ -11,10 +11,12 @@ class RemoteConfigService {
   RemoteConfigService(this._remoteConfig);
 
   Future<void> init() async {
-    await _remoteConfig.setConfigSettings(RemoteConfigSettings(
-      fetchTimeout: const Duration(minutes: 1),
-      minimumFetchInterval: const Duration(hours: 1),
-    ));
+    await _remoteConfig.setConfigSettings(
+      RemoteConfigSettings(
+        fetchTimeout: const Duration(minutes: 1),
+        minimumFetchInterval: const Duration(hours: 1),
+      ),
+    );
 
     await _remoteConfig.setDefaults(const {
       'banner_1_url': '',

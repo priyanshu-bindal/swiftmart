@@ -1,6 +1,5 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import '../../core/providers/supabase_provider.dart';
 import '../models/order.dart';
 
@@ -15,9 +14,9 @@ class OrderRepository {
   OrderRepository({required this.supabase});
 
   String _getUid() {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) throw Exception("User not authenticated");
-    return user.uid;
+    final id = supabase.auth.currentUser?.id;
+    if (id == null) throw Exception('User not authenticated');
+    return id;
   }
 
   Future<Order> placeOrder({
@@ -27,13 +26,13 @@ class OrderRepository {
     String paymentMethod = 'cod',
   }) async {
     final uid = _getUid();
-    
+
     // 1. Fetch cart items
     final cartRes = await supabase
         .from('cart_items')
         .select('*, products(*)')
         .eq('user_id', uid);
-    
+
     final cartList = cartRes as List<dynamic>;
     if (cartList.isEmpty) throw Exception("Cart is empty");
 
@@ -46,17 +45,21 @@ class OrderRepository {
     }
 
     // 3. Insert Order
-    final orderRes = await supabase.from('orders').insert({
-      'user_id': uid,
-      'status': 'placed',
-      'total_amount': totalAmount,
-      'delivery_address': deliveryAddress,
-      'delivery_lat': lat,
-      'delivery_lng': lng,
-      'payment_method': paymentMethod,
-      'estimated_minutes': 28, // mock estimate
-    }).select().single();
-    
+    final orderRes = await supabase
+        .from('orders')
+        .insert({
+          'user_id': uid,
+          'status': 'placed',
+          'total_amount': totalAmount,
+          'delivery_address': deliveryAddress,
+          'delivery_lat': lat,
+          'delivery_lng': lng,
+          'payment_method': paymentMethod,
+          'estimated_minutes': 28, // mock estimate
+        })
+        .select()
+        .single();
+
     final insertedOrderId = orderRes['id'];
 
     // 4. Insert order items
@@ -88,8 +91,10 @@ class OrderRepository {
         .select('*, order_items(*)')
         .eq('user_id', uid)
         .order('placed_at', ascending: false);
-        
-    return (response as List<dynamic>).map((e) => Order.fromJson(e as Map<String, dynamic>)).toList();
+
+    return (response as List<dynamic>)
+        .map((e) => Order.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
   Future<Order> fetchOrderById(String id) async {
@@ -100,7 +105,7 @@ class OrderRepository {
         .eq('id', id)
         .eq('user_id', uid)
         .single();
-        
+
     return Order.fromJson(response);
   }
 }

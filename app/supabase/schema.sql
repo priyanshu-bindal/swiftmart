@@ -164,7 +164,7 @@ CREATE TABLE public.home_config (
 -- 14. User FCM Tokens
 CREATE TABLE public.user_fcm_tokens (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  user_id text NOT NULL,
   token text NOT NULL,
   platform text,
   updated_at timestamptz DEFAULT NOW()
@@ -200,7 +200,7 @@ CREATE POLICY "Users manage own orders" ON public.orders FOR ALL TO authenticate
 CREATE POLICY "Users manage own order items" ON public.order_items FOR ALL TO authenticated USING (
   EXISTS (SELECT 1 FROM public.orders WHERE id = order_items.order_id AND user_id = auth.uid())
 );
-CREATE POLICY "Users manage own fcm tokens" ON public.user_fcm_tokens FOR ALL TO authenticated USING (auth.uid() = user_id);
+CREATE POLICY "Users manage own fcm tokens" ON public.user_fcm_tokens FOR ALL TO authenticated USING (auth.uid()::text = user_id);
 
 -- Authenticated read for active coupons
 CREATE POLICY "Authenticated read on active coupons" ON public.coupons FOR SELECT TO authenticated USING (is_active = true);

@@ -52,7 +52,7 @@ class FlashDealsScreen extends HookConsumerWidget {
                           color: Colors.grey.shade600,
                           fontWeight: FontWeight.bold,
                         ),
-                      )
+                      ),
                     ],
                   ).animate().fadeIn(duration: 400.ms),
                 ),
@@ -76,7 +76,10 @@ class FlashDealsScreen extends HookConsumerWidget {
             child: CircularProgressIndicator(color: Color(0xFF6C3CE1)),
           ),
           error: (err, stack) => Center(
-            child: Text('Error: $err', style: const TextStyle(color: Colors.red)),
+            child: Text(
+              'Error: $err',
+              style: const TextStyle(color: Colors.red),
+            ),
           ),
         ),
       ),

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:app/shared/widgets/app_network_image.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../../../models/flash_deal.dart';
 import '../../cart/providers/cart_provider.dart';
@@ -50,7 +51,7 @@ class _DealCardState extends ConsumerState<DealCard> {
   @override
   Widget build(BuildContext context) {
     final isSoldOut = widget.deal.soldQty >= widget.deal.maxQty;
-    
+
     final h = _timeLeft.inHours.toString().padLeft(2, '0');
     final m = (_timeLeft.inMinutes % 60).toString().padLeft(2, '0');
     final s = (_timeLeft.inSeconds % 60).toString().padLeft(2, '0');
@@ -64,7 +65,7 @@ class _DealCardState extends ConsumerState<DealCard> {
             color: Colors.black.withValues(alpha: 0.05),
             offset: const Offset(0, 4),
             blurRadius: 10,
-          )
+          ),
         ],
       ),
       clipBehavior: Clip.antiAlias,
@@ -76,9 +77,9 @@ class _DealCardState extends ConsumerState<DealCard> {
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(12),
-                  child: CachedNetworkImage(
-                    imageUrl: widget.deal.product.imagePath.isNotEmpty 
-                        ? widget.deal.product.imagePath 
+                  child: AppNetworkImage(
+                    imageUrl: widget.deal.product.imagePath.isNotEmpty
+                        ? widget.deal.product.imagePath
                         : 'https://via.placeholder.com/90',
                     width: 90,
                     height: 90,
@@ -112,7 +113,7 @@ class _DealCardState extends ConsumerState<DealCard> {
                       Row(
                         children: [
                           Text(
-                            '\$${widget.deal.product.price.toStringAsFixed(2)}',
+                            '₹${widget.deal.product.price.toStringAsFixed(0)}',
                             style: const TextStyle(
                               color: AppColors.outline,
                               decoration: TextDecoration.lineThrough,
@@ -121,7 +122,7 @@ class _DealCardState extends ConsumerState<DealCard> {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            '\$${(widget.deal.product.price * (1 - widget.deal.discountPercent / 100)).toStringAsFixed(2)}',
+                            '₹${(widget.deal.product.price * (1 - widget.deal.discountPercent / 100)).toStringAsFixed(0)}',
                             style: const TextStyle(
                               color: Color(0xFF6C3CE1),
                               fontWeight: FontWeight.w900,
@@ -135,41 +136,100 @@ class _DealCardState extends ConsumerState<DealCard> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
                             decoration: BoxDecoration(
                               color: const Color(0xFF1A1A2E),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Row(
                               children: [
-                                const Icon(Icons.timer_outlined, color: Colors.white, size: 12),
+                                const Icon(
+                                  Icons.timer_outlined,
+                                  color: Colors.white,
+                                  size: 12,
+                                ),
                                 const SizedBox(width: 4),
                                 _AnimatedDigit(text: h),
-                                const Text(':', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                                const Text(
+                                  ':',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                                 _AnimatedDigit(text: m),
-                                const Text(':', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                                const Text(
+                                  ':',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                                 _AnimatedDigit(text: s),
                               ],
                             ),
                           ),
                           GestureDetector(
-                            onTap: isSoldOut ? null : () {
-                              ref.read(cartProvider.notifier).addProduct(widget.deal.product);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('${widget.deal.product.name} added to cart!')),
-                              );
-                            },
+                            onTap: isSoldOut
+                                ? null
+                                : () async {
+                                    try {
+                                      await ref
+                                          .read(cartProvider.notifier)
+                                          .addToCart(widget.deal.product.id);
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              '${widget.deal.product.name} added to cart!',
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                    } catch (e) {
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            backgroundColor: Colors.red,
+                                            content: Text(
+                                              'Failed to add ${widget.deal.product.name}: $e',
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                    }
+                                  },
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
                               decoration: BoxDecoration(
-                                color: isSoldOut ? Colors.grey : const Color(0xFF6C3CE1),
+                                color: isSoldOut
+                                    ? Colors.grey
+                                    : const Color(0xFF6C3CE1),
                                 borderRadius: BorderRadius.circular(8),
                               ),
-                              child: const Text('Add', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                              child: const Text(
+                                'Add',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ),
-                          )
+                          ),
                         ],
-                      )
+                      ),
                     ],
                   ),
                 ),
@@ -203,7 +263,10 @@ class _DealCardState extends ConsumerState<DealCard> {
                 color: Colors.white.withValues(alpha: 0.7),
                 alignment: Alignment.center,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.black87,
                     borderRadius: BorderRadius.circular(20),
@@ -239,10 +302,7 @@ class _AnimatedDigit extends StatelessWidget {
             begin: const Offset(0.0, -0.5),
             end: Offset.zero,
           ).animate(animation),
-          child: FadeTransition(
-            opacity: animation,
-            child: child,
-          ),
+          child: FadeTransition(opacity: animation, child: child),
         );
       },
       child: Text(

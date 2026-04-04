@@ -39,21 +39,23 @@ class ProductsRepository {
 
     final count = response.count;
     final List<dynamic> data = response.data;
-    
+
     final products = data.map((e) => ProductModel.fromJson(e)).toList();
 
     return (products: products, count: count);
   }
 
-  Future<({ProductModel product, List<ProductModel> related})> getProductById(String id) async {
+  Future<({ProductModel product, List<ProductModel> related})> getProductById(
+    String id,
+  ) async {
     final productData = await SupabaseService.client
         .from(SupabaseConstants.productsTable)
         .select('*, categories(name)')
         .eq('id', id)
         .single();
-        
+
     final product = ProductModel.fromJson(productData);
-    
+
     List<ProductModel> related = [];
     if (product.categoryId != null) {
       final relatedData = await SupabaseService.client
@@ -63,23 +65,23 @@ class ProductsRepository {
           .eq('category_id', product.categoryId!)
           .neq('id', id)
           .limit(6);
-          
+
       related = relatedData.map((e) => ProductModel.fromJson(e)).toList();
     }
-    
+
     return (product: product, related: related);
   }
 
   Future<List<Map<String, dynamic>>> getFlashDeals() async {
     final now = DateTime.now().toUtc().toIso8601String();
-    
+
     final data = await SupabaseService.client
         .from(SupabaseConstants.flashDealsTable)
         .select('*, products(*)')
         .eq('is_active', true)
         .lte('start_time', now)
         .gte('end_time', now);
-        
+
     return List<Map<String, dynamic>>.from(data);
   }
 
@@ -89,7 +91,7 @@ class ProductsRepository {
         .select()
         .eq('is_active', true)
         .order('display_order', ascending: true);
-        
+
     return data.map((e) => BannerModel.fromJson(e)).toList();
   }
 
@@ -100,7 +102,7 @@ class ProductsRepository {
         .eq('is_active', true)
         .limit(1)
         .maybeSingle();
-        
+
     return data ?? {};
   }
 }

@@ -18,71 +18,90 @@ import '../../widgets/product_card.dart';
 
 typedef CategoryFilterArgs = ({String category, String filter});
 
-final categoryProductsProvider = FutureProvider.autoDispose.family<List<Product>, CategoryFilterArgs>((ref, args) async {
-  final supabase = Supabase.instance.client;
-  
-  try {
-    // 1. Get the category ID first to avoid complex inner join syntax issues
-    final categoryResp = await supabase
-        .from('categories')
-        .select('id')
-        .eq('name', args.category)
-        .maybeSingle();
-        
-    if (categoryResp == null) return [];
-    
-    // 2. Fetch products for this category using reliable category_id filter
-    var query = supabase.from('products')
-        .select('*, categories(*)')
-        .eq('is_active', true)
-        .eq('category_id', categoryResp['id']);
-    
-    if (args.filter != 'All') {
-      query = query.contains('tags', [args.filter.toLowerCase()]);
-    }
-    
-    final response = await query;
-    return (response as List).map((json) => Product.fromJson(json)).toList();
-  } catch (e) {
-    // If anything fails, throw it clearly so Riverpod triggers the error state instead of hanging
-    throw Exception('Failed to load products: \$e');
-  }
-});
+final categoryProductsProvider = FutureProvider.autoDispose
+    .family<List<Product>, CategoryFilterArgs>((ref, args) async {
+      final supabase = Supabase.instance.client;
+
+      try {
+        // 1. Get the category ID first to avoid complex inner join syntax issues
+        final categoryResp = await supabase
+            .from('categories')
+            .select('id')
+            .eq('name', args.category)
+            .maybeSingle();
+
+        if (categoryResp == null) return [];
+
+        // 2. Fetch products for this category using reliable category_id filter
+        var query = supabase
+            .from('products')
+            .select('*, categories(*)')
+            .eq('is_active', true)
+            .eq('category_id', categoryResp['id']);
+
+        if (args.filter != 'All') {
+          query = query.contains('tags', [args.filter.toLowerCase()]);
+        }
+
+        final response = await query;
+        return (response as List)
+            .map((json) => Product.fromJson(json))
+            .toList();
+      } catch (e) {
+        // If anything fails, throw it clearly so Riverpod triggers the error state instead of hanging
+        throw Exception('Failed to load products: \$e');
+      }
+    });
 
 class CategoryScreen extends HookConsumerWidget {
   final String categoryName;
 
-  const CategoryScreen({
-    super.key,
-    required this.categoryName,
-  });
+  const CategoryScreen({super.key, required this.categoryName});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedFilter = useState('All');
-    final productsAsync = ref.watch(categoryProductsProvider((category: categoryName, filter: selectedFilter.value)));
-    
+    final productsAsync = ref.watch(
+      categoryProductsProvider((
+        category: categoryName,
+        filter: selectedFilter.value,
+      )),
+    );
+
     // Example subcategories based on category
     final filterChips = ['All', 'Milk', 'Bread', 'Cheese', 'Eggs', 'Yogurt'];
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.dark,
       child: Scaffold(
-        backgroundColor: const Color(0xFFFBF8FF), // Using the surface color from the HTML
+        backgroundColor: const Color(
+          0xFFFBF8FF,
+        ), // Using the surface color from the HTML
         extendBodyBehindAppBar: true,
         appBar: _CategoryAppBar(categoryName: categoryName),
         body: RefreshIndicator(
           color: AppColors.primary,
-          onRefresh: () async => ref.refresh(categoryProductsProvider((category: categoryName, filter: selectedFilter.value))),
+          onRefresh: () async => ref.refresh(
+            categoryProductsProvider((
+              category: categoryName,
+              filter: selectedFilter.value,
+            )),
+          ),
           child: CustomScrollView(
             physics: const BouncingScrollPhysics(),
             slivers: [
-              SliverToBoxAdapter(child: SizedBox(height: MediaQuery.of(context).padding.top + 80)), // Top padding for AppBar
-
+              SliverToBoxAdapter(
+                child: SizedBox(
+                  height: MediaQuery.of(context).padding.top + 80,
+                ),
+              ), // Top padding for AppBar
               // Hero Banner Section
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24.0,
+                    vertical: 8.0,
+                  ),
                   child: _HeroBanner(),
                 ),
               ),
@@ -97,7 +116,8 @@ class CategoryScreen extends HookConsumerWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 24),
                     scrollDirection: Axis.horizontal,
                     itemCount: filterChips.length,
-                    separatorBuilder: (context, index) => const SizedBox(width: 8),
+                    separatorBuilder: (context, index) =>
+                        const SizedBox(width: 8),
                     itemBuilder: (context, index) {
                       final chip = filterChips[index];
                       final isSelected = chip == selectedFilter.value;
@@ -107,7 +127,11 @@ class CategoryScreen extends HookConsumerWidget {
                           duration: const Duration(milliseconds: 200),
                           padding: const EdgeInsets.symmetric(horizontal: 24),
                           decoration: BoxDecoration(
-                            color: isSelected ? AppColors.primary : const Color(0xFFE9E7EF), // surface-container-high
+                            color: isSelected
+                                ? AppColors.primary
+                                : const Color(
+                                    0xFFE9E7EF,
+                                  ), // surface-container-high
                             borderRadius: BorderRadius.circular(24),
                           ),
                           alignment: Alignment.center,
@@ -116,7 +140,11 @@ class CategoryScreen extends HookConsumerWidget {
                             style: GoogleFonts.inter(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
-                              color: isSelected ? Colors.white : const Color(0xFF494455), // on-surface-variant
+                              color: isSelected
+                                  ? Colors.white
+                                  : const Color(
+                                      0xFF494455,
+                                    ), // on-surface-variant
                             ),
                           ),
                         ),
@@ -130,7 +158,10 @@ class CategoryScreen extends HookConsumerWidget {
 
               // Product Grid
               SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 8,
+                ),
                 sliver: productsAsync.when(
                   data: (products) {
                     if (products.isEmpty) {
@@ -147,14 +178,18 @@ class CategoryScreen extends HookConsumerWidget {
                       );
                     }
                     return SliverGrid(
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 16,
-                        mainAxisSpacing: 16,
-                        childAspectRatio: 0.70, // Product card ratio
-                      ),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            crossAxisSpacing: 16,
+                            mainAxisSpacing: 16,
+                            childAspectRatio: 0.70, // Product card ratio
+                          ),
                       delegate: SliverChildBuilderDelegate(
-                        (context, index) => ProductCard(product: products[index])
+                        (
+                          context,
+                          index,
+                        ) => ProductCard(product: products[index])
                             .animate(delay: Duration(milliseconds: 50 * index))
                             .fadeIn(duration: 400.ms)
                             .slideY(begin: 0.1, end: 0, curve: Curves.easeOut),
@@ -166,12 +201,13 @@ class CategoryScreen extends HookConsumerWidget {
                     return Skeletonizer.sliver(
                       enabled: true,
                       child: SliverGrid(
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          crossAxisSpacing: 16,
-                          mainAxisSpacing: 16,
-                          childAspectRatio: 0.70,
-                        ),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              crossAxisSpacing: 16,
+                              mainAxisSpacing: 16,
+                              childAspectRatio: 0.70,
+                            ),
                         delegate: SliverChildBuilderDelegate(
                           (context, index) => ProductCard(
                             product: Product(
@@ -200,8 +236,10 @@ class CategoryScreen extends HookConsumerWidget {
                   ),
                 ),
               ),
-              
-              const SliverToBoxAdapter(child: SizedBox(height: 100)), // Bottom padding
+
+              const SliverToBoxAdapter(
+                child: SizedBox(height: 100),
+              ), // Bottom padding
             ],
           ),
         ),
@@ -253,11 +291,7 @@ class _CategoryAppBar extends StatelessWidget implements PreferredSizeWidget {
                 onTap: () => context.push('/search'),
                 child: const Padding(
                   padding: EdgeInsets.all(8.0),
-                  child: Icon(
-                    Icons.search,
-                    color: Color(0xFF6C3CE1),
-                    size: 24,
-                  ),
+                  child: Icon(Icons.search, color: Color(0xFF6C3CE1), size: 24),
                 ),
               ),
             ],
@@ -292,7 +326,7 @@ class _HeroBanner extends StatelessWidget {
             child: Opacity(
               opacity: 0.6,
               child: Image.network(
-                'https://lh3.googleusercontent.com/aida-public/AB6AXuBm8DlGTg_1XO7vQWGfg4KB_NxjlP4JAWAj5ZkYATv3l5bxkeWPZj6kbVImp5K23HI64foBJVCGkq5UMdv0Ji67NMF6tXQMv3mopnk1BzGvecsG7DEogYR-1LMxLNOWTKh9SUMx_4VeaB4-Up1u46T4YoV_-fhbvBNL1e9p4l6mswWIMXSRmtf7OrOUxnf-wcFtHeJKet33-nc296IvROYdGIaIGhGKOilzdGp7QwMlN4E9ITtjjM-JEXpupPp_fdTWU2MvvSoLiA4C',
+                'https://source.unsplash.com/featured/?shopping',
                 fit: BoxFit.cover,
                 colorBlendMode: BlendMode.overlay,
               ),

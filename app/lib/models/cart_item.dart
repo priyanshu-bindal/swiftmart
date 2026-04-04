@@ -18,13 +18,27 @@ class CartItem {
   });
 
   factory CartItem.fromJson(Map<String, dynamic> json) {
+    // Supabase returns the joined table as either a Map (object) or List.
+    // Guard against both cases.
+    Map<String, dynamic> productJson;
+    final raw = json['products'];
+    if (raw is Map<String, dynamic>) {
+      productJson = raw;
+    } else if (raw is List && raw.isNotEmpty) {
+      productJson = raw.first as Map<String, dynamic>;
+    } else {
+      productJson = {};
+    }
+
     return CartItem(
-      id: json['id'] as String,
-      userId: json['user_id'] as String,
-      productId: json['product_id'] as String,
-      quantity: json['quantity'] as int? ?? 1,
-      updatedAt: json['updated_at'] != null ? DateTime.parse(json['updated_at']) : null,
-      product: Product.fromJson(json['products'] ?? {}),
+      id: json['id']?.toString() ?? '',
+      userId: json['user_id']?.toString() ?? '',
+      productId: json['product_id']?.toString() ?? '',
+      quantity: (json['quantity'] as int?) ?? 1,
+      updatedAt: json['updated_at'] != null
+          ? DateTime.tryParse(json['updated_at'].toString())
+          : null,
+      product: Product.fromJson(productJson),
     );
   }
 

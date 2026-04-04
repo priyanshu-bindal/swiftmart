@@ -1,7 +1,6 @@
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/utils/go_router_refresh_stream.dart';
 
@@ -11,13 +10,14 @@ import '../../features/products/browse_categories_screen.dart';
 import '../../features/products/product_detail_screen.dart';
 import '../../features/cart/cart_screen.dart';
 import '../../features/orders/checkout_screen.dart';
-import '../../features/orders/order_success_screen.dart'; 
+import '../../features/orders/mock_payment_screen.dart';
+import '../../features/orders/order_success_screen.dart';
 import '../../features/orders/order_tracking_screen.dart';
 import '../../features/orders/order_history_screen.dart';
 import '../../features/products/search_screen.dart';
 import '../../features/profile/profile_screen.dart';
-import '../../features/auth/presentation/login_screen.dart';
-import '../../features/auth/presentation/signup_screen.dart';
+import '../../features/auth/screens/login_screen.dart';
+import '../../features/auth/screens/signup_screen.dart';
 import '../../features/deals/flash_deals_screen.dart';
 import '../../features/offers/coupons_screen.dart';
 
@@ -25,13 +25,15 @@ final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/home',
     refreshListenable: GoRouterRefreshStream(
-      FirebaseAuth.instance.authStateChanges(),
+      Supabase.instance.client.auth.onAuthStateChange,
     ),
     redirect: (context, state) {
-      final isAuthenticated = FirebaseAuth.instance.currentUser != null;
-      final isAuthRoute = state.matchedLocation == '/login' || 
-                          state.matchedLocation == '/signup';
-      
+      final isAuthenticated =
+          Supabase.instance.client.auth.currentSession != null;
+      final isAuthRoute =
+          state.matchedLocation == '/login' ||
+          state.matchedLocation == '/signup';
+
       if (!isAuthenticated && !isAuthRoute) return '/login';
       if (isAuthenticated && isAuthRoute) return '/home';
       return null;
@@ -53,17 +55,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const HomeScreen(),
       ),
       // Fallback for root
-      GoRoute(
-        path: '/',
-        redirect: (context, state) => '/home',
-      ),
+      GoRoute(path: '/', redirect: (context, state) => '/home'),
       GoRoute(
         path: '/category',
         name: 'category',
         builder: (context, state) {
           final extra = state.extra as Map<String, dynamic>?;
           final categoryName = extra?['name'] as String? ?? 'Category';
-          return CategoryScreen(categoryName: categoryName); 
+          return CategoryScreen(categoryName: categoryName);
         },
       ),
       GoRoute(
@@ -90,6 +89,18 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const CheckoutScreen(),
       ),
       GoRoute(
+        path: '/mock-payment',
+        name: 'mockPayment',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>? ?? {};
+          return MockPaymentScreen(
+            orderId: extra['order_id']?.toString() ?? '',
+            total: (extra['total'] as num?)?.toDouble() ?? 0.0,
+            paymentMethod: extra['payment_method']?.toString() ?? 'upi',
+          );
+        },
+      ),
+      GoRoute(
         path: '/search',
         name: 'search',
         builder: (context, state) => const SearchScreen(),
@@ -97,12 +108,19 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/order-confirm/:orderId',
         name: 'orderConfirm',
-        builder: (context, state) => const OrderSuccessScreen(),
+        builder: (context, state) {
+          final orderId = state.pathParameters['orderId'];
+          return OrderSuccessScreen(orderId: orderId);
+        },
       ),
       GoRoute(
         path: '/order-success',
         name: 'orderSuccess',
-        builder: (context, state) => const OrderSuccessScreen(),
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          final orderId = extra?['order_id']?.toString();
+          return OrderSuccessScreen(orderId: orderId);
+        },
       ),
       GoRoute(
         path: '/order-tracking',
@@ -112,7 +130,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/order-history',
         name: 'orderHistory',
-        builder: (context, state) => const OrderHistoryScreen(userId: ''), 
+        builder: (context, state) => const OrderHistoryScreen(userId: ''),
       ),
       GoRoute(
         path: '/profile',

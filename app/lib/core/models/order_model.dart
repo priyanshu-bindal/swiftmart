@@ -109,8 +109,12 @@ class OrderModel {
       couponCode: json['coupon_code']?.toString(),
       addressId: json['address_id']?.toString(),
       paymentMethod: json['payment_method']?.toString(),
-      createdAt: json['created_at'] != null ? DateTime.tryParse(json['created_at'].toString()) : null,
-      updatedAt: json['updated_at'] != null ? DateTime.tryParse(json['updated_at'].toString()) : null,
+      createdAt: json['created_at'] != null
+          ? DateTime.tryParse(json['created_at'].toString())
+          : null,
+      updatedAt: json['updated_at'] != null
+          ? DateTime.tryParse(json['updated_at'].toString())
+          : null,
     );
   }
 

@@ -1,6 +1,5 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import '../../core/providers/supabase_provider.dart';
 import '../models/cart_item.dart';
 
@@ -15,9 +14,9 @@ class CartRepository {
   CartRepository({required this.supabase});
 
   String _getUid() {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) throw Exception("User not authenticated");
-    return user.uid;
+    final id = supabase.auth.currentUser?.id;
+    if (id == null) throw Exception('User not authenticated');
+    return id;
   }
 
   Future<List<CartItem>> fetchCart() async {
@@ -27,8 +26,10 @@ class CartRepository {
           .from('cart_items')
           .select('*, products(*, categories(name))')
           .eq('user_id', uid);
-          
-      return (response as List<dynamic>).map((e) => CartItem.fromJson(e as Map<String, dynamic>)).toList();
+
+      return (response as List<dynamic>)
+          .map((e) => CartItem.fromJson(e as Map<String, dynamic>))
+          .toList();
     } catch (_) {
       return [];
     }

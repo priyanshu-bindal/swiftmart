@@ -26,7 +26,7 @@ class OrderHistoryNotifier extends AsyncNotifier<List<OrderModel>> {
   Future<List<OrderModel>> build() async {
     final auth = ref.watch(authProvider);
     final userId = auth.user?.id;
-    
+
     if (userId == null) {
       return [];
     }
@@ -39,16 +39,19 @@ class OrderHistoryNotifier extends AsyncNotifier<List<OrderModel>> {
           .eq('user_id', userId)
           .order('created_at', ascending: false);
 
-      return (response as List).map((json) => OrderModel.fromJson(json)).toList();
+      return (response as List)
+          .map((json) => OrderModel.fromJson(json))
+          .toList();
     } catch (e) {
       throw Exception('Failed to fetch orders: \$e');
     }
   }
 }
 
-final orderHistoryProvider = AsyncNotifierProvider<OrderHistoryNotifier, List<OrderModel>>(() {
-  return OrderHistoryNotifier();
-});
+final orderHistoryProvider =
+    AsyncNotifierProvider<OrderHistoryNotifier, List<OrderModel>>(() {
+      return OrderHistoryNotifier();
+    });
 
 // Provider for holding current active order context (useful for tracking via Sockets in real-time)
 class ActiveOrderNotifier extends Notifier<OrderModel?> {
@@ -60,6 +63,8 @@ class ActiveOrderNotifier extends Notifier<OrderModel?> {
   }
 }
 
-final activeOrderProvider = NotifierProvider<ActiveOrderNotifier, OrderModel?>(() {
-  return ActiveOrderNotifier();
-});
+final activeOrderProvider = NotifierProvider<ActiveOrderNotifier, OrderModel?>(
+  () {
+    return ActiveOrderNotifier();
+  },
+);

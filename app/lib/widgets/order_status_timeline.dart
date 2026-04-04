@@ -25,7 +25,7 @@ class OrderStatusTimeline extends StatelessWidget {
       children: List.generate(_steps.length, (index) {
         final isCompleted = index < currentStepIndex;
         final isActive = index == currentStepIndex;
-        
+
         Widget row = Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -36,7 +36,9 @@ class OrderStatusTimeline extends StatelessWidget {
                   Container(
                     width: 2,
                     height: 24,
-                    color: isCompleted ? const Color(0xFF00D4AA) : const Color(0xFF4A4A6A),
+                    color: isCompleted
+                        ? const Color(0xFF00D4AA)
+                        : const Color(0xFF4A4A6A),
                   ),
               ],
             ),
@@ -47,7 +49,9 @@ class OrderStatusTimeline extends StatelessWidget {
                 child: Text(
                   _steps[index],
                   style: TextStyle(
-                    color: (isCompleted || isActive) ? Colors.white : Colors.white54,
+                    color: (isCompleted || isActive)
+                        ? Colors.white
+                        : Colors.white54,
                     fontSize: 16,
                     fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
                   ),
@@ -163,7 +167,7 @@ class _AnimatedActiveDotState extends State<AnimatedActiveDot>
                   color: const Color(0xFFF39C12).withValues(alpha: 0.5),
                   blurRadius: 8 * _scaleAnimation.value,
                   spreadRadius: 2,
-                )
+                ),
               ],
             ),
           ),

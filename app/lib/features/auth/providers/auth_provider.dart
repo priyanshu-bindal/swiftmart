@@ -1,128 +1,191 @@
 import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import '../../../../core/models/user_model.dart';
-import '../data/auth_repository.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../../../core/constants/supabase_constants.dart';
+import '../../../core/models/user_model.dart';
+import '../services/auth_service.dart';
+import '../../../core/providers/fcm_provider.dart';
+
+final authServiceProvider = Provider<AuthService>((ref) {
+  return AuthService(Supabase.instance.client);
+});
 
 enum AuthStatus { initial, loading, authenticated, unauthenticated, error }
 
-class AuthState {
+/// App-level auth UI state (distinct from Gotrue’s [AuthState]).
+class AppAuthState {
   final AuthStatus status;
   final UserModel? user;
   final String? errorMessage;
-  
-  const AuthState({
+
+  const AppAuthState({
     this.status = AuthStatus.initial,
     this.user,
     this.errorMessage,
   });
-  
-  AuthState copyWith({
+
+  AppAuthState copyWith({
     AuthStatus? status,
     UserModel? user,
     String? errorMessage,
+    bool clearError = false,
   }) {
-    return AuthState(
+    return AppAuthState(
       status: status ?? this.status,
       user: user ?? this.user,
-      errorMessage: errorMessage, // We allow setting error to null naturally if not provided in some contexts, but usually we just don't pass it or pass null to clear
+      errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
     );
   }
 
   bool get isLoading => status == AuthStatus.loading;
-  bool get isAuthenticated => status == AuthStatus.authenticated;
+  bool get isLoggedIn => status == AuthStatus.authenticated;
+  bool get isAuthenticated => isLoggedIn;
 }
 
-class AuthNotifier extends Notifier<AuthState> {
-  late final AuthRepository _repository;
-  StreamSubscription? _authSubscription;
+class AuthNotifier extends Notifier<AppAuthState> {
+  AuthService get _auth => ref.read(authServiceProvider);
+  StreamSubscription<AuthState>? _supabaseAuthSub;
 
   @override
-  AuthState build() {
-    _repository = ref.watch(authRepositoryProvider);
-    
-    // Listen to Firebase auth state changes
-    _authSubscription = _repository.authStateStream.listen((firebaseUser) {
-      if (firebaseUser == null) {
-        state = const AuthState(status: AuthStatus.unauthenticated);
-      } else {
-        // user is logged into firebase, we need to ensure they have the UserModel from Supabase
-        _fetchUserAndSetState();
-      }
-    });
+  AppAuthState build() {
+    _supabaseAuthSub = _auth.authStateChanges.listen(_onSupabaseAuth);
 
     ref.onDispose(() {
-      _authSubscription?.cancel();
+      _supabaseAuthSub?.cancel();
     });
 
-    return const AuthState(status: AuthStatus.loading);
+    return const AppAuthState(status: AuthStatus.loading);
   }
 
-  Future<void> _fetchUserAndSetState() async {
+  Future<void> _onSupabaseAuth(AuthState authState) async {
+    final session = authState.session;
+    if (session == null) {
+      state = const AppAuthState(status: AuthStatus.unauthenticated);
+      return;
+    }
+
+    state = state.copyWith(status: AuthStatus.loading, clearError: true);
+    await _loadProfileAndFcm(session.user.id);
+  }
+
+  Future<void> _loadProfileAndFcm(String userId) async {
     try {
-      final user = await _repository.getCurrentUser();
-      if (user != null) {
-        state = AuthState(status: AuthStatus.authenticated, user: user);
-      } else {
-        state = const AuthState(status: AuthStatus.unauthenticated);
-      }
-    } catch (e) {
-      state = const AuthState(status: AuthStatus.unauthenticated);
+      await ref.read(authServiceProvider).saveFcmToken();
+
+      final row = await Supabase.instance.client
+          .from(SupabaseConstants.profileTable)
+          .select()
+          .eq('id', userId)
+          .maybeSingle();
+
+      final user = row != null
+          ? UserModel.fromJson(row)
+          : UserModel(id: userId, email: Supabase.instance.client.auth.currentUser?.email);
+
+      state = AppAuthState(status: AuthStatus.authenticated, user: user);
+
+      final fcm = ref.read(fcmProvider);
+      await fcm.requestPermission();
+      fcm.handleForegroundMessages();
+      fcm.handleBackgroundMessages();
+    } catch (e, st) {
+      debugPrint('Auth profile load failed: $e\n$st');
+      state = AppAuthState(
+        status: AuthStatus.error,
+        errorMessage: 'Could not load your profile. Try again.',
+      );
     }
   }
 
-  Future<void> signUpWithEmail(String email, String password, String name) async {
-    state = state.copyWith(status: AuthStatus.loading, errorMessage: null);
+  Future<void> signUpWithEmail(
+    String email,
+    String password,
+    String fullName,
+  ) async {
+    state = state.copyWith(status: AuthStatus.loading, clearError: true);
     try {
-      final user = await _repository.signUpWithEmail(email, password, name);
-      // Let stream handle the successful auth emit, but we can fast-track here
-      state = AuthState(status: AuthStatus.authenticated, user: user);
+      await _auth.signUpWithEmail(email, password, fullName);
+    } on AuthException catch (e) {
+      state = AppAuthState(
+        status: AuthStatus.error,
+        errorMessage: e.message,
+      );
     } catch (e) {
-      state = AuthState(status: AuthStatus.error, errorMessage: e.toString());
+      state = AppAuthState(
+        status: AuthStatus.error,
+        errorMessage: e.toString(),
+      );
     }
   }
 
   Future<void> signInWithEmail(String email, String password) async {
-    state = state.copyWith(status: AuthStatus.loading, errorMessage: null);
+    state = state.copyWith(status: AuthStatus.loading, clearError: true);
     try {
-      final user = await _repository.signInWithEmail(email, password);
-      state = AuthState(status: AuthStatus.authenticated, user: user);
+      await _auth.signInWithEmail(email, password);
+    } on AuthException catch (e) {
+      state = AppAuthState(
+        status: AuthStatus.error,
+        errorMessage: e.message,
+      );
     } catch (e) {
-      state = AuthState(status: AuthStatus.error, errorMessage: e.toString());
+      state = AppAuthState(
+        status: AuthStatus.error,
+        errorMessage: e.toString(),
+      );
     }
   }
 
   Future<void> signInWithGoogle() async {
-    state = state.copyWith(status: AuthStatus.loading, errorMessage: null);
+    state = state.copyWith(status: AuthStatus.loading, clearError: true);
     try {
-      final user = await _repository.signInWithGoogle();
-      if (user != null) {
-        state = AuthState(status: AuthStatus.authenticated, user: user);
-      } else {
-        state = const AuthState(status: AuthStatus.unauthenticated);
-      }
+      await _auth.signInWithGoogle();
+    } on AuthException catch (e) {
+      state = AppAuthState(
+        status: AuthStatus.error,
+        errorMessage: e.message,
+      );
     } catch (e) {
-      state = AuthState(status: AuthStatus.error, errorMessage: e.toString());
+      state = AppAuthState(
+        status: AuthStatus.error,
+        errorMessage: e.toString(),
+      );
     }
   }
 
   Future<void> signOut() async {
-    state = state.copyWith(status: AuthStatus.loading, errorMessage: null);
+    state = state.copyWith(status: AuthStatus.loading, clearError: true);
     try {
-      await _repository.signOut();
-      // _authSubscription will handle state update
+      await _auth.signOut();
+    } on AuthException catch (e) {
+      state = AppAuthState(
+        status: AuthStatus.error,
+        errorMessage: e.message,
+      );
     } catch (e) {
-      state = AuthState(status: AuthStatus.error, errorMessage: e.toString());
+      state = AppAuthState(
+        status: AuthStatus.error,
+        errorMessage: e.toString(),
+      );
     }
   }
 
-  Future<void> checkSession() async {
-    await _fetchUserAndSetState();
+  Future<void> resetPasswordForEmail(String email) async {
+    try {
+      await _auth.resetPasswordForEmail(email);
+    } on AuthException catch (e) {
+      state = AppAuthState(
+        status: AuthStatus.error,
+        errorMessage: e.message,
+      );
+      rethrow;
+    }
   }
 }
 
-final authRepositoryProvider = Provider((ref) => AuthRepository());
-
-final authProvider = NotifierProvider<AuthNotifier, AuthState>(() {
+final authProvider = NotifierProvider<AuthNotifier, AppAuthState>(() {
   return AuthNotifier();
 });
 
@@ -131,5 +194,5 @@ final currentUserProvider = Provider<UserModel?>((ref) {
 });
 
 final isAuthProvider = Provider<bool>((ref) {
-  return ref.watch(authProvider).isAuthenticated;
+  return ref.watch(authProvider).isLoggedIn;
 });

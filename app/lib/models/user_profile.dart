@@ -31,7 +31,9 @@ class UserProfile {
       locationLat: (json['location_lat'] as num?)?.toDouble(),
       locationLng: (json['location_lng'] as num?)?.toDouble(),
       avatarUrl: json['avatar_url'] as String?,
-      createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']) : null,
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'])
+          : null,
     );
   }
 

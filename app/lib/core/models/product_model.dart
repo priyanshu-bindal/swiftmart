@@ -11,7 +11,7 @@ class ProductModel {
   final List<String> tags;
   final bool isActive;
   final DateTime? createdAt;
-  
+
   // To handle joining with Category table
   final String? categoryName;
 
@@ -31,7 +31,8 @@ class ProductModel {
     this.categoryName,
   });
 
-  int get discountPercent => mrp > 0 ? ((mrp - salePrice) / mrp * 100).round() : 0;
+  int get discountPercent =>
+      mrp > 0 ? ((mrp - salePrice) / mrp * 100).round() : 0;
   bool get isInStock => stockQty > 0;
   String? get primaryImage => images.isNotEmpty ? images[0] : null;
 
@@ -48,8 +49,12 @@ class ProductModel {
       images: json['images'] != null ? List<String>.from(json['images']) : [],
       tags: json['tags'] != null ? List<String>.from(json['tags']) : [],
       isActive: json['is_active'] as bool? ?? true,
-      createdAt: json['created_at'] != null ? DateTime.tryParse(json['created_at'].toString()) : null,
-      categoryName: json['categories'] != null ? json['categories']['name']?.toString() : null,
+      createdAt: json['created_at'] != null
+          ? DateTime.tryParse(json['created_at'].toString())
+          : null,
+      categoryName: json['categories'] != null
+          ? json['categories']['name']?.toString()
+          : null,
     );
   }
 

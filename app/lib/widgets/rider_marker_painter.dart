@@ -4,10 +4,7 @@ import 'package:flutter/material.dart';
 class RiderMarkerIcon extends StatefulWidget {
   final double bearing; // Calculated rotation
 
-  const RiderMarkerIcon({
-    super.key,
-    this.bearing = 0.0,
-  });
+  const RiderMarkerIcon({super.key, this.bearing = 0.0});
 
   @override
   State<RiderMarkerIcon> createState() => _RiderMarkerIconState();
@@ -29,7 +26,9 @@ class _RiderMarkerIconState extends State<RiderMarkerIcon>
 
     // Pulse a #00D4AA ring every 1.5 seconds
     _glowController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 1500));
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    );
     _glowRadiusAnimation = Tween<double>(begin: 1.0, end: 1.4).animate(
       CurvedAnimation(parent: _glowController, curve: Curves.easeOutCubic),
     );
@@ -40,10 +39,15 @@ class _RiderMarkerIconState extends State<RiderMarkerIcon>
 
     // Continuous rotation for wheels & pulsing motion blur/speed lines
     _continuousController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 400));
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
 
-    final disableAnimations =
-        WidgetsBinding.instance.platformDispatcher.accessibilityFeatures.disableAnimations;
+    final disableAnimations = WidgetsBinding
+        .instance
+        .platformDispatcher
+        .accessibilityFeatures
+        .disableAnimations;
 
     if (!disableAnimations) {
       _glowController.repeat();
@@ -72,7 +76,9 @@ class _RiderMarkerIconState extends State<RiderMarkerIcon>
             painter: RiderMarkerPainter(
               disableAnimations: disableAnimations,
               glowRadius: disableAnimations ? 1.0 : _glowRadiusAnimation.value,
-              glowOpacity: disableAnimations ? 0.0 : _glowOpacityAnimation.value,
+              glowOpacity: disableAnimations
+                  ? 0.0
+                  : _glowOpacityAnimation.value,
               continuousTime: _continuousController.value,
             ),
           );
@@ -112,16 +118,19 @@ class RiderMarkerPainter extends CustomPainter {
 
     // Motion blur trailing oval (behind the rider based on orientation — let's put it "below" assuming forward is top)
     if (!disableAnimations) {
-      final blurPulse = (math.sin(continuousTime * math.pi * 2) + 1) / 2; // 0 to 1
+      final blurPulse =
+          (math.sin(continuousTime * math.pi * 2) + 1) / 2; // 0 to 1
       final blurPaint = Paint()
-        ..color = const Color(0xFF6C3CE1).withValues(alpha: 0.2 + blurPulse * 0.2)
+        ..color = const Color(
+          0xFF6C3CE1,
+        ).withValues(alpha: 0.2 + blurPulse * 0.2)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
       final blurRect = RRect.fromLTRBR(
         center.dx - riderWidth / 2,
-        center.dy, 
+        center.dy,
         center.dx + riderWidth / 2,
         center.dy + riderHeight,
-        const Radius.circular(8)
+        const Radius.circular(8),
       );
       canvas.drawRRect(blurRect, blurPaint);
 
@@ -137,23 +146,35 @@ class RiderMarkerPainter extends CustomPainter {
         double yy = center.dy - 10 + i * 10;
         double lineLen = 6.0 + (i % 2) * 4;
         canvas.drawLine(
-            Offset(center.dx - riderWidth / 2 - 8, yy),
-            Offset(center.dx - riderWidth / 2 - 8 - lineLen, yy + lineLen * 0.5),
-            linesPaint);
+          Offset(center.dx - riderWidth / 2 - 8, yy),
+          Offset(center.dx - riderWidth / 2 - 8 - lineLen, yy + lineLen * 0.5),
+          linesPaint,
+        );
       }
     }
 
     // Body Gradient
     final bodyPaint = Paint()
-      ..shader = const LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [Color(0xFF8E54E9), Color(0xFF6C3CE1)], // Brighter to Deep Violet
-      ).createShader(Rect.fromCenter(center: center, width: riderWidth, height: riderHeight));
+      ..shader =
+          const LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFF8E54E9),
+              Color(0xFF6C3CE1),
+            ], // Brighter to Deep Violet
+          ).createShader(
+            Rect.fromCenter(
+              center: center,
+              width: riderWidth,
+              height: riderHeight,
+            ),
+          );
 
     final bodyRect = RRect.fromRectAndRadius(
-        Rect.fromCenter(center: center, width: riderWidth, height: riderHeight),
-        const Radius.circular(6));
+      Rect.fromCenter(center: center, width: riderWidth, height: riderHeight),
+      const Radius.circular(6),
+    );
     canvas.drawRRect(bodyRect, bodyPaint);
 
     // Box details (Top flap of delivery bag)
@@ -161,15 +182,20 @@ class RiderMarkerPainter extends CustomPainter {
       ..color = Colors.black26
       ..style = PaintingStyle.fill;
     canvas.drawRect(
-      Rect.fromLTWH(center.dx - riderWidth/2 + 2, center.dy - riderHeight/2 + 4, riderWidth - 4, 6),
-      detailPaint
+      Rect.fromLTWH(
+        center.dx - riderWidth / 2 + 2,
+        center.dy - riderHeight / 2 + 4,
+        riderWidth - 4,
+        6,
+      ),
+      detailPaint,
     );
 
     // Wheels (two rotating circles on the sides)
     final wheelPaint = Paint()
       ..color = const Color(0xFF111111)
       ..style = PaintingStyle.fill;
-      
+
     final axlePaint = Paint()
       ..color = Colors.white54
       ..style = PaintingStyle.stroke
@@ -177,21 +203,35 @@ class RiderMarkerPainter extends CustomPainter {
 
     final wheelRadius = 5.0;
     final List<Offset> wheelCenters = [
-      Offset(center.dx - riderWidth / 2 - wheelRadius + 2, center.dy + riderHeight / 4), // Left rear
-      Offset(center.dx + riderWidth / 2 + wheelRadius - 2, center.dy + riderHeight / 4), // Right rear
+      Offset(
+        center.dx - riderWidth / 2 - wheelRadius + 2,
+        center.dy + riderHeight / 4,
+      ), // Left rear
+      Offset(
+        center.dx + riderWidth / 2 + wheelRadius - 2,
+        center.dy + riderHeight / 4,
+      ), // Right rear
     ];
 
     double wheelRot = disableAnimations ? 0 : continuousTime * math.pi * 2;
 
     for (final wc in wheelCenters) {
       canvas.drawCircle(wc, wheelRadius, wheelPaint);
-      
+
       // Draw spokes/axle for rotation effect
       canvas.save();
       canvas.translate(wc.dx, wc.dy);
       canvas.rotate(wheelRot);
-      canvas.drawLine(Offset(-wheelRadius, 0), Offset(wheelRadius, 0), axlePaint);
-      canvas.drawLine(Offset(0, -wheelRadius), Offset(0, wheelRadius), axlePaint);
+      canvas.drawLine(
+        Offset(-wheelRadius, 0),
+        Offset(wheelRadius, 0),
+        axlePaint,
+      );
+      canvas.drawLine(
+        Offset(0, -wheelRadius),
+        Offset(0, wheelRadius),
+        axlePaint,
+      );
       canvas.restore();
     }
   }

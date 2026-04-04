@@ -23,12 +23,14 @@ class Coupon {
     return Coupon(
       id: json['id']?.toString() ?? '',
       code: json['code']?.toString() ?? '',
-      discountType: json['discount_type']?.toString() ?? 'percent',
-      discountValue: (json['discount_value'] ?? 0).toDouble(),
-      minOrderValue: (json['min_order_value'] ?? 0).toDouble(),
+      discountType: json['type']?.toString() ?? 'percent',
+      discountValue: (json['value'] ?? 0).toDouble(),
+      minOrderValue: (json['min_order'] ?? 0).toDouble(),
       maxUses: int.tryParse(json['max_uses']?.toString() ?? '') ?? 0,
       usedCount: int.tryParse(json['used_count']?.toString() ?? '') ?? 0,
-      validUntil: DateTime.tryParse(json['valid_until']?.toString() ?? '') ?? DateTime.now(),
+      validUntil:
+          DateTime.tryParse(json['valid_to']?.toString() ?? '') ??
+          DateTime.now(),
     );
   }
 

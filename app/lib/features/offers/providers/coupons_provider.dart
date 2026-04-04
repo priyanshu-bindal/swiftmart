@@ -12,10 +12,12 @@ final couponsProvider = FutureProvider<List<Coupon>>((ref) async {
         .from('coupons')
         .select()
         .eq('is_active', true)
-        .gte('valid_until', now)
-        .order('discount_value', ascending: false);
+        .gte('valid_to', now)
+        .order('value', ascending: false);
 
-    return (response as List).map((e) => Coupon.fromJson(e as Map<String, dynamic>)).toList();
+    return (response as List)
+        .map((e) => Coupon.fromJson(e as Map<String, dynamic>))
+        .toList();
   } catch (e) {
     debugPrint('Supabase coupons error: \$e');
     // Fallback dummy data
@@ -49,7 +51,7 @@ final couponsProvider = FutureProvider<List<Coupon>>((ref) async {
         maxUses: 50,
         usedCount: 49,
         validUntil: DateTime.now().add(const Duration(hours: 12)),
-      )
+      ),
     ];
   }
 });

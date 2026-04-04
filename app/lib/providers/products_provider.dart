@@ -3,9 +3,11 @@ import '../../models/product.dart';
 import '../../models/category.dart';
 import '../../repositories/product_repository.dart';
 
-final productsProvider = AsyncNotifierProvider<ProductsNotifier, List<Product>>(() {
-  return ProductsNotifier();
-});
+final productsProvider = AsyncNotifierProvider<ProductsNotifier, List<Product>>(
+  () {
+    return ProductsNotifier();
+  },
+);
 
 class ProductsNotifier extends AsyncNotifier<List<Product>> {
   @override

@@ -24,8 +24,12 @@ class UserModel {
       name: json['name']?.toString(),
       avatarUrl: json['avatar_url']?.toString(),
       fcmToken: json['fcm_token']?.toString(),
-      createdAt: json['created_at'] != null ? DateTime.parse(json['created_at'].toString()) : null,
-      updatedAt: json['updated_at'] != null ? DateTime.parse(json['updated_at'].toString()) : null,
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'].toString())
+          : null,
+      updatedAt: json['updated_at'] != null
+          ? DateTime.parse(json['updated_at'].toString())
+          : null,
     );
   }
 
@@ -63,5 +67,6 @@ class UserModel {
 
   // Helpers
   String get displayName => name ?? email?.split('@')[0] ?? 'User';
-  String? get avatarInitial => displayName.isNotEmpty ? displayName[0].toUpperCase() : null;
+  String? get avatarInitial =>
+      displayName.isNotEmpty ? displayName[0].toUpperCase() : null;
 }

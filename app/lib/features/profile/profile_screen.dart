@@ -14,8 +14,11 @@ class ProfileScreen extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authProvider).user;
-    final userName = user?.displayName?.isNotEmpty == true ? user!.displayName! : 'Alex Rivera';
-    final userEmail = user?.email?.isNotEmpty == true ? user!.email! : 'alex.rivera@premium.com';
+    final userName =
+        user != null && user.displayName.isNotEmpty ? user.displayName : 'Priyanshu Bindal';
+    final userEmail = user != null && (user.email?.isNotEmpty ?? false)
+        ? user.email!
+        : 'priyanshu.bindal@premium.com';
     final cashbackAmount = "250"; // dynamic fallback mockup
 
     return Scaffold(
@@ -39,7 +42,10 @@ class ProfileScreen extends HookConsumerWidget {
                 ),
               ),
               leading: IconButton(
-                icon: const Icon(Icons.arrow_back, color: AppColors.onSurfaceVariant),
+                icon: const Icon(
+                  Icons.arrow_back,
+                  color: AppColors.onSurfaceVariant,
+                ),
                 onPressed: () {
                   if (context.canPop()) context.pop();
                 },
@@ -55,7 +61,10 @@ class ProfileScreen extends HookConsumerWidget {
               ),
               actions: [
                 IconButton(
-                  icon: const Icon(Icons.settings_outlined, color: AppColors.onSurfaceVariant),
+                  icon: const Icon(
+                    Icons.settings_outlined,
+                    color: AppColors.onSurfaceVariant,
+                  ),
                   onPressed: () {},
                 ),
                 const SizedBox(width: 8),
@@ -83,9 +92,14 @@ class ProfileScreen extends HookConsumerWidget {
                       height: 80,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.surfaceContainerHigh, width: 2),
+                        border: Border.all(
+                          color: AppColors.surfaceContainerHigh,
+                          width: 2,
+                        ),
                         image: const DecorationImage(
-                          image: NetworkImage("https://lh3.googleusercontent.com/aida-public/AB6AXuCK1m942ZcDpSZfEK2C1xvMsjRivolXpkTIdjGS_DOqeDXjKpm8D4xgFjZcR0uTrw_5JYaM460P1_jYAFUzymCDxPf0HxUt8kJNQLI4eY_p2Xs8_2qI-f1acqqb-YZqZiWOW3_WxH4mg2nlbGBSWn4g-Vgci2W1iy05FyspVpsELJYmYlVEVF8xWsCDDlEEzDmKzDNCbmAmzYQf4nLiHm_zJAQ7ZIOhwyf3c1uAGIN1ng13oJn-T0YHaMp_1A85xVYQ67yRX8rTPuDY"),
+                          image: NetworkImage(
+                            "https://source.unsplash.com/featured/?shopping",
+                          ),
                           fit: BoxFit.cover,
                         ),
                       ),
@@ -98,9 +112,16 @@ class ProfileScreen extends HookConsumerWidget {
                         decoration: BoxDecoration(
                           color: AppColors.primary,
                           shape: BoxShape.circle,
-                          border: Border.all(color: AppColors.surface, width: 2),
+                          border: Border.all(
+                            color: AppColors.surface,
+                            width: 2,
+                          ),
                         ),
-                        child: const Icon(Icons.edit, color: AppColors.onPrimary, size: 12),
+                        child: const Icon(
+                          Icons.edit,
+                          color: AppColors.onPrimary,
+                          size: 12,
+                        ),
                       ),
                     ),
                   ],
@@ -128,11 +149,22 @@ class ProfileScreen extends HookConsumerWidget {
                   onPressed: () {},
                   style: OutlinedButton.styleFrom(
                     visualDensity: VisualDensity.compact,
-                    side: const BorderSide(color: AppColors.outlineVariant, width: 1),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    side: const BorderSide(
+                      color: AppColors.outlineVariant,
+                      width: 1,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(100),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
                     foregroundColor: AppColors.onSurfaceVariant,
-                    textStyle: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600),
+                    textStyle: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   child: const Text('Edit Profile'),
                 ),
@@ -239,7 +271,9 @@ class ProfileScreen extends HookConsumerWidget {
                                 fontSize: 12,
                                 fontWeight: FontWeight.w800,
                                 letterSpacing: 2,
-                                color: AppColors.primaryFixed.withValues(alpha: 0.9),
+                                color: AppColors.primaryFixed.withValues(
+                                  alpha: 0.9,
+                                ),
                               ),
                             ),
                             const SizedBox(height: 8),
@@ -280,9 +314,24 @@ class ProfileScreen extends HookConsumerWidget {
             _SettingsSection(
               title: 'Account Details',
               items: [
-                _SettingsItem(icon: Icons.person, iconColor: AppColors.primary, label: 'Personal Information', onTap: () {}),
-                _SettingsItem(icon: Icons.location_on, iconColor: AppColors.primary, label: 'Saved Addresses', onTap: () {}),
-                _SettingsItem(icon: Icons.credit_card, iconColor: AppColors.primary, label: 'Payment Methods', onTap: () {}),
+                _SettingsItem(
+                  icon: Icons.person,
+                  iconColor: AppColors.primary,
+                  label: 'Personal Information',
+                  onTap: () {},
+                ),
+                _SettingsItem(
+                  icon: Icons.location_on,
+                  iconColor: AppColors.primary,
+                  label: 'Saved Addresses',
+                  onTap: () {},
+                ),
+                _SettingsItem(
+                  icon: Icons.credit_card,
+                  iconColor: AppColors.primary,
+                  label: 'Payment Methods',
+                  onTap: () {},
+                ),
               ],
             ),
 
@@ -291,9 +340,27 @@ class ProfileScreen extends HookConsumerWidget {
             _SettingsSection(
               title: 'App Preferences',
               items: [
-                _SettingsItem(icon: Icons.notifications_active, iconColor: AppColors.secondary, label: 'Notifications', onTap: () {}),
-                _SettingsItem(icon: Icons.dark_mode, iconColor: AppColors.secondary, label: 'Dark Mode', isToggle: true, toggleValue: false, onTap: () {}),
-                _SettingsItem(icon: Icons.translate, iconColor: AppColors.secondary, label: 'Language', trailingText: 'English', onTap: () {}),
+                _SettingsItem(
+                  icon: Icons.notifications_active,
+                  iconColor: AppColors.secondary,
+                  label: 'Notifications',
+                  onTap: () {},
+                ),
+                _SettingsItem(
+                  icon: Icons.dark_mode,
+                  iconColor: AppColors.secondary,
+                  label: 'Dark Mode',
+                  isToggle: true,
+                  toggleValue: false,
+                  onTap: () {},
+                ),
+                _SettingsItem(
+                  icon: Icons.translate,
+                  iconColor: AppColors.secondary,
+                  label: 'Language',
+                  trailingText: 'English',
+                  onTap: () {},
+                ),
               ],
             ),
 
@@ -302,8 +369,18 @@ class ProfileScreen extends HookConsumerWidget {
             _SettingsSection(
               title: 'Support',
               items: [
-                _SettingsItem(icon: Icons.support_agent, iconColor: AppColors.tertiary, label: 'Help & Support', onTap: () {}),
-                _SettingsItem(icon: Icons.info, iconColor: AppColors.tertiary, label: 'About SwiftMart', onTap: () {}),
+                _SettingsItem(
+                  icon: Icons.support_agent,
+                  iconColor: AppColors.tertiary,
+                  label: 'Help & Support',
+                  onTap: () {},
+                ),
+                _SettingsItem(
+                  icon: Icons.info,
+                  iconColor: AppColors.tertiary,
+                  label: 'About SwiftMart',
+                  onTap: () {},
+                ),
               ],
             ),
 
@@ -315,17 +392,39 @@ class ProfileScreen extends HookConsumerWidget {
                 final confirmed = await showDialog<bool>(
                   context: context,
                   builder: (_) => AlertDialog(
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                    title: Text('Log Out', style: GoogleFonts.manrope(fontWeight: FontWeight.w800)),
-                    content: Text('Are you sure you want to log out?', style: GoogleFonts.inter(color: AppColors.onSurfaceVariant)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    title: Text(
+                      'Log Out',
+                      style: GoogleFonts.manrope(fontWeight: FontWeight.w800),
+                    ),
+                    content: Text(
+                      'Are you sure you want to log out?',
+                      style: GoogleFonts.inter(
+                        color: AppColors.onSurfaceVariant,
+                      ),
+                    ),
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.pop(context, false),
-                        child: Text('Cancel', style: GoogleFonts.inter(color: AppColors.outline, fontWeight: FontWeight.w600)),
+                        child: Text(
+                          'Cancel',
+                          style: GoogleFonts.inter(
+                            color: AppColors.outline,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ),
                       TextButton(
                         onPressed: () => Navigator.pop(context, true),
-                        child: Text('Log Out', style: GoogleFonts.inter(color: AppColors.error, fontWeight: FontWeight.w700)),
+                        child: Text(
+                          'Log Out',
+                          style: GoogleFonts.inter(
+                            color: AppColors.error,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -407,10 +506,7 @@ class _QuickActionCard extends StatelessWidget {
             Container(
               width: 56,
               height: 56,
-              decoration: BoxDecoration(
-                color: iconBg,
-                shape: BoxShape.circle,
-              ),
+              decoration: BoxDecoration(color: iconBg, shape: BoxShape.circle),
               child: Icon(icon, color: iconColor, size: 28),
             ),
             const SizedBox(height: 16),
@@ -459,9 +555,7 @@ class _SettingsSection extends StatelessWidget {
             color: AppColors.surfaceContainerLow,
             borderRadius: BorderRadius.circular(24),
           ),
-          child: Column(
-            children: items,
-          ),
+          child: Column(children: items),
         ),
       ],
     );

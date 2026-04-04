@@ -22,7 +22,9 @@ class FlashDeal {
       id: json['id']?.toString() ?? '',
       product: Product.fromJson(json['products'] ?? {}),
       discountPercent: (json['discount_percent'] ?? 0).toDouble(),
-      endTime: DateTime.tryParse(json['end_time']?.toString() ?? '') ?? DateTime.now(),
+      endTime:
+          DateTime.tryParse(json['end_time']?.toString() ?? '') ??
+          DateTime.now(),
       maxQty: int.tryParse(json['max_qty']?.toString() ?? '') ?? 0,
       soldQty: int.tryParse(json['sold_qty']?.toString() ?? '') ?? 0,
     );

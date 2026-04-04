@@ -20,7 +20,7 @@ class HomeRepository {
           .select()
           .eq('is_active', true)
           .single();
-          
+
       return HomeConfig.fromJson(response);
     } catch (_) {
       return null;

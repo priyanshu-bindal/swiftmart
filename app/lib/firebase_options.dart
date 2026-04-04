@@ -63,7 +63,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: '101997307881',
     projectId: 'swiftmart-9',
     storageBucket: 'swiftmart-9.firebasestorage.app',
-    iosClientId: '101997307881-mgcvla30ooffbej14uh193p6j7siuiic.apps.googleusercontent.com',
+    iosClientId:
+        '101997307881-mgcvla30ooffbej14uh193p6j7siuiic.apps.googleusercontent.com',
     iosBundleId: 'com.example.app',
   );
 
@@ -73,7 +74,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: '101997307881',
     projectId: 'swiftmart-9',
     storageBucket: 'swiftmart-9.firebasestorage.app',
-    iosClientId: '101997307881-mgcvla30ooffbej14uh193p6j7siuiic.apps.googleusercontent.com',
+    iosClientId:
+        '101997307881-mgcvla30ooffbej14uh193p6j7siuiic.apps.googleusercontent.com',
     iosBundleId: 'com.example.app',
   );
 

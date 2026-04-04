@@ -1,6 +1,5 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import '../../core/providers/supabase_provider.dart';
 import '../models/user_profile.dart';
 
@@ -15,9 +14,9 @@ class UserRepository {
   UserRepository({required this.supabase});
 
   String _getUid() {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) throw Exception("User not authenticated");
-    return user.uid;
+    final id = supabase.auth.currentUser?.id;
+    if (id == null) throw Exception('User not authenticated');
+    return id;
   }
 
   Future<void> createProfile({
@@ -27,9 +26,9 @@ class UserRepository {
     double? lat,
     double? lng,
   }) async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
+    final uid = supabase.auth.currentUser?.id;
     if (uid == null) return;
-    
+
     await supabase.from('users').upsert({
       'id': uid,
       'name': name,
@@ -43,7 +42,11 @@ class UserRepository {
   Future<UserProfile?> fetchProfile() async {
     try {
       final uid = _getUid();
-      final response = await supabase.from('users').select().eq('id', uid).single();
+      final response = await supabase
+          .from('users')
+          .select()
+          .eq('id', uid)
+          .single();
       return UserProfile.fromJson(response);
     } catch (_) {
       return null;

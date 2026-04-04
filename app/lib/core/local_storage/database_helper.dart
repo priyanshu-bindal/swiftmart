@@ -1,7 +1,5 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
-import '../../features/cart/providers/cart_provider.dart';
-import '../../models/product.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
@@ -69,53 +67,11 @@ CREATE TABLE recent_searches (
     }
   }
 
-  Future<void> saveCart(List<CartItem> items) async {
-    final db = await instance.database;
-    await db.transaction((txn) async {
-      await txn.delete('cart');
-      for (final item in items) {
-        await txn.insert('cart', {
-          'id': item.product.id,
-          'name': item.product.name,
-          'imagePath': item.product.imagePath,
-          'price': item.product.price,
-          'unit': item.product.unit,
-          'quantity': item.quantity,
-          'brand': item.product.brand ?? '',
-          'isOrganic': item.product.isOrganic ? 1 : 0,
-          'rating': item.product.rating,
-          'reviewCount': item.product.reviewCount,
-        });
-      }
-    });
-  }
-
-  Future<List<CartItem>> getCart() async {
-    final db = await instance.database;
-    final maps = await db.query('cart');
-
-    return maps.map((map) {
-      return CartItem(
-        product: Product(
-          id: map['id'] as String,
-          name: map['name'] as String,
-          imagePath: map['imagePath'] as String,
-          price: map['price'] as double,
-          unit: map['unit'] as String,
-          brand: map['brand'] == '' ? null : map['brand'] as String,
-          isOrganic: (map['isOrganic'] as int) == 1,
-          rating: map['rating'] as double,
-          reviewCount: map['reviewCount'] as int,
-        ),
-        quantity: map['quantity'] as int,
-      );
-    }).toList();
-  }
-
-  Future<void> clearCart() async {
-    final db = await instance.database;
-    await db.delete('cart');
-  }
+  // Cart is now synced to Supabase — these stubs prevent call-site breakage
+  // during migration. They can be fully removed if no other code calls them.
+  Future<void> saveCart(List<dynamic> items) async {}
+  Future<List<dynamic>> getCart() async => [];
+  Future<void> clearCart() async {}
 
   Future<void> addRecentSearch(String query) async {
     final db = await instance.database;
@@ -129,7 +85,11 @@ CREATE TABLE recent_searches (
     if (maps.length > 10) {
       final oldQueries = maps.sublist(10).map((m) => m['query']).toList();
       for (final old in oldQueries) {
-        await db.delete('recent_searches', where: 'query = ?', whereArgs: [old]);
+        await db.delete(
+          'recent_searches',
+          where: 'query = ?',
+          whereArgs: [old],
+        );
       }
     }
   }

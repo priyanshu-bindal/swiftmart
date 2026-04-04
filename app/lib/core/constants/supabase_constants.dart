@@ -1,9 +1,11 @@
 class SupabaseConstants {
   // You should ideally load these from environment variables in a real app (.env)
   static const String supabaseUrl = 'https://wfbxhuuvstahijtwsraf.supabase.co';
-  static const String supabaseAnonKey = 'sb_publishable_0z4xzVT3isqJsF46-efEVw_QUwNAzx4';
+  static const String supabaseAnonKey =
+      'sb_publishable_0z4xzVT3isqJsF46-efEVw_QUwNAzx4';
 
-  // Table names
+  // Table names — profile row for auth (same as `users`, or `profiles` if you run that migration)
+  static const String profileTable = 'profiles';
   static const String usersTable = 'users';
   static const String productsTable = 'products';
   static const String categoriesTable = 'categories';

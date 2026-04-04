@@ -105,9 +105,9 @@ _CategoryMeta _metaFor(String name) {
 // ─── Mock skeleton categories ─────────────────────────────────────────────────
 
 List<Category> _mockCategories() => List.generate(
-      8,
-      (i) => Category(id: 'mock$i', name: 'Loading...' , sortOrder: i),
-    );
+  8,
+  (i) => Category(id: 'mock$i', name: 'Loading...', sortOrder: i),
+);
 
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
@@ -133,7 +133,11 @@ class BrowseCategoriesScreen extends HookConsumerWidget {
             physics: const BouncingScrollPhysics(),
             slivers: [
               // Top padding for AppBar
-              SliverToBoxAdapter(child: SizedBox(height: MediaQuery.of(context).padding.top + 80)),
+              SliverToBoxAdapter(
+                child: SizedBox(
+                  height: MediaQuery.of(context).padding.top + 80,
+                ),
+              ),
 
               // Editorial header
               SliverToBoxAdapter(
@@ -143,15 +147,18 @@ class BrowseCategoriesScreen extends HookConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'The Fresh Pantry',
-                        style: GoogleFonts.manrope(
-                          fontSize: 34,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.onSurface,
-                          height: 1.1,
-                          letterSpacing: -0.5,
-                        ),
-                      ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.2, end: 0),
+                            'The Fresh Pantry',
+                            style: GoogleFonts.manrope(
+                              fontSize: 34,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.onSurface,
+                              height: 1.1,
+                              letterSpacing: -0.5,
+                            ),
+                          )
+                          .animate()
+                          .fadeIn(duration: 400.ms)
+                          .slideY(begin: 0.2, end: 0),
                       const SizedBox(height: 6),
                       Text(
                         'Curated selections from our local organic partners.',
@@ -172,23 +179,21 @@ class BrowseCategoriesScreen extends HookConsumerWidget {
                 sliver: Skeletonizer.sliver(
                   enabled: isLoading,
                   child: SliverGrid(
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
-                      childAspectRatio: 1.0,
-                    ),
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final cat = categories[index];
-                        return _CategoryCard(
-                          category: cat,
-                          index: index,
-                          isLoading: isLoading,
-                        );
-                      },
-                      childCount: categories.length,
-                    ),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                          childAspectRatio: 1.0,
+                        ),
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      final cat = categories[index];
+                      return _CategoryCard(
+                        category: cat,
+                        index: index,
+                        isLoading: isLoading,
+                      );
+                    }, childCount: categories.length),
                   ),
                 ),
               ),
@@ -331,78 +336,81 @@ class _CategoryCardState extends State<_CategoryCard>
         onTapCancel: _onTapCancel,
         onTap: () {
           HapticFeedback.lightImpact();
-          context.push('/category', extra: {
-            'name': widget.category.name
-          });
+          context.push('/category', extra: {'name': widget.category.name});
         },
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF1A1B21).withValues(alpha: 0.04),
-                blurRadius: 16,
-                offset: const Offset(0, 6),
-              ),
-            ],
-          ),
-          child: Stack(
-            children: [
-              // Content
-              Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Icon circle
-                    Container(
-                      width: 72,
-                      height: 72,
-                      decoration: BoxDecoration(
-                        color: meta.bgColor,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        meta.icon,
-                        size: 36,
-                        color: meta.iconColor,
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    // Label
-                    Text(
-                      widget.category.name,
-                      style: GoogleFonts.manrope(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.onSurface,
-                      ),
-                      textAlign: TextAlign.center,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-              // Hover ring overlay (subtle)
-              Positioned.fill(
-                child: Material(
-                  color: Colors.transparent,
-                  borderRadius: BorderRadius.circular(20),
-                  child: InkWell(
+        child:
+            Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(20),
-                    onTap: null, // Handled by GestureDetector above
-                    splashColor: AppColors.primary.withValues(alpha: 0.06),
-                    highlightColor: AppColors.primary.withValues(alpha: 0.03),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF1A1B21).withValues(alpha: 0.04),
+                        blurRadius: 16,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
                   ),
-                ),
-              ),
-            ],
-          ),
-        )
-            .animate(delay: Duration(milliseconds: 60 * widget.index))
-            .fadeIn(duration: 300.ms)
-            .slideY(begin: 0.15, end: 0, curve: Curves.easeOutCubic),
+                  child: Stack(
+                    children: [
+                      // Content
+                      Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // Icon circle
+                            Container(
+                              width: 72,
+                              height: 72,
+                              decoration: BoxDecoration(
+                                color: meta.bgColor,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                meta.icon,
+                                size: 36,
+                                color: meta.iconColor,
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+                            // Label
+                            Text(
+                              widget.category.name,
+                              style: GoogleFonts.manrope(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.onSurface,
+                              ),
+                              textAlign: TextAlign.center,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                      // Hover ring overlay (subtle)
+                      Positioned.fill(
+                        child: Material(
+                          color: Colors.transparent,
+                          borderRadius: BorderRadius.circular(20),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(20),
+                            onTap: null, // Handled by GestureDetector above
+                            splashColor: AppColors.primary.withValues(
+                              alpha: 0.06,
+                            ),
+                            highlightColor: AppColors.primary.withValues(
+                              alpha: 0.03,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+                .animate(delay: Duration(milliseconds: 60 * widget.index))
+                .fadeIn(duration: 300.ms)
+                .slideY(begin: 0.15, end: 0, curve: Curves.easeOutCubic),
       ),
     );
   }
@@ -436,11 +444,12 @@ class _HeroBannerCard extends StatelessWidget {
           // Background produce image
           Positioned.fill(
             child: Image.network(
-              'https://lh3.googleusercontent.com/aida-public/AB6AXuB_8hUfuSnaFEQ0Xntd2gh7XqFhjIGyRigxMihO8Bv4G6DPck5SXXSpizHciEgVgbfs8yQ2ZXtqSWK_15m9gyKWBaGMDBoq58nbE4AYOdlq3MyUJuLavxPReeXwOmKYON6o8G94_U-jUlQIQpvf4G1bJoG6aIaGiJQ1wL3bdmKhRqRP7idg5ByOHjQgx4oX8vUkMBrBKf0MOX1GOPCbWIlxVhHAJe7neFvau7Fglay2HguF-Hf7HQdriU8q0wBI-QFLWMFWoIGEGUaV',
+              'https://source.unsplash.com/featured/?shopping',
               fit: BoxFit.cover,
               color: Colors.black.withValues(alpha: 0.35),
               colorBlendMode: BlendMode.darken,
-              errorBuilder: (context, error, stackTrace) => Container(color: const Color(0xFF6C3CE1)),
+              errorBuilder: (context, error, stackTrace) =>
+                  Container(color: const Color(0xFF6C3CE1)),
             ),
           ),
           // Gradient overlay at bottom for text legibility
@@ -468,7 +477,10 @@ class _HeroBannerCard extends StatelessWidget {
               children: [
                 // Badge
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 5,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFF006B55),
                     borderRadius: BorderRadius.circular(50),
@@ -513,7 +525,10 @@ class _HeroBannerCard extends StatelessWidget {
                 GestureDetector(
                   onTap: () {},
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(50),
@@ -540,9 +555,6 @@ class _HeroBannerCard extends StatelessWidget {
           ),
         ],
       ),
-    )
-        .animate()
-        .fadeIn(duration: 500.ms, delay: 200.ms)
-        .slideY(begin: 0.1, end: 0);
+    ).animate().fadeIn(duration: 500.ms, delay: 200.ms).slideY(begin: 0.1, end: 0);
   }
 }

@@ -50,7 +50,8 @@ class LocationNotifier extends Notifier<String> {
       );
 
       // 4. Reverse-geocode to a human-readable area name
-      String locationStr = '${pos.latitude.toStringAsFixed(4)}, ${pos.longitude.toStringAsFixed(4)}'; // fallback
+      String locationStr =
+          '${pos.latitude.toStringAsFixed(4)}, ${pos.longitude.toStringAsFixed(4)}'; // fallback
 
       try {
         final placemarks = await placemarkFromCoordinates(
@@ -61,12 +62,14 @@ class LocationNotifier extends Notifier<String> {
         if (placemarks.isNotEmpty) {
           final p = placemarks.first;
           final parts = <String>[
-            if (p.subLocality != null && p.subLocality!.isNotEmpty) p.subLocality!,
+            if (p.subLocality != null && p.subLocality!.isNotEmpty)
+              p.subLocality!,
             if (p.locality != null && p.locality!.isNotEmpty) p.locality!,
           ];
           if (parts.isNotEmpty) {
             locationStr = parts.join(', ');
-          } else if (p.administrativeArea != null && p.administrativeArea!.isNotEmpty) {
+          } else if (p.administrativeArea != null &&
+              p.administrativeArea!.isNotEmpty) {
             locationStr = p.administrativeArea!;
           }
         }
@@ -90,5 +93,6 @@ class LocationNotifier extends Notifier<String> {
   }
 }
 
-final locationProvider =
-    NotifierProvider<LocationNotifier, String>(LocationNotifier.new);
+final locationProvider = NotifierProvider<LocationNotifier, String>(
+  LocationNotifier.new,
+);
