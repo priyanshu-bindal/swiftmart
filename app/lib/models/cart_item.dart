@@ -69,5 +69,9 @@ class CartItem {
     );
   }
 
+  /// Total line price: sale_price × quantity.
   double get totalPrice => product.price * quantity;
+
+  /// Sale price convenience getter.
+  double get unitPrice => product.price;
 }

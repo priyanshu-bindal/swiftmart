@@ -14,7 +14,7 @@ class AppNetworkImage extends StatelessWidget {
   final int? memCacheHeight;
 
   const AppNetworkImage({
-    Key? key,
+    super.key,
     required this.imageUrl,
     this.fit = BoxFit.cover,
     this.width,
@@ -25,7 +25,7 @@ class AppNetworkImage extends StatelessWidget {
     this.fadeOutDuration,
     this.memCacheWidth,
     this.memCacheHeight,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -5,7 +5,6 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:app/shared/widgets/app_network_image.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -300,13 +299,16 @@ class _CartListView extends HookConsumerWidget {
       final type = response['type'] as String? ?? 'flat';
       final value = (response['value'] as num?)?.toDouble() ?? 0.0;
 
-      if (validFrom != null && now.isBefore(validFrom))
+      if (validFrom != null && now.isBefore(validFrom)) {
         throw Exception('Coupon not yet active');
-      if (validTo != null && now.isAfter(validTo))
+      }
+      if (validTo != null && now.isAfter(validTo)) {
         throw Exception('Coupon expired');
-      if (usedCount >= maxUses) throw Exception('Coupon limit reached');
-      if (subtotal < minOrder)
+      }
+      if (usedCount >= maxUses) { throw Exception('Coupon limit reached'); }
+      if (subtotal < minOrder) {
         throw Exception('Minimum order value should be ₹$minOrder');
+      }
 
       double discountVal = 0.0;
       if (type == 'flat' || type == 'cashback') {

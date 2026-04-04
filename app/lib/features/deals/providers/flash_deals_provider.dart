@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../models/flash_deal.dart';
-import '../../../models/product.dart';
 
 final flashDealsProvider =
     AsyncNotifierProvider<FlashDealsNotifier, List<FlashDeal>>(() {

@@ -83,6 +83,7 @@ class CheckoutScreen extends HookConsumerWidget {
           final response = await Supabase.instance.client
               .from('orders')
               .insert({
+                // ignore: use_null_aware_elements
                 if (supabaseUid != null) 'user_id': supabaseUid,
                 'status': 'PENDING',
                 'items': cartItemsPayload,

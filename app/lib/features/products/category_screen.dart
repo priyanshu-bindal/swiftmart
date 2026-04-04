@@ -7,83 +7,78 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
 import 'package:flutter_hooks/flutter_hooks.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../models/product.dart';
 import '../../widgets/product_card.dart';
 
-// --- State Management ---
+// ── State ──────────────────────────────────────────────────────────────────────
 
-typedef CategoryFilterArgs = ({String category, String filter});
+typedef _CategoryArgs = ({String categoryId, String filter});
 
-final categoryProductsProvider = FutureProvider.autoDispose
-    .family<List<Product>, CategoryFilterArgs>((ref, args) async {
+/// Fetches products by categoryId (UUID) directly — no secondary name lookup.
+final categoryProductsProvider =
+    FutureProvider.autoDispose.family<List<Product>, _CategoryArgs>(
+  (ref, args) async {
+    try {
       final supabase = Supabase.instance.client;
+      var query = supabase
+          .from('products')
+          .select('*, categories(*)')
+          .eq('is_active', true)
+          .eq('category_id', args.categoryId);
 
-      try {
-        // 1. Get the category ID first to avoid complex inner join syntax issues
-        final categoryResp = await supabase
-            .from('categories')
-            .select('id')
-            .eq('name', args.category)
-            .maybeSingle();
-
-        if (categoryResp == null) return [];
-
-        // 2. Fetch products for this category using reliable category_id filter
-        var query = supabase
-            .from('products')
-            .select('*, categories(*)')
-            .eq('is_active', true)
-            .eq('category_id', categoryResp['id']);
-
-        if (args.filter != 'All') {
-          query = query.contains('tags', [args.filter.toLowerCase()]);
-        }
-
-        final response = await query;
-        return (response as List)
-            .map((json) => Product.fromJson(json))
-            .toList();
-      } catch (e) {
-        // If anything fails, throw it clearly so Riverpod triggers the error state instead of hanging
-        throw Exception('Failed to load products: \$e');
+      if (args.filter != 'All') {
+        query = query.contains('tags', [args.filter.toLowerCase()]);
       }
-    });
+
+      final response = await query.order('created_at', ascending: false);
+      return (response as List)
+          .map((json) => Product.fromJson(json as Map<String, dynamic>))
+          .toList();
+    } catch (e, st) {
+      debugPrint('categoryProductsProvider error: $e\n$st');
+      throw Exception('Failed to load products: $e');
+    }
+  },
+);
+
+// ── Screen ─────────────────────────────────────────────────────────────────────
 
 class CategoryScreen extends HookConsumerWidget {
+  final String categoryId;
   final String categoryName;
 
-  const CategoryScreen({super.key, required this.categoryName});
+  const CategoryScreen({
+    super.key,
+    required this.categoryId,
+    required this.categoryName,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedFilter = useState('All');
     final productsAsync = ref.watch(
       categoryProductsProvider((
-        category: categoryName,
+        categoryId: categoryId,
         filter: selectedFilter.value,
       )),
     );
 
-    // Example subcategories based on category
-    final filterChips = ['All', 'Milk', 'Bread', 'Cheese', 'Eggs', 'Yogurt'];
+    final filterChips = ['All', 'Best Seller', 'Organic', 'Low Stock'];
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.dark,
       child: Scaffold(
-        backgroundColor: const Color(
-          0xFFFBF8FF,
-        ), // Using the surface color from the HTML
+        backgroundColor: const Color(0xFFFBF8FF),
         extendBodyBehindAppBar: true,
         appBar: _CategoryAppBar(categoryName: categoryName),
         body: RefreshIndicator(
           color: AppColors.primary,
           onRefresh: () async => ref.refresh(
             categoryProductsProvider((
-              category: categoryName,
+              categoryId: categoryId,
               filter: selectedFilter.value,
             )),
           ),
@@ -94,21 +89,9 @@ class CategoryScreen extends HookConsumerWidget {
                 child: SizedBox(
                   height: MediaQuery.of(context).padding.top + 80,
                 ),
-              ), // Top padding for AppBar
-              // Hero Banner Section
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24.0,
-                    vertical: 8.0,
-                  ),
-                  child: _HeroBanner(),
-                ),
               ),
 
-              const SliverToBoxAdapter(child: SizedBox(height: 16)),
-
-              // Category Filters
+              // Filter chips
               SliverToBoxAdapter(
                 child: SizedBox(
                   height: 40,
@@ -116,8 +99,7 @@ class CategoryScreen extends HookConsumerWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 24),
                     scrollDirection: Axis.horizontal,
                     itemCount: filterChips.length,
-                    separatorBuilder: (context, index) =>
-                        const SizedBox(width: 8),
+                    separatorBuilder: (_, unused) => const SizedBox(width: 8),
                     itemBuilder: (context, index) {
                       final chip = filterChips[index];
                       final isSelected = chip == selectedFilter.value;
@@ -125,26 +107,23 @@ class CategoryScreen extends HookConsumerWidget {
                         onTap: () => selectedFilter.value = chip,
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 200),
-                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          padding:
+                              const EdgeInsets.symmetric(horizontal: 20),
                           decoration: BoxDecoration(
                             color: isSelected
                                 ? AppColors.primary
-                                : const Color(
-                                    0xFFE9E7EF,
-                                  ), // surface-container-high
+                                : const Color(0xFFE9E7EF),
                             borderRadius: BorderRadius.circular(24),
                           ),
                           alignment: Alignment.center,
                           child: Text(
                             chip,
                             style: GoogleFonts.inter(
-                              fontSize: 14,
+                              fontSize: 13,
                               fontWeight: FontWeight.w600,
                               color: isSelected
                                   ? Colors.white
-                                  : const Color(
-                                      0xFF494455,
-                                    ), // on-surface-variant
+                                  : const Color(0xFF494455),
                             ),
                           ),
                         ),
@@ -156,23 +135,43 @@ class CategoryScreen extends HookConsumerWidget {
 
               const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
-              // Product Grid
+              // Product grid
               SliverPadding(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
+                  horizontal: 16,
                   vertical: 8,
                 ),
                 sliver: productsAsync.when(
                   data: (products) {
                     if (products.isEmpty) {
-                      return const SliverToBoxAdapter(
+                      return SliverToBoxAdapter(
                         child: Padding(
-                          padding: EdgeInsets.only(top: 48.0),
-                          child: Center(
-                            child: Text(
-                              'No products found in this category.',
-                              style: TextStyle(color: Color(0xFF494455)),
-                            ),
+                          padding: const EdgeInsets.only(top: 80.0),
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.inventory_2_outlined,
+                                size: 64,
+                                color: Colors.grey.shade300,
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'No products found',
+                                style: GoogleFonts.manrope(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                  color: const Color(0xFF494455),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Try a different filter or check back later.',
+                                style: TextStyle(
+                                  color: Colors.grey.shade500,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       );
@@ -180,66 +179,101 @@ class CategoryScreen extends HookConsumerWidget {
                     return SliverGrid(
                       gridDelegate:
                           const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            crossAxisSpacing: 16,
-                            mainAxisSpacing: 16,
-                            childAspectRatio: 0.70, // Product card ratio
-                          ),
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 12,
+                        mainAxisSpacing: 12,
+                        childAspectRatio: 0.68,
+                      ),
                       delegate: SliverChildBuilderDelegate(
-                        (
-                          context,
-                          index,
-                        ) => ProductCard(product: products[index])
-                            .animate(delay: Duration(milliseconds: 50 * index))
-                            .fadeIn(duration: 400.ms)
-                            .slideY(begin: 0.1, end: 0, curve: Curves.easeOut),
+                        (context, index) => ProductCard(
+                          product: products[index],
+                        )
+                            .animate(
+                          delay: Duration(milliseconds: 40 * index),
+                        )
+                            .fadeIn(duration: 350.ms)
+                            .slideY(
+                          begin: 0.1,
+                          end: 0,
+                          curve: Curves.easeOut,
+                        ),
                         childCount: products.length,
                       ),
                     );
                   },
-                  loading: () {
-                    return Skeletonizer.sliver(
-                      enabled: true,
-                      child: SliverGrid(
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              crossAxisSpacing: 16,
-                              mainAxisSpacing: 16,
-                              childAspectRatio: 0.70,
-                            ),
-                        delegate: SliverChildBuilderDelegate(
-                          (context, index) => ProductCard(
-                            product: Product(
-                              id: 'mock\$index',
-                              name: 'Loading Item',
-                              imagePath: '',
-                              price: 0,
+                  loading: () => Skeletonizer.sliver(
+                    enabled: true,
+                    child: SliverGrid(
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 12,
+                        mainAxisSpacing: 12,
+                        childAspectRatio: 0.68,
+                      ),
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) => ProductCard(
+                          product: Product(
+                            id: 'mock$index',
+                            name: 'Loading Product',
+                            imagePath: '',
+                            price: 0,
+                          ),
+                        ),
+                        childCount: 6,
+                      ),
+                    ),
+                  ),
+                  error: (error, _) => SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.all(32.0),
+                      child: Column(
+                        children: [
+                          const Icon(
+                            Icons.wifi_off_rounded,
+                            size: 48,
+                            color: Colors.redAccent,
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Could not load products',
+                            style: GoogleFonts.manrope(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 16,
                             ),
                           ),
-                          childCount: 4,
-                        ),
-                      ),
-                    );
-                  },
-                  error: (error, stackTrace) => SliverToBoxAdapter(
-                    child: Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24.0),
-                        child: Text(
-                          'Oops, something went wrong:\\n\$error',
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(color: Colors.red),
-                        ),
+                          const SizedBox(height: 8),
+                          Text(
+                            error.toString(),
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: Colors.red,
+                              fontSize: 12,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          ElevatedButton.icon(
+                            onPressed: () => ref.refresh(
+                              categoryProductsProvider((
+                                categoryId: categoryId,
+                                filter: selectedFilter.value,
+                              )),
+                            ),
+                            icon: const Icon(Icons.refresh),
+                            label: const Text('Retry'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: Colors.white,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
                 ),
               ),
 
-              const SliverToBoxAdapter(
-                child: SizedBox(height: 100),
-              ), // Bottom padding
+              const SliverToBoxAdapter(child: SizedBox(height: 100)),
             ],
           ),
         ),
@@ -248,9 +282,10 @@ class CategoryScreen extends HookConsumerWidget {
   }
 }
 
+// ── App Bar ────────────────────────────────────────────────────────────────────
+
 class _CategoryAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String categoryName;
-
   const _CategoryAppBar({required this.categoryName});
 
   @override
@@ -262,7 +297,7 @@ class _CategoryAppBar extends StatelessWidget implements PreferredSizeWidget {
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
         child: Container(
-          color: Colors.white.withValues(alpha: 0.7),
+          color: Colors.white.withValues(alpha: 0.75),
           height: 64 + MediaQuery.of(context).padding.top,
           padding: EdgeInsets.only(
             top: MediaQuery.of(context).padding.top,
@@ -272,7 +307,10 @@ class _CategoryAppBar extends StatelessWidget implements PreferredSizeWidget {
           child: Row(
             children: [
               IconButton(
-                icon: const Icon(Icons.arrow_back, color: Color(0xFF6C3CE1)),
+                icon: const Icon(
+                  Icons.arrow_back,
+                  color: AppColors.primary,
+                ),
                 onPressed: () => context.pop(),
               ),
               const SizedBox(width: 4),
@@ -291,7 +329,11 @@ class _CategoryAppBar extends StatelessWidget implements PreferredSizeWidget {
                 onTap: () => context.push('/search'),
                 child: const Padding(
                   padding: EdgeInsets.all(8.0),
-                  child: Icon(Icons.search, color: Color(0xFF6C3CE1), size: 24),
+                  child: Icon(
+                    Icons.search,
+                    color: AppColors.primary,
+                    size: 24,
+                  ),
                 ),
               ),
             ],
@@ -299,73 +341,5 @@ class _CategoryAppBar extends StatelessWidget implements PreferredSizeWidget {
         ),
       ),
     );
-  }
-}
-
-class _HeroBanner extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 180,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        gradient: const LinearGradient(
-          colors: [Color(0xFFF4F2FA), Color(0xFFE2D6FF)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Stack(
-        children: [
-          Positioned(
-            top: 0,
-            right: 0,
-            bottom: 0,
-            width: MediaQuery.of(context).size.width * 0.5,
-            child: Opacity(
-              opacity: 0.6,
-              child: Image.network(
-                'https://source.unsplash.com/featured/?shopping',
-                fit: BoxFit.cover,
-                colorBlendMode: BlendMode.overlay,
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                Text(
-                  'Daily Essentials',
-                  style: GoogleFonts.manrope(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFF5416C9), // Primary
-                    height: 1.1,
-                    letterSpacing: -0.5,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                const SizedBox(
-                  width: 200,
-                  child: Text(
-                    'Farm-to-table freshness delivered to your doorstep every morning.',
-                    style: TextStyle(
-                      color: Color(0xFF494455), // on-surface-variant
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      height: 1.3,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    ).animate().fadeIn(duration: 500.ms).slideY(begin: 0.1, end: 0);
   }
 }

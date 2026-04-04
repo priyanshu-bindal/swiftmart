@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:app/shared/widgets/app_network_image.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -90,17 +89,16 @@ class ProductCard extends ConsumerWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    '₹${(product.discountedPrice != null && product.discountedPrice! > 0 ? product.discountedPrice! : product.price).toStringAsFixed(0)}',
+                                    '₹${product.price.toStringAsFixed(0)}',
                                     style: const TextStyle(
                                       fontWeight: FontWeight.w900,
                                       fontSize: 15,
                                       color: Color(0xFF6C3CE1),
                                     ),
                                   ),
-                                  if (product.discountedPrice != null &&
-                                      product.discountedPrice! > 0)
+                                  if (product.mrp > product.price)
                                     Text(
-                                      '₹${product.price.toStringAsFixed(0)}',
+                                      '₹${product.mrp.toStringAsFixed(0)}',
                                       style: const TextStyle(
                                         color: Color(0xFF9E9CA7),
                                         fontSize: 9,

@@ -16,6 +16,7 @@ import '../../features/orders/order_tracking_screen.dart';
 import '../../features/orders/order_history_screen.dart';
 import '../../features/products/search_screen.dart';
 import '../../features/profile/profile_screen.dart';
+import '../../features/profile/addresses_screen.dart';
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/auth/screens/signup_screen.dart';
 import '../../features/deals/flash_deals_screen.dart';
@@ -39,6 +40,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
+      // ── Auth ──────────────────────────────────────────────────────────────
       GoRoute(
         path: '/login',
         name: 'login',
@@ -49,26 +51,36 @@ final routerProvider = Provider<GoRouter>((ref) {
         name: 'signup',
         builder: (context, state) => const SignupScreen(),
       ),
+
+      // ── Root redirect ─────────────────────────────────────────────────────
+      GoRoute(path: '/', redirect: (context, state) => '/home'),
+
+      // ── Home ──────────────────────────────────────────────────────────────
       GoRoute(
         path: '/home',
         name: 'home',
         builder: (context, state) => const HomeScreen(),
       ),
-      // Fallback for root
-      GoRoute(path: '/', redirect: (context, state) => '/home'),
-      GoRoute(
-        path: '/category',
-        name: 'category',
-        builder: (context, state) {
-          final extra = state.extra as Map<String, dynamic>?;
-          final categoryName = extra?['name'] as String? ?? 'Category';
-          return CategoryScreen(categoryName: categoryName);
-        },
-      ),
+
+      // ── Products / Categories ─────────────────────────────────────────────
       GoRoute(
         path: '/browse_categories',
         name: 'browseCategories',
         builder: (context, state) => const BrowseCategoriesScreen(),
+      ),
+      // /category/:categoryId?name=CategoryName
+      GoRoute(
+        path: '/category/:categoryId',
+        name: 'category',
+        builder: (context, state) {
+          final categoryId = state.pathParameters['categoryId']!;
+          final categoryName =
+              state.uri.queryParameters['name'] ?? 'Category';
+          return CategoryScreen(
+            categoryId: categoryId,
+            categoryName: categoryName,
+          );
+        },
       ),
       GoRoute(
         path: '/product/:productId',
@@ -78,6 +90,13 @@ final routerProvider = Provider<GoRouter>((ref) {
           return ProductDetailScreen(productId: id);
         },
       ),
+      GoRoute(
+        path: '/search',
+        name: 'search',
+        builder: (context, state) => const SearchScreen(),
+      ),
+
+      // ── Cart & Checkout ───────────────────────────────────────────────────
       GoRoute(
         path: '/cart',
         name: 'cart',
@@ -100,11 +119,8 @@ final routerProvider = Provider<GoRouter>((ref) {
           );
         },
       ),
-      GoRoute(
-        path: '/search',
-        name: 'search',
-        builder: (context, state) => const SearchScreen(),
-      ),
+
+      // ── Orders ────────────────────────────────────────────────────────────
       GoRoute(
         path: '/order-confirm/:orderId',
         name: 'orderConfirm',
@@ -123,20 +139,39 @@ final routerProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
-        path: '/order-tracking',
-        name: 'orderTracking',
-        builder: (context, state) => const OrderTrackingScreen(),
-      ),
-      GoRoute(
         path: '/order-history',
         name: 'orderHistory',
-        builder: (context, state) => const OrderHistoryScreen(userId: ''),
+        // userId is fetched inside OrderHistoryScreen from Supabase auth
+        builder: (context, state) => const OrderHistoryScreen(),
       ),
+      GoRoute(
+        path: '/order-track/:orderId',
+        name: 'orderTracking',
+        builder: (context, state) {
+          final orderId = state.pathParameters['orderId'] ?? '';
+          return OrderTrackingScreen(orderId: orderId);
+        },
+      ),
+      // Legacy route without path param (keep for backward compat)
+      GoRoute(
+        path: '/order-tracking',
+        name: 'orderTrackingLegacy',
+        builder: (context, state) => const OrderTrackingScreen(orderId: ''),
+      ),
+
+      // ── Profile ───────────────────────────────────────────────────────────
       GoRoute(
         path: '/profile',
         name: 'profile',
         builder: (context, state) => const ProfileScreen(),
       ),
+      GoRoute(
+        path: '/addresses',
+        name: 'addresses',
+        builder: (context, state) => const AddressesScreen(),
+      ),
+
+      // ── Deals & Offers ────────────────────────────────────────────────────
       GoRoute(
         path: '/flash-deals',
         name: 'flashDeals',

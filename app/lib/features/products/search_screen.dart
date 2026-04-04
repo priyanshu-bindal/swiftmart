@@ -7,7 +7,8 @@ import 'package:skeletonizer/skeletonizer.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/local_storage/database_helper.dart';
+import 'dart:convert';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../widgets/product_card.dart';
 import '../../models/product.dart';
 import '../../repositories/product_repository.dart';
@@ -21,6 +22,32 @@ final searchResultsProvider = FutureProvider.family<List<Product>, String>((
   return repo.fetchProducts(search: query);
 });
 
+class SearchStorage {
+  static const _storage = FlutterSecureStorage();
+  
+  static Future<void> addRecentSearch(String query) async {
+    final list = await getRecentSearches();
+    list.remove(query);
+    list.insert(0, query);
+    if(list.length > 10) list.removeLast();
+    await _storage.write(key: 'recent_searches', value: jsonEncode(list));
+  }
+  
+  static Future<List<String>> getRecentSearches() async {
+    final str = await _storage.read(key: 'recent_searches');
+    if (str == null) return [];
+    try {
+      return List<String>.from(jsonDecode(str));
+    } catch (_) {
+      return [];
+    }
+  }
+
+  static Future<void> clearRecentSearches() async {
+    await _storage.delete(key: 'recent_searches');
+  }
+}
+
 class SearchScreen extends HookConsumerWidget {
   const SearchScreen({super.key});
 
@@ -31,7 +58,7 @@ class SearchScreen extends HookConsumerWidget {
     final recentSearches = useState<List<String>>([]);
 
     void loadRecents() async {
-      final recents = await DatabaseHelper.instance.getRecentSearches();
+      final recents = await SearchStorage.getRecentSearches();
       if (context.mounted) recentSearches.value = recents;
     }
 
@@ -72,7 +99,7 @@ class SearchScreen extends HookConsumerWidget {
     useEffect(() {
       final timer = Future.delayed(const Duration(milliseconds: 1000), () {
         if (searchQuery.value.trim().isNotEmpty) {
-          DatabaseHelper.instance.addRecentSearch(searchQuery.value.trim());
+          SearchStorage.addRecentSearch(searchQuery.value.trim());
         }
       });
       return () => timer.ignore();
@@ -234,7 +261,7 @@ class SearchScreen extends HookConsumerWidget {
                 if (searches.isNotEmpty)
                   InkWell(
                     onTap: () async {
-                      await DatabaseHelper.instance.clearRecentSearches();
+                      await SearchStorage.clearRecentSearches();
                       loadRecents();
                     },
                     borderRadius: BorderRadius.circular(12),

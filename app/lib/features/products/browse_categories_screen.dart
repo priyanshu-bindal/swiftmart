@@ -336,7 +336,7 @@ class _CategoryCardState extends State<_CategoryCard>
         onTapCancel: _onTapCancel,
         onTap: () {
           HapticFeedback.lightImpact();
-          context.push('/category', extra: {'name': widget.category.name});
+          context.push('/category/${widget.category.id}?name=${Uri.encodeComponent(widget.category.name)}');
         },
         child:
             Container(

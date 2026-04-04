@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:app/shared/widgets/app_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -383,7 +382,7 @@ class ProductDetailScreen extends HookConsumerWidget {
                           textBaseline: TextBaseline.alphabetic,
                           children: [
                             Text(
-                              '₹${(product.discountedPrice ?? product.price).toInt()}',
+                              '₹${product.price.toInt()}',
                               style: GoogleFonts.manrope(
                                 fontSize: 32,
                                 fontWeight: FontWeight.w900,
@@ -391,9 +390,9 @@ class ProductDetailScreen extends HookConsumerWidget {
                               ),
                             ),
                             const SizedBox(width: 12),
-                            if (product.discountedPrice != null)
+                            if (product.mrp > product.price)
                               Text(
-                                '₹${product.price.toInt()}',
+                                '₹${product.mrp.toInt()}',
                                 style: const TextStyle(
                                   fontSize: 18,
                                   color: AppColors.onSurfaceVariant,
@@ -401,8 +400,7 @@ class ProductDetailScreen extends HookConsumerWidget {
                                 ),
                               ),
                             const SizedBox(width: 12),
-                            if (product.discountedPrice != null &&
-                                product.price > 0)
+                            if (product.mrp > product.price)
                               Container(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 8,
@@ -413,7 +411,7 @@ class ProductDetailScreen extends HookConsumerWidget {
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Text(
-                                  '-${(((product.price - product.discountedPrice!) / product.price) * 100).toInt()}% OFF',
+                                  '-${product.discountPercent}% OFF',
                                   style: const TextStyle(
                                     color: AppColors.onErrorContainer,
                                     fontSize: 10,

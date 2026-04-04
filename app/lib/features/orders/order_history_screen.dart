@@ -4,8 +4,7 @@ import '../../providers/order_provider.dart';
 import '../../models/order_model.dart';
 
 class OrderHistoryScreen extends ConsumerStatefulWidget {
-  final String userId;
-  const OrderHistoryScreen({super.key, required this.userId});
+  const OrderHistoryScreen({super.key});
 
   @override
   ConsumerState<OrderHistoryScreen> createState() => _OrderHistoryScreenState();

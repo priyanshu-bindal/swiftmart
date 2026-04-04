@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:app/shared/widgets/app_network_image.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/theme/app_spacing.dart';
-import 'package:skeletonizer/skeletonizer.dart';
 import '../../models/product.dart';
+
 
 class ProductCard extends HookConsumerWidget {
   final Product product;
