@@ -19,6 +19,7 @@ class ProductRepository {
     String? search,
     bool? organicOnly,
     String? sort, // 'price_asc' | 'price_desc'
+    int? limit,
   }) async {
     var baseQuery = supabase
         .from('products')
@@ -42,6 +43,10 @@ class ProductRepository {
       finalQuery = baseQuery.order('sale_price', ascending: false);
     } else {
       finalQuery = baseQuery.order('id', ascending: false);
+    }
+
+    if (limit != null) {
+      finalQuery = finalQuery.limit(limit) as PostgrestTransformBuilder<PostgrestList>;
     }
 
     final response = await finalQuery;

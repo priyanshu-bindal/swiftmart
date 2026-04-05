@@ -12,6 +12,10 @@ class AppNetworkImage extends StatelessWidget {
   final Duration? fadeOutDuration;
   final int? memCacheWidth;
   final int? memCacheHeight;
+  final int? maxWidthDiskCache;
+  final int? maxHeightDiskCache;
+  final Color? color;
+  final BlendMode? colorBlendMode;
 
   const AppNetworkImage({
     super.key,
@@ -21,10 +25,14 @@ class AppNetworkImage extends StatelessWidget {
     this.height,
     this.placeholder,
     this.errorWidget,
-    this.fadeInDuration,
-    this.fadeOutDuration,
-    this.memCacheWidth,
+    this.fadeInDuration = Duration.zero,
+    this.fadeOutDuration = Duration.zero,
+    this.memCacheWidth = 400, // Clamp memory usage to sensible boundary
     this.memCacheHeight,
+    this.maxWidthDiskCache = 800, // Limit disk cache file sizes
+    this.maxHeightDiskCache,
+    this.color,
+    this.colorBlendMode,
   });
 
   @override
@@ -39,17 +47,21 @@ class AppNetworkImage extends StatelessWidget {
       fit: fit,
       width: width,
       height: height,
-      fadeInDuration: fadeInDuration ?? const Duration(milliseconds: 500),
-      fadeOutDuration: fadeOutDuration,
+      color: color,
+      colorBlendMode: colorBlendMode,
+      fadeInDuration: fadeInDuration ?? Duration.zero,
+      fadeOutDuration: fadeOutDuration ?? Duration.zero,
       memCacheWidth: memCacheWidth,
       memCacheHeight: memCacheHeight,
+      maxWidthDiskCache: maxWidthDiskCache,
+      maxHeightDiskCache: maxHeightDiskCache,
       placeholder:
           placeholder ??
           (context, url) => const Center(
             child: SizedBox(
               width: 20,
               height: 20,
-              child: CircularProgressIndicator(strokeWidth: 2),
+              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.grey),
             ),
           ),
       errorWidget:
@@ -59,3 +71,4 @@ class AppNetworkImage extends StatelessWidget {
     );
   }
 }
+

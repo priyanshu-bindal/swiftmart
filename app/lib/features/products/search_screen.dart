@@ -22,6 +22,14 @@ final searchResultsProvider = FutureProvider.family<List<ProductModel>, String>(
   return repo.fetchProducts(search: query);
 });
 
+final relatedProductsProvider = FutureProvider.family<List<ProductModel>, ProductModel?>((ref, mainProduct) async {
+  final repo = ref.read(productRepositoryProvider);
+  if (mainProduct == null || mainProduct.categoryId == null) {
+    return repo.fetchProducts(limit: 6);
+  }
+  return repo.fetchProducts(categoryId: mainProduct.categoryId, limit: 6);
+});
+
 class SearchStorage {
   static const _storage = FlutterSecureStorage();
 
@@ -117,6 +125,15 @@ class SearchScreen extends HookConsumerWidget {
             Expanded(
               child: AnimatedSwitcher(
                 duration: const Duration(milliseconds: 200),
+                layoutBuilder: (Widget? currentChild, List<Widget> previousChildren) {
+                  return Stack(
+                    alignment: Alignment.topCenter,
+                    children: <Widget>[
+                      ...previousChildren,
+                      ?currentChild,
+                    ],
+                  );
+                },
                 child: hasQuery
                     ? _buildSearchResultsArea(
                         ref,
@@ -127,6 +144,7 @@ class SearchScreen extends HookConsumerWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
+                            const SizedBox(height: 16),
                             _buildRecentSearches(
                               recentSearches.value,
                               searchController,
@@ -424,63 +442,118 @@ class SearchScreen extends HookConsumerWidget {
           // EMPTY STATE ONLY WHEN QUERY EXISTS & 0 RESULTS
           return _buildEmptyState(controller);
         }
-        return Column(
-          children: [
-            Padding(
+        
+        final bool showRecommendations = products.length <= 4;
+        
+        return CustomScrollView(
+          slivers: [
+            SliverPadding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-              child: Row(
-                children: [
-                  const Text(
-                    'Search Results',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w900,
-                      fontSize: 18,
-                      color: Color(0xFF1A1A1A),
+              sliver: SliverToBoxAdapter(
+                child: Row(
+                  children: [
+                    const Text(
+                      'Search Results',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 18,
+                        color: Color(0xFF1A1A1A),
+                      ),
                     ),
-                  ),
-                  const Spacer(),
-                  Text(
-                    '${products.length} items found',
-                    style: const TextStyle(
-                      color: Color(0xFF7A869A),
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
+                    const Spacer(),
+                    Text(
+                      '${products.length} items found',
+                      style: const TextStyle(
+                        color: Color(0xFF7A869A),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-            Expanded(child: _buildGrid(products, isSkeleton: false)),
+            _buildSliverGrid(products, isSkeleton: false),
+            
+            // You may also like Section
+            if (showRecommendations)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 32, 16, 12),
+                  child: Row(
+                    children: [
+                      const Text(
+                        'You may also like',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 18,
+                          color: Color(0xFF1A1A1A),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE5F4EC),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text('Picked for you', style: TextStyle(color: Color(0xFF2E7D32), fontSize: 9, fontWeight: FontWeight.bold)),
+                      )
+                    ],
+                  ),
+                ),
+              ),
+              
+            if (showRecommendations)
+              ref.watch(relatedProductsProvider(products.first)).when(
+                data: (related) {
+                  if (related.isEmpty) return const SliverToBoxAdapter(child: SizedBox());
+                  return _buildSliverGrid(related, isSkeleton: false);
+                },
+                loading: () => _buildSliverGrid(mockProducts(), isSkeleton: true),
+                error: (e, s) => SliverToBoxAdapter(child: Center(child: Text('Error: $e'))),
+              ),
+              
+            const SliverToBoxAdapter(child: SizedBox(height: 32)), // Bottom padding
           ],
         );
       },
-      loading: () => _buildGrid(mockProducts(), isSkeleton: true),
+      loading: () => CustomScrollView(
+        slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.only(top: 16),
+            sliver: _buildSliverGrid(mockProducts(), isSkeleton: true),
+          ),
+        ],
+      ),
       error: (e, s) => Center(child: Text('Error: $e')),
     );
   }
 
-  Widget _buildGrid(List<ProductModel> products, {required bool isSkeleton}) {
-    return Skeletonizer(
-      enabled: isSkeleton,
-      child: GridView.builder(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          childAspectRatio: 0.60,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
+  Widget _buildSliverGrid(List<ProductModel> products, {required bool isSkeleton}) {
+    return SliverPadding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      sliver: Skeletonizer.sliver(
+        enabled: isSkeleton,
+        child: SliverGrid.builder(
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            crossAxisSpacing: 8,
+            mainAxisSpacing: 16,
+            mainAxisExtent: 320,
+          ),
+          itemCount: products.length,
+          itemBuilder: (context, index) {
+            final product = products[index];
+            final card = ProductCard(product: product);
+            return isSkeleton
+                ? card
+                : card.animate().fadeIn(
+                    duration: 400.ms,
+                    curve: Curves.easeOutQuad,
+                  );
+          },
         ),
-        itemCount: products.length,
-        itemBuilder: (context, index) {
-          final product = products[index];
-          final card = ProductCard(product: product);
-          return isSkeleton
-              ? card
-              : card.animate().fadeIn(
-                  duration: 400.ms,
-                  curve: Curves.easeOutQuad,
-                );
-        },
       ),
     );
   }

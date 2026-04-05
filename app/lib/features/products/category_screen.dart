@@ -5,7 +5,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:skeletonizer/skeletonizer.dart';
+import '../../shared/widgets/app_network_image.dart';
 
 class SubcategoryItem {
   final String name;
@@ -259,7 +260,7 @@ class _CategoryScreenState extends ConsumerState<CategoryScreen> {
                                   ],
                           ),
                           child: ClipOval(
-                            child: CachedNetworkImage(
+                            child: AppNetworkImage(
                               imageUrl: sub.imageUrl,
                               fit: BoxFit.cover,
                               errorWidget: (c, u, e) => Container(
@@ -336,7 +337,7 @@ class _CategoryScreenState extends ConsumerState<CategoryScreen> {
                       child: Container(
                         color: const Color(0xFFF6F5ED), // natural food bg
                         child: p['image_url'] != null && p['image_url'].toString().isNotEmpty
-                            ? CachedNetworkImage(
+                            ? AppNetworkImage(
                                 imageUrl: p['image_url'],
                                 width: double.infinity,
                                 height: 140,

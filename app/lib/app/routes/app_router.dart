@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/utils/go_router_refresh_stream.dart';
 
 import '../../features/home/home_screen.dart';
+import '../../features/home/main_shell.dart';
 import '../../features/products/category_screen.dart';
 import '../../features/products/browse_categories_screen.dart';
 import '../../features/products/product_detail_screen.dart';
@@ -55,19 +56,43 @@ final routerProvider = Provider<GoRouter>((ref) {
       // ── Root redirect ─────────────────────────────────────────────────────
       GoRoute(path: '/', redirect: (context, state) => '/home'),
 
-      // ── Home ──────────────────────────────────────────────────────────────
-      GoRoute(
-        path: '/home',
-        name: 'home',
-        builder: (context, state) => const HomeScreen(),
+      // ── Main Shell (Home, Categories, Orders) ─────────────────────────────
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) {
+          return MainShell(navigationShell: navigationShell);
+        },
+        branches: [
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/home',
+                name: 'home',
+                builder: (context, state) => const HomeScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/browse_categories',
+                name: 'browseCategories',
+                builder: (context, state) => const BrowseCategoriesScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/OrderModel-history',
+                name: 'orderHistory',
+                builder: (context, state) => const OrderHistoryScreen(),
+              ),
+            ],
+          ),
+        ],
       ),
 
       // ── Products / Categories ─────────────────────────────────────────────
-      GoRoute(
-        path: '/browse_categories',
-        name: 'browseCategories',
-        builder: (context, state) => const BrowseCategoriesScreen(),
-      ),
       // /CategoryModel/:categoryId?name=CategoryName
       GoRoute(
         path: '/CategoryModel/:categoryId',
@@ -136,12 +161,6 @@ final routerProvider = Provider<GoRouter>((ref) {
           final orderId = extra?['order_id']?.toString();
           return OrderSuccessScreen(orderId: orderId);
         },
-      ),
-      GoRoute(
-        path: '/OrderModel-history',
-        name: 'orderHistory',
-        // userId is fetched inside OrderHistoryScreen from Supabase auth
-        builder: (context, state) => const OrderHistoryScreen(),
       ),
       GoRoute(
         path: '/OrderModel-track/:orderId',

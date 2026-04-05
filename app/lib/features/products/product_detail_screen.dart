@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -10,6 +11,8 @@ import '../../core/theme/app_colors.dart';
 import '../cart/providers/cart_provider.dart';
 import '../../repositories/product_repository.dart';
 import 'package:app/core/models/product_model.dart';
+import '../../shared/widgets/cart_toast_bar.dart';
+import '../../shared/providers/cart_toast_provider.dart';
 
 // No dummy fallback - always load from Supabase
 
@@ -52,13 +55,10 @@ class ProductDetailScreen extends HookConsumerWidget {
 
     final product = productAsync.value!;
 
-    final cartItemCount = ref.watch(cartItemCountProvider);
-    final cartTotal = ref.watch(cartTotalProvider);
-
     return Scaffold(
       backgroundColor: AppColors.surface,
       extendBodyBehindAppBar: true,
-      extendBody: true,
+      extendBody: false,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(64.0),
         child: ClipRRect(
@@ -116,108 +116,9 @@ class ProductDetailScreen extends HookConsumerWidget {
           ),
         ),
       ),
-      bottomNavigationBar: cartItemCount > 0
-          ? ClipRRect(
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(24),
-              ),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 16,
-                      ).copyWith(
-                        bottom: MediaQuery.of(context).padding.bottom + 16,
-                      ),
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceContainerLowest.withValues(
-                      alpha: 0.7,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.onSurface.withValues(alpha: 0.06),
-                        offset: const Offset(0, -16),
-                        blurRadius: 32,
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '$cartItemCount Item${cartItemCount > 1 ? 's' : ''} Added',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.onSurfaceVariant,
-                            ),
-                          ),
-                          Text(
-                            '₹${cartTotal.toStringAsFixed(2)}',
-                            style: GoogleFonts.manrope(
-                              fontSize: 24,
-                              fontWeight: FontWeight.w900,
-                              color: AppColors.onSurface,
-                            ),
-                          ),
-                        ],
-                      ),
-                      InkWell(
-                        onTap: () => context.push('/cart'),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 40,
-                            vertical: 16,
-                          ),
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [AppColors.primary, AppColors.secondary],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            borderRadius: BorderRadius.circular(16),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.primary.withValues(alpha: 0.2),
-                                blurRadius: 16,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                'Go to Cart',
-                                style: GoogleFonts.manrope(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              const Icon(
-                                Icons.arrow_forward,
-                                color: Colors.white,
-                                size: 18,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            )
-          : const SizedBox.shrink(),
-      body: CustomScrollView(
+      body: Stack(
+        children: [
+          CustomScrollView(
         slivers: [
           SliverToBoxAdapter(
             child: Padding(
@@ -528,6 +429,7 @@ class ProductDetailScreen extends HookConsumerWidget {
                           child: InkWell(
                             onTap: () async {
                               try {
+                                HapticFeedback.lightImpact();
                                 await ref
                                     .read(cartProvider.notifier)
                                     .addToCart(
@@ -536,27 +438,16 @@ class ProductDetailScreen extends HookConsumerWidget {
                                     );
                                 if (context.mounted) {
                                   localCount.value = 1;
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text('Added to cart! ✓'),
-                                      behavior: SnackBarBehavior.floating,
-                                      backgroundColor: AppColors.secondary,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      duration: const Duration(
-                                        milliseconds: 1200,
-                                      ),
-                                    ),
+                                  ref.read(cartToastProvider.notifier).show(
+                                    productName: product.name,
+                                    productImage: product.primaryImage,
                                   );
                                 }
                               } catch (e) {
                                 if (context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
-                                      content: Text(
-                                        'Failed to add to cart: $e',
-                                      ),
+                                      content: Text('Failed to add: $e'),
                                       backgroundColor: AppColors.error,
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(12),
@@ -833,6 +724,10 @@ class ProductDetailScreen extends HookConsumerWidget {
               ),
             ),
           ),
+        ],
+      ),
+          // ── Floating cart toast overlay ───────────────────────────────
+          const CartToastBar(bottomOffset: 24),
         ],
       ),
     );

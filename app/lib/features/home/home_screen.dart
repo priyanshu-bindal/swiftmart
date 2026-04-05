@@ -5,8 +5,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import '../../shared/widgets/product_card.dart';
+import '../../shared/widgets/app_network_image.dart';
 
-import 'widgets/animated_bottom_nav.dart';
 
 // Provider to fetch banners
 final bannersProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
@@ -89,10 +90,41 @@ class HomeScreen extends StatefulHookConsumerWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-  final int _selectedIndex = 0;
-
   @override
   Widget build(BuildContext context) {
+    // Aggressively pre-cache category images as soon as they load
+    ref.listen(homeCategoriesProvider, (prev, next) {
+      if (next is AsyncData) {
+        for (var cat in next.value!) {
+          for (var img in cat['images']) {
+            if (img.toString().isNotEmpty) precacheImage(CachedNetworkImageProvider(img, maxHeight: 400), context);
+          }
+        }
+      }
+    });
+
+    // Aggressively pre-cache product images
+    ref.listen(groupedProductsProvider, (prev, next) {
+      if (next is AsyncData) {
+        for (var group in next.value!) {
+          for (var p in group['products']) {
+            final url = p['image_url']?.toString() ?? '';
+            if (url.isNotEmpty) precacheImage(CachedNetworkImageProvider(url, maxHeight: 400), context);
+          }
+        }
+      }
+    });
+
+    // Aggressively pre-cache banners
+    ref.listen(bannersProvider, (prev, next) {
+      if (next is AsyncData) {
+        for (var b in next.value!) {
+          final url = b['image_url']?.toString() ?? '';
+          if (url.isNotEmpty) precacheImage(CachedNetworkImageProvider(url, maxHeight: 800), context);
+        }
+      }
+    });
+
     return Scaffold(
       backgroundColor: const Color(0xFFF9F9FB),
       body: SafeArea(
@@ -110,7 +142,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               children: [
                 _buildAppBar(context),
                 const SizedBox(height: 12),
-                _buildSearchBar(),
+                _buildSearchBar(context),
                 const SizedBox(height: 24),
                 _buildHeroBanner(),
                 const SizedBox(height: 32),
@@ -125,22 +157,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
         ),
       ),
-      bottomNavigationBar: SwiftmartBottomNav(
-        currentTab: const ['home', 'category', 'orders', 'cart'][_selectedIndex],
-        onTabSelected: (tab) {
-           int i = const ['home', 'category', 'orders', 'cart'].indexOf(tab);
-           if (i == 0) return; // Already on Home
-           
-           if (i == 1) {
-             context.push('/browse_categories');
-           } else if (i == 2) {
-             context.push('/OrderModel-history');
-           } else if (i == 3) {
-             context.push('/cart');
-           }
-        },
-      ),
-      extendBody: true,
     );
   }
 
@@ -200,7 +216,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 shape: BoxShape.circle,
                 border: Border.all(color: const Color(0xFF006B5C).withValues(alpha: 0.2), width: 2),
                 image: const DecorationImage(
-                  image: NetworkImage('https://lh3.googleusercontent.com/aida-public/AB6AXuA199lxjUYB1dc1Q45OLCjH3X_0-WRUfpNhLMKb1R8owyAEAgIJkYc_quYiJJpds4-xeebvNGtYH-G132SHjvXrbJMMyfkpemsCpUUGQlruHhf9OtwgFuemi8zSMZgOYMmSLgylyj_d5WVSOKPb_MVkkplX28ftssCtQmDvFViPkncWvzNl1UKweA6U9AOHvDXku39H-fTNnbMsd_WoMdUDv7YjZl2BJxFN0-illwsVt5OHO3Q3hXFyipC63mOdPeutFmYWCmyewqoa'),
+                  image: CachedNetworkImageProvider('https://lh3.googleusercontent.com/aida-public/AB6AXuA199lxjUYB1dc1Q45OLCjH3X_0-WRUfpNhLMKb1R8owyAEAgIJkYc_quYiJJpds4-xeebvNGtYH-G132SHjvXrbJMMyfkpemsCpUUGQlruHhf9OtwgFuemi8zSMZgOYMmSLgylyj_d5WVSOKPb_MVkkplX28ftssCtQmDvFViPkncWvzNl1UKweA6U9AOHvDXku39H-fTNnbMsd_WoMdUDv7YjZl2BJxFN0-illwsVt5OHO3Q3hXFyipC63mOdPeutFmYWCmyewqoa'),
                   fit: BoxFit.cover,
                 ),
               ),
@@ -211,12 +227,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _buildSearchBar() {
+  Widget _buildSearchBar(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Container(
-        height: 56,
-        decoration: BoxDecoration(
+      child: GestureDetector(
+        onTap: () => context.push('/search'),
+        child: Container(
+          height: 56,
+          decoration: BoxDecoration(
           color: const Color(0xFFF3F3F5),
           borderRadius: BorderRadius.circular(16),
           boxShadow: const [
@@ -246,8 +264,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ],
         ),
       ),
-    );
-  }
+    ), // This closes GestureDetector
+  ); // This closes Padding
+}
 
   Widget _buildHeroBanner() {
     return Padding(
@@ -271,8 +290,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               bottom: 0,
               width: 220,
               height: 220,
-              child: Image.network(
-                'https://lh3.googleusercontent.com/aida-public/AB6AXuC8oFOM_oJjC9Mns4dTa2OHbmOIOwH-CFsRb-EER7nXmpzhaJQfsil8n2kePN0G0QSuO_uoa8xqAc50kT1xvyHUtYsw0V28ptz4lVSP9sg0pJyrensZqeLC6pnYRViwsI58z4V7wiWpCT7TBF3A559b9iDD1r8_9LOPJvgH8vJZVxLiBI-X0EJeXDW7nzJ0fZxB9epgvS-ciKnuq1WuztU5cTPbbM2eW-oMc_kb9UIuXdgo452zDBEA-ws-LrrztmPnwVBOe3faAOzP',
+              child: AppNetworkImage(
+                imageUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuC8oFOM_oJjC9Mns4dTa2OHbmOIOwH-CFsRb-EER7nXmpzhaJQfsil8n2kePN0G0QSuO_uoa8xqAc50kT1xvyHUtYsw0V28ptz4lVSP9sg0pJyrensZqeLC6pnYRViwsI58z4V7wiWpCT7TBF3A559b9iDD1r8_9LOPJvgH8vJZVxLiBI-X0EJeXDW7nzJ0fZxB9epgvS-ciKnuq1WuztU5cTPbbM2eW-oMc_kb9UIuXdgo452zDBEA-ws-LrrztmPnwVBOe3faAOzP',
                 fit: BoxFit.contain,
                 colorBlendMode: BlendMode.multiply,
               ),
@@ -633,7 +652,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                          child: Text(mocks[index]['discount']!, style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold)),
                        ),
                        const SizedBox(height: 6),
-                       ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.network(mocks[index]['img']!, width: 40, height: 40, fit: BoxFit.cover)),
+                       ClipRRect(borderRadius: BorderRadius.circular(8), child: AppNetworkImage(imageUrl: mocks[index]['img']!, width: 40, height: 40, fit: BoxFit.cover)),
                        const SizedBox(height: 6),
                        Text(mocks[index]['name']!, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
                      ],
@@ -682,7 +701,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                    bottom: 0, right: 0,
                    child: ClipRRect(
                      borderRadius: BorderRadius.circular(8),
-                     child: Image.network(b['image_url'], width: height * 0.6, height: height * 0.6, fit: BoxFit.cover),
+                     child: AppNetworkImage(imageUrl: b['image_url'], width: height * 0.6, height: height * 0.6, fit: BoxFit.cover),
                    ),
                  )
             ]
@@ -741,7 +760,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 )
               ),
               if (b['image_url'] != null)
-                ClipRRect(borderRadius: const BorderRadius.only(topRight: Radius.circular(16), bottomRight: Radius.circular(16)), child: Image.network(b['image_url'], width: 120, height: 120, fit: BoxFit.cover)),
+                ClipRRect(borderRadius: const BorderRadius.only(topRight: Radius.circular(16), bottomRight: Radius.circular(16)), child: AppNetworkImage(imageUrl: b['image_url'], width: 120, height: 120, fit: BoxFit.cover)),
             ]
           )
         )
@@ -806,14 +825,14 @@ class CategoryCard extends StatelessWidget {
                         itemBuilder: (context, index) {
                           final hasImage = index < images.length && images[index].isNotEmpty;
                           Widget img = hasImage
-                              ? CachedNetworkImage(
+                              ? AppNetworkImage(
                                   imageUrl: images[index],
                                   fit: BoxFit.cover,
                                   placeholder: (context, url) => Container(color: Colors.grey.shade200),
                                   errorWidget: (context, url, error) => Container(
                                     color: Colors.grey.shade200, 
-                                    child: const Icon(Icons.image_not_supported, color: Colors.grey, size: 16)
-                                  ),
+                                    child: const Icon(Icons.broken_image, size: 16, color: Colors.grey),
+                                  )
                                 )
                               : Container(
                                   color: Colors.grey.shade200, 

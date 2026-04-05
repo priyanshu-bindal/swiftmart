@@ -10,6 +10,7 @@ import 'package:skeletonizer/skeletonizer.dart';
 import '../../core/theme/app_colors.dart';
 import 'package:app/core/models/category_model.dart';
 import 'providers/products_provider.dart';
+import '../../shared/widgets/app_network_image.dart';
 
 // ─── CategoryModel visual metadata (icon + pastel colors per name) ─────────────────
 
@@ -445,12 +446,12 @@ class _HeroBannerCard extends StatelessWidget {
         children: [
           // Background produce image
           Positioned.fill(
-            child: Image.network(
-              'https://source.unsplash.com/featured/?shopping',
+            child: AppNetworkImage(
+              imageUrl: 'https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=1000',
               fit: BoxFit.cover,
               color: Colors.black.withValues(alpha: 0.35),
               colorBlendMode: BlendMode.darken,
-              errorBuilder: (context, error, stackTrace) =>
+              errorWidget: (context, error, stackTrace) =>
                   Container(color: const Color(0xFF6C3CE1)),
             ),
           ),

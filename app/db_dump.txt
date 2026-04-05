@@ -1,0 +1,51 @@
+ID: efdf7691-bbe4-49d8-a58c-32c66fc28ca9 - Name: Fresh Mango - Cat: null - Img: https://images.unsplash.com/photo-1553284965-83fd3e82fa5a?auto=format&fit=crop&w=800&q=80
+ID: 0b37360c-e7de-4cae-b755-db65cf4a75ea - Name: Banana - Cat: Fruits & Vegetables - Img: https://images.unsplash.com/photo-1528825871115-3581a5387919?auto=format&fit=crop&w=800&q=80
+ID: 38c18d6f-fd2a-4330-8f45-005329f1bfc0 - Name: Apple - Cat: Fruits & Vegetables - Img: https://source.unsplash.com/featured/?apple
+ID: 22cfb75c-cb28-4805-8b13-64a8947f5340 - Name: Mango - Cat: Fruits & Vegetables - Img: https://loremflickr.com/400/400/mango,fruit?lock=1
+ID: d62b55b0-4dab-410b-900b-dbaffc4d8926 - Name: Tomato - Cat: Fruits & Vegetables - Img: https://loremflickr.com/400/400/tomato,vegetable?lock=3
+ID: dbeaf837-400b-4e6e-a725-da925714ecca - Name: Tomatoes - Cat: null - Img: https://loremflickr.com/400/400/tomato,vegetable?lock=3
+ID: 54f276a3-2c2f-43b7-905a-a5b3d0ebfc18 - Name: Potato - Cat: Fruits & Vegetables - Img: https://loremflickr.com/400/400/potato,vegetable?lock=4
+ID: 5b0d9697-5c83-41bd-a5f1-09f8c97f90ab - Name: Potatoes - Cat: null - Img: https://loremflickr.com/400/400/potato,vegetable?lock=4
+ID: 43448612-f713-4578-9829-67ba8ad50652 - Name: Onion - Cat: Fruits & Vegetables - Img: https://loremflickr.com/400/400/onion,vegetable?lock=5
+ID: 48fd36bd-6dc1-4e7a-9e84-271dccd54729 - Name: Onions - Cat: null - Img: https://loremflickr.com/400/400/onion,vegetable?lock=5
+ID: dcf1cbc5-fa42-4ab1-a1d9-b402a5a86fbf - Name: Whole Milk - Cat: null - Img: https://loremflickr.com/400/400/milk,glass?lock=10
+ID: 31997cbd-b0ef-4c2e-b6d1-cb36b15d2148 - Name: Monaco Classic Crackers - Cat: null - Img: https://loremflickr.com/400/400/cracker,cookie?lock=17
+ID: 773390a3-4e62-4a4e-ac2c-7cb93b367154 - Name: Hide & Seek Chocolate Chips - Cat: null - Img: https://loremflickr.com/400/400/chocolate,cookie?lock=18
+ID: e27f2296-abc8-48a4-8cac-07d0093026b1 - Name: Parle-G Biscuits - Cat: null - Img: https://loremflickr.com/400/400/chocolate,cookie?lock=18
+ID: bb8c79e6-b60d-41f5-a2ee-6f692613df79 - Name: Maggi 2-Minute Noodles - Cat: null - Img: https://loremflickr.com/400/400/noodles,food?lock=19
+ID: a610ad37-0492-4869-a95f-d1a493c10769 - Name: Tata Tea Premium - Cat: null - Img: https://loremflickr.com/400/400/tea,cup?lock=20
+ID: d0f52873-aa42-44b6-8490-e866d4ceef69 - Name: Nescafe Classic Coffee - Cat: null - Img: https://loremflickr.com/400/400/coffee,cup?lock=21
+ID: d96b758a-7440-48e7-8c8d-c47acc9e7b23 - Name: Real Fruit Juice Mixed - Cat: null - Img: https://loremflickr.com/400/400/juice,fruit?lock=22
+ID: 0cf0a035-a77b-448e-855b-ad69917c11cf - Name: Tropicana Orange Juice - Cat: null - Img: https://loremflickr.com/400/400/juice,fruit?lock=22
+ID: bb763ddd-4c81-465c-8970-cc0c3edbc391 - Name: Bisleri Water Bottle - Cat: null - Img: https://loremflickr.com/400/400/water,bottle?lock=23
+ID: 6a61616e-c3c5-4b5d-803f-c697cb22896d - Name: Horlicks Health Drink - Cat: null - Img: https://loremflickr.com/400/400/drink,glass?lock=24
+ID: 3e13dc26-cc14-45f8-9173-e1bc8492447f - Name: Britannia Bread - Cat: null - Img: https://loremflickr.com/400/400/bread,slice?lock=25
+ID: cf939925-35cc-4fd2-aeb2-264886865f7d - Name: Brown Bread Whole Wheat - Cat: null - Img: https://loremflickr.com/400/400/bread,slice?lock=25
+ID: 26d8f38a-2f12-4741-908e-902f0f37862a - Name: English Muffins - Cat: null - Img: https://loremflickr.com/400/400/muffin,food?lock=26
+ID: 53ca9eb1-d485-4c47-b965-5db7b94742a3 - Name: Britannia Good Day Butter - Cat: null - Img: https://loremflickr.com/400/400/cookie,bakery?lock=27
+ID: e7443626-c9f5-41d0-9d7f-bf4ae5794f53 - Name: Croissant Plain - Cat: null - Img: https://loremflickr.com/400/400/croissant,bakery?lock=28
+ID: cc0011ca-c6cf-4442-8523-7197bc6b78db - Name: Lay's Classic Salted Chips - Cat: null - Img: https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/Lay%27s_Potato_Chips_Original.jpg/800px-Lay%27s_Potato_Chips_Original.jpg
+ID: 86655f52-01d8-42a1-beb8-90ca43743f57 - Name: Kurkure Masala Munch - Cat: null - Img: https://images.unsplash.com/photo-1600350756711-2eb25e36fe04?auto=format&fit=crop&w=800&q=80
+ID: 094db7e4-16ae-4f14-9252-1a22588d6e1a - Name: Dove Soap Bar - Cat: null - Img: https://images.unsplash.com/photo-1600857062241-98e5dba7f214?auto=format&fit=crop&w=800&q=80
+ID: 0eb684bc-e66a-4697-9817-bd83c3a7996c - Name: Spinach - Cat: Fruits & Vegetables - Img: https://loremflickr.com/400/400/spinach,vegetable?lock=6
+ID: 55ad7cd2-47da-480c-b7d6-1031e7d2c6b4 - Name: Carrot - Cat: Fruits & Vegetables - Img: https://loremflickr.com/400/400/carrot,vegetable?lock=8
+ID: 4de9d7f0-6180-467d-9e81-bd3baae6fc77 - Name: Amul Milk - Cat: Dairy - Img: https://loremflickr.com/400/400/milk,glass?lock=10
+ID: 6e5f94a2-5e8f-4a04-8837-fef24a899318 - Name: Nestle Munch Milk - Cat: null - Img: https://loremflickr.com/400/400/milk,glass?lock=10
+ID: 7a12ba52-e81a-42ed-b56c-a95b304a2bb8 - Name: Amul Butter - Cat: Dairy - Img: https://loremflickr.com/400/400/butter,dairy?lock=11
+ID: b82852ca-d4d3-4055-9c2f-94892cbc5fe3 - Name: Amul Butter - Cat: null - Img: https://loremflickr.com/400/400/butter,dairy?lock=11
+ID: bfb3cde3-d142-4c20-9605-f5bbafd5609b - Name: Amul Dahi Curd - Cat: null - Img: https://loremflickr.com/400/400/yogurt,dairy?lock=12
+ID: 1ee773c3-14f8-436e-98bd-3b1e78bfad69 - Name: Paneer Fresh - Cat: null - Img: https://loremflickr.com/400/400/cheese,dairy?lock=13
+ID: 4b4371aa-60c1-4b6f-9b1c-3ca8cf3b7972 - Name: Chicken Breast Boneless - Cat: null - Img: https://loremflickr.com/400/400/chicken,meat?lock=29
+ID: c2ec0fb1-758e-4ab0-af99-81351c6c7269 - Name: Eggs Farm Fresh - Cat: null - Img: https://loremflickr.com/400/400/egg,carton?lock=30
+ID: 2c0d6e9f-e7e0-425f-bf62-85125272aed8 - Name: Rohu Fish Fresh - Cat: null - Img: https://loremflickr.com/400/400/fish,fresh?lock=31
+ID: c05b0fce-b850-474a-bdf5-bf0e8b170057 - Name: Prawns Medium - Cat: null - Img: https://loremflickr.com/400/400/prawn,shrimp?lock=32
+ID: ee9b7148-8025-4656-8565-e996d0e1d365 - Name: Mutton Curry Cut - Cat: null - Img: https://loremflickr.com/400/400/meat,mutton?lock=33
+ID: 57d48966-a215-4be8-a937-c9faafbc6a43 - Name: Head & Shoulders Shampoo - Cat: null - Img: https://loremflickr.com/400/400/shampoo,bottle?lock=35
+ID: ef513f88-e622-4219-b72f-e019ddd7496e - Name: Colgate Strong Teeth - Cat: null - Img: https://loremflickr.com/400/400/toothpaste,brush?lock=36
+ID: 5f62dbf1-6b01-425f-aa4d-f42517733db9 - Name: Dettol Hand Wash - Cat: null - Img: https://loremflickr.com/400/400/soap,dispenser?lock=37
+ID: 11dc5e4c-88e8-420a-b894-8a75392e463e - Name: Vaseline Body Lotion - Cat: null - Img: https://loremflickr.com/400/400/lotion,bottle?lock=38
+ID: 5dddf935-46dc-44ac-a2cf-36e8200ab5d6 - Name: Surf Excel Matic Powder - Cat: null - Img: https://loremflickr.com/400/400/detergent,powder?lock=39
+ID: b00f9bfc-e3a5-4557-8e13-515dcfd34ba7 - Name: Vim Dishwash Bar - Cat: null - Img: https://loremflickr.com/400/400/dishwash,soap?lock=40
+ID: 11376ea0-f088-4800-9b3b-9aaf514dfd68 - Name: Harpic Toilet Cleaner - Cat: null - Img: https://loremflickr.com/400/400/toilet,cleaner?lock=41
+ID: b723f865-90dc-4c18-87f1-0ae29d5b1c2d - Name: Good Knight Mosquito Coil - Cat: null - Img: https://loremflickr.com/400/400/mosquito,coil?lock=42
+ID: 09cf0372-026e-4fe0-a791-fc869cec859a - Name: Scotch-Brite Scrub Pad - Cat: null - Img: https://loremflickr.com/400/400/scrub,sponge?lock=43

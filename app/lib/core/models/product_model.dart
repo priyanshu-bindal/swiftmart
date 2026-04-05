@@ -45,11 +45,16 @@ class ProductModel {
       categoryId: json['category_id'] as String?,
       brand: json['brand'] as String?,
       description: json['description'] as String?,
-      mrp: (json['mrp'] as num?)?.toDouble() ?? 0.0,
-      salePrice: (json['sale_price'] as num?)?.toDouble() ?? 0.0,
-      unit: json['unit'] as String?,
-      stockQty: (json['stock_qty'] as num?)?.toInt() ?? 0,
-      images: json['images'] != null ? List<String>.from(json['images']) : [],
+      mrp: (json['mrp'] as num?)?.toDouble() ?? (json['price'] as num?)?.toDouble() ?? 0.0,
+      salePrice: (json['sale_price'] as num?)?.toDouble() ?? (json['discounted_price'] as num?)?.toDouble() ?? (json['mrp'] as num?)?.toDouble() ?? (json['price'] as num?)?.toDouble() ?? 0.0,
+      unit: json['unit'] as String? ?? json['unit_size'] as String?,
+      stockQty: (() {
+        final fromStockQty = (json['stock_qty'] as num?)?.toInt() ?? 0;
+        return fromStockQty > 0 ? fromStockQty : ((json['stock_count'] as num?)?.toInt() ?? 0);
+      })(),
+      images: json['images'] != null 
+          ? List<String>.from(json['images']) 
+          : (json['image_url'] != null ? [json['image_url'].toString()] : []),
       tags: json['tags'] != null ? List<String>.from(json['tags']) : [],
       isActive: json['is_active'] as bool? ?? true,
       createdAt: json['created_at'] != null

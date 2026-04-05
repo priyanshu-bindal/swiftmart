@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 
 import 'app/routes/app_router.dart';
 import 'core/services/remote_config_service.dart';
@@ -36,9 +37,13 @@ void main() async {
   PaintingBinding.instance.imageCache.maximumSizeBytes =
       1024 * 1024 * 100; // 100MB
   PaintingBinding.instance.imageCache.maximumSize = 200; // max 200 images
+  
+  // Clear file cache to ensure broken image links are redownloaded
+  await DefaultCacheManager().emptyCache();
 
   runApp(const ProviderScope(child: SwiftMartApp()));
 }
+
 
 class SwiftMartApp extends ConsumerStatefulWidget {
   const SwiftMartApp({super.key});
