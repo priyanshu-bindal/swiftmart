@@ -61,8 +61,8 @@ class CouponsScreen extends HookConsumerWidget {
             itemCount: coupons.length,
             separatorBuilder: (_, _) => const SizedBox(height: 20),
             itemBuilder: (context, index) {
-              final coupon = coupons[index];
-              return CouponCard(coupon: coupon, fromCart: fromCart)
+              final couponModel = coupons[index];
+              return CouponCard(coupon: couponModel, fromCart: fromCart)
                   .animate(delay: (100 * index).ms)
                   .fadeIn(duration: 400.ms)
                   .slideY(begin: 0.3, end: 0, curve: Curves.easeOutQuart);

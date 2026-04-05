@@ -3,11 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
-import '../../../models/coupon.dart';
+import 'package:app/core/models/coupon_model.dart';
 import '../../../core/theme/app_colors.dart';
 
 class CouponCard extends StatefulWidget {
-  final Coupon coupon;
+  final CouponModel coupon;
   final bool fromCart;
 
   const CouponCard({super.key, required this.coupon, this.fromCart = false});
@@ -122,7 +122,7 @@ class _CouponCardState extends State<CouponCard>
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Min order ₹${widget.coupon.minOrderValue.toInt()}',
+                      'Min OrderModel ₹${widget.coupon.minOrderValue.toInt()}',
                       style: const TextStyle(
                         fontSize: 12,
                         color: AppColors.outline,
@@ -203,14 +203,14 @@ class DashedBorderPainter extends CustomPainter {
     const dashWidth = 4.0;
     const dashSpace = 4.0;
 
-    // Top border
+    // Top Border
     var startX = 0.0;
     while (startX < size.width) {
       canvas.drawLine(Offset(startX, 0), Offset(startX + dashWidth, 0), paint);
       startX += dashWidth + dashSpace;
     }
 
-    // Right border
+    // Right Border
     var startY = 0.0;
     while (startY < size.height) {
       canvas.drawLine(
@@ -221,7 +221,7 @@ class DashedBorderPainter extends CustomPainter {
       startY += dashWidth + dashSpace;
     }
 
-    // Bottom border
+    // Bottom Border
     startX = size.width;
     while (startX > 0) {
       canvas.drawLine(
@@ -232,7 +232,7 @@ class DashedBorderPainter extends CustomPainter {
       startX -= dashWidth + dashSpace;
     }
 
-    // Left border
+    // Left Border
     startY = size.height;
     while (startY > 0) {
       canvas.drawLine(Offset(0, startY), Offset(0, startY - dashWidth), paint);

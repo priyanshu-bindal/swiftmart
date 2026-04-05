@@ -3,6 +3,7 @@ class ProductModel {
   final String name;
   final String? categoryId;
   final String? brand;
+  final String? description;
   final double mrp;
   final double salePrice;
   final String? unit;
@@ -12,7 +13,7 @@ class ProductModel {
   final bool isActive;
   final DateTime? createdAt;
 
-  // To handle joining with Category table
+  // To handle joining with CategoryModel table
   final String? categoryName;
 
   ProductModel({
@@ -20,6 +21,7 @@ class ProductModel {
     required this.name,
     this.categoryId,
     this.brand,
+    this.description,
     required this.mrp,
     required this.salePrice,
     this.unit,
@@ -38,13 +40,14 @@ class ProductModel {
 
   factory ProductModel.fromJson(Map<String, dynamic> json) {
     return ProductModel(
-      id: json['id']?.toString() ?? '',
-      name: json['name']?.toString() ?? '',
-      categoryId: json['category_id']?.toString(),
-      brand: json['brand']?.toString(),
+      id: json['id'] as String,
+      name: json['name'] as String,
+      categoryId: json['category_id'] as String?,
+      brand: json['brand'] as String?,
+      description: json['description'] as String?,
       mrp: (json['mrp'] as num?)?.toDouble() ?? 0.0,
       salePrice: (json['sale_price'] as num?)?.toDouble() ?? 0.0,
-      unit: json['unit']?.toString(),
+      unit: json['unit'] as String?,
       stockQty: (json['stock_qty'] as num?)?.toInt() ?? 0,
       images: json['images'] != null ? List<String>.from(json['images']) : [],
       tags: json['tags'] != null ? List<String>.from(json['tags']) : [],
@@ -64,6 +67,7 @@ class ProductModel {
       'name': name,
       'category_id': categoryId,
       'brand': brand,
+      'description': description,
       'mrp': mrp,
       'sale_price': salePrice,
       'unit': unit,

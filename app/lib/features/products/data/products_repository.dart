@@ -7,11 +7,25 @@ import '../../../../core/services/supabase_service.dart';
 
 class ProductsRepository {
   Future<List<CategoryModel>> getCategories() async {
-    final data = await SupabaseService.client
-        .from(SupabaseConstants.categoriesTable)
+    final data = await Supabase.instance.client
+        .from('categories')
         .select()
         .order('sort_order', ascending: true);
-    return data.map((e) => CategoryModel.fromJson(e)).toList();
+    return (data as List)
+        .map((e) => CategoryModel.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<List<ProductModel>> getProductsByCategoryModel(String categoryId) async {
+    final data = await Supabase.instance.client
+        .from('products')
+        .select()
+        .eq('category_id', categoryId)
+        .eq('is_active', true)
+        .order('name', ascending: true);
+    return (data as List)
+        .map((e) => ProductModel.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
   Future<({List<ProductModel> products, int count})> getProducts({
@@ -95,7 +109,7 @@ class ProductsRepository {
     return data.map((e) => BannerModel.fromJson(e)).toList();
   }
 
-  Future<Map<String, dynamic>> getHomeConfig() async {
+  Future<Map<String, dynamic>> getHomeConfigModel() async {
     final data = await SupabaseService.client
         .from(SupabaseConstants.homeConfigTable)
         .select()

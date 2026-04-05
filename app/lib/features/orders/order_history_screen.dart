@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../providers/order_provider.dart';
-import '../../models/order_model.dart';
+import 'providers/order_provider.dart';
+import '../../core/models/order_model.dart';
 
 class OrderHistoryScreen extends ConsumerStatefulWidget {
   const OrderHistoryScreen({super.key});
@@ -38,7 +38,7 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen>
       backgroundColor: const Color(0xFF1A1A2E), // Background dark
       appBar: AppBar(
         title: const Text(
-          'Order History',
+          'OrderModel History',
           style: TextStyle(color: Colors.white),
         ),
         backgroundColor: const Color(0xFF6C3CE1), // Primary Deep Violet
@@ -120,7 +120,7 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen>
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Order #${order.id.substring(0, 8)}',
+                'OrderModel #${order.id.substring(0, 8)}',
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 16,
@@ -135,7 +135,7 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen>
           ),
           const SizedBox(height: 16),
           Text(
-            '\$${order.totalAmount.toStringAsFixed(2)} • ${order.paymentMethod}',
+            '\$${order.total.toStringAsFixed(2)} • ${order.paymentMethod ?? 'N/A'}',
             style: const TextStyle(color: Colors.white70),
           ),
           const SizedBox(height: 16),
@@ -147,7 +147,7 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen>
           Align(
             alignment: Alignment.centerRight,
             child: Text(
-              _formatDate(order.createdAt),
+              _formatDate(order.createdAt ?? DateTime.now()),
               style: const TextStyle(color: Colors.white54, fontSize: 12),
             ),
           ),

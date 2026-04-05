@@ -20,8 +20,8 @@ class AnimatedSearchBar extends HookWidget {
       final hour = DateTime.now().hour;
       if (hour >= 5 && hour < 12) return 'Search for breakfast items ☀️';
       if (hour >= 12 && hour < 17) return 'Find lunch essentials fast 🍱';
-      if (hour >= 17 && hour < 21) return 'Order snacks & beverages 🍿';
-      return 'Late night cravings? Order now 🌙';
+      if (hour >= 17 && hour < 21) return 'OrderModel snacks & beverages 🍿';
+      return 'Late night cravings? OrderModel now 🌙';
     });
 
     final placeholders = useMemoized(
@@ -29,7 +29,7 @@ class AnimatedSearchBar extends HookWidget {
         timeContext,
         'Search for milk, bread, eggs...',
         'Find fruits, vegetables, snacks...',
-        'Order fresh groceries in minutes ⚡',
+        'OrderModel fresh groceries in minutes ⚡',
         'Get daily essentials fast',
         'Search & save with coupons 🎉',
         'Flash deals ending soon 🔥',
@@ -105,7 +105,7 @@ class AnimatedSearchBar extends HookWidget {
                     : Colors.grey.withValues(alpha: 0.1),
                 width: isFocused.value
                     ? 2
-                    : 1, // Glow effect simulation via border
+                    : 1, // Glow effect simulation via Border
               ),
               boxShadow: [
                 BoxShadow(

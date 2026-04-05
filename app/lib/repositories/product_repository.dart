@@ -1,8 +1,8 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/providers/supabase_provider.dart';
-import '../models/product.dart';
-import '../models/category.dart';
+import 'package:app/core/models/product_model.dart';
+import 'package:app/core/models/category_model.dart';
 
 final productRepositoryProvider = Provider<ProductRepository>((ref) {
   final supabase = ref.watch(supabaseProvider);
@@ -14,10 +14,10 @@ class ProductRepository {
 
   ProductRepository({required this.supabase});
 
-  Future<List<Product>> fetchProducts({
+  Future<List<ProductModel>> fetchProducts({
     String? categoryId,
     String? search,
-    bool? isOrganic,
+    bool? organicOnly,
     String? sort, // 'price_asc' | 'price_desc'
   }) async {
     var baseQuery = supabase
@@ -31,42 +31,42 @@ class ProductRepository {
     if (search != null && search.isNotEmpty) {
       baseQuery = baseQuery.ilike('name', '%$search%');
     }
-    if (isOrganic != null && isOrganic) {
+    if (organicOnly == true) {
       baseQuery = baseQuery.contains('tags', ['organic']);
     }
 
     PostgrestTransformBuilder<PostgrestList> finalQuery;
     if (sort == 'price_asc') {
-      finalQuery = baseQuery.order('price', ascending: true);
+      finalQuery = baseQuery.order('sale_price', ascending: true);
     } else if (sort == 'price_desc') {
-      finalQuery = baseQuery.order('price', ascending: false);
+      finalQuery = baseQuery.order('sale_price', ascending: false);
     } else {
       finalQuery = baseQuery.order('id', ascending: false);
     }
 
     final response = await finalQuery;
     return (response as List<dynamic>)
-        .map((e) => Product.fromJson(e as Map<String, dynamic>))
+        .map((e) => ProductModel.fromJson(e as Map<String, dynamic>))
         .toList();
   }
 
-  Future<Product?> fetchProductById(String id) async {
+  Future<ProductModel?> fetchProductById(String id) async {
     final response = await supabase
         .from('products')
         .select('*, categories(name)')
         .eq('id', id)
         .maybeSingle();
     if (response == null) return null;
-    return Product.fromJson(response);
+    return ProductModel.fromJson(response);
   }
 
-  Future<List<Category>> fetchCategories() async {
+  Future<List<CategoryModel>> fetchCategories() async {
     final response = await supabase
         .from('categories')
         .select()
         .order('sort_order', ascending: true);
     return (response as List<dynamic>)
-        .map((e) => Category.fromJson(e as Map<String, dynamic>))
+        .map((e) => CategoryModel.fromJson(e as Map<String, dynamic>))
         .toList();
   }
 }

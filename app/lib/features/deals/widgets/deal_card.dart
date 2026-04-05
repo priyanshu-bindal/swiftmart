@@ -2,12 +2,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:app/shared/widgets/app_network_image.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import '../../../models/flash_deal.dart';
+import 'package:app/core/models/flash_deal_model.dart';
 import '../../cart/providers/cart_provider.dart';
 import '../../../core/theme/app_colors.dart';
 
 class DealCard extends StatefulHookConsumerWidget {
-  final FlashDeal deal;
+  final FlashDealModel deal;
   const DealCard({super.key, required this.deal});
 
   @override
@@ -49,7 +49,7 @@ class _DealCardState extends ConsumerState<DealCard> {
 
   @override
   Widget build(BuildContext context) {
-    final isSoldOut = widget.deal.soldQty >= widget.deal.maxQty;
+    final isSoldOut = (widget.deal.product?.stockQty ?? 0) <= 0;
 
     final h = _timeLeft.inHours.toString().padLeft(2, '0');
     final m = (_timeLeft.inMinutes % 60).toString().padLeft(2, '0');
@@ -77,8 +77,8 @@ class _DealCardState extends ConsumerState<DealCard> {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(12),
                   child: AppNetworkImage(
-                    imageUrl: widget.deal.product.imagePath.isNotEmpty
-                        ? widget.deal.product.imagePath
+                    imageUrl: widget.deal.product?.primaryImage?.isNotEmpty == true
+                        ? widget.deal.product!.primaryImage!
                         : 'https://via.placeholder.com/90',
                     width: 90,
                     height: 90,
@@ -91,7 +91,7 @@ class _DealCardState extends ConsumerState<DealCard> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        widget.deal.product.name,
+                        widget.deal.product?.name ?? '',
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
@@ -102,7 +102,7 @@ class _DealCardState extends ConsumerState<DealCard> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        widget.deal.product.unit ?? '',
+                        widget.deal.product?.unit ?? '',
                         style: const TextStyle(
                           fontSize: 12,
                           color: AppColors.outline,
@@ -112,7 +112,7 @@ class _DealCardState extends ConsumerState<DealCard> {
                       Row(
                         children: [
                           Text(
-                            '₹${widget.deal.product.price.toStringAsFixed(0)}',
+                            '₹${(widget.deal.product?.salePrice ?? 0).toStringAsFixed(0)}',
                             style: const TextStyle(
                               color: AppColors.outline,
                               decoration: TextDecoration.lineThrough,
@@ -121,7 +121,7 @@ class _DealCardState extends ConsumerState<DealCard> {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            '₹${(widget.deal.product.price * (1 - widget.deal.discountPercent / 100)).toStringAsFixed(0)}',
+                            '₹${((widget.deal.product?.salePrice ?? 0) * (1 - widget.deal.discountPercent / 100)).toStringAsFixed(0)}',
                             style: const TextStyle(
                               color: Color(0xFF6C3CE1),
                               fontWeight: FontWeight.w900,
@@ -180,14 +180,14 @@ class _DealCardState extends ConsumerState<DealCard> {
                                     try {
                                       await ref
                                           .read(cartProvider.notifier)
-                                          .addToCart(widget.deal.product.id);
+                                          .addToCart(widget.deal.product?.id ?? '');
                                       if (context.mounted) {
                                         ScaffoldMessenger.of(
                                           context,
                                         ).showSnackBar(
                                           SnackBar(
                                             content: Text(
-                                              '${widget.deal.product.name} added to cart!',
+                                              '${widget.deal.product?.name ?? "Item"} added to cart!',
                                             ),
                                           ),
                                         );
@@ -200,7 +200,7 @@ class _DealCardState extends ConsumerState<DealCard> {
                                           SnackBar(
                                             backgroundColor: Colors.red,
                                             content: Text(
-                                              'Failed to add ${widget.deal.product.name}: $e',
+                                              'Failed to add ${widget.deal.product?.name ?? "Item"}: $e',
                                             ),
                                           ),
                                         );

@@ -1,7 +1,7 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/providers/supabase_provider.dart';
-import '../models/order.dart';
+import 'package:app/core/models/order_model.dart';
 
 final orderRepositoryProvider = Provider<OrderRepository>((ref) {
   final supabase = ref.watch(supabaseProvider);
@@ -19,7 +19,7 @@ class OrderRepository {
     return id;
   }
 
-  Future<Order> placeOrder({
+  Future<OrderModel> placeOrderModel({
     required String deliveryAddress,
     double? lat,
     double? lng,
@@ -44,7 +44,7 @@ class OrderRepository {
       totalAmount += price * quantity;
     }
 
-    // 3. Insert Order
+    // 3. Insert OrderModel
     final orderRes = await supabase
         .from('orders')
         .insert({
@@ -62,7 +62,7 @@ class OrderRepository {
 
     final insertedOrderId = orderRes['id'];
 
-    // 4. Insert order items
+    // 4. Insert OrderModel items
     final List<Map<String, dynamic>> orderItemsToInsert = cartList.map((item) {
       return {
         'order_id': insertedOrderId,
@@ -71,7 +71,7 @@ class OrderRepository {
         'product_image': item['products']['image_url'],
         'unit_size': item['products']['unit_size'],
         'quantity': item['quantity'],
-        'price_at_order': item['products']['price'],
+        'price_at_OrderModel': item['products']['price'],
       };
     }).toList();
 
@@ -80,11 +80,11 @@ class OrderRepository {
     // 5. Clear cart
     await supabase.from('cart_items').delete().eq('user_id', uid);
 
-    // 6. Return created order
+    // 6. Return created OrderModel
     return fetchOrderById(insertedOrderId as String);
   }
 
-  Future<List<Order>> fetchOrders() async {
+  Future<List<OrderModel>> fetchOrders() async {
     final uid = _getUid();
     final response = await supabase
         .from('orders')
@@ -93,11 +93,11 @@ class OrderRepository {
         .order('placed_at', ascending: false);
 
     return (response as List<dynamic>)
-        .map((e) => Order.fromJson(e as Map<String, dynamic>))
+        .map((e) => OrderModel.fromJson(e as Map<String, dynamic>))
         .toList();
   }
 
-  Future<Order> fetchOrderById(String id) async {
+  Future<OrderModel> fetchOrderById(String id) async {
     final uid = _getUid();
     final response = await supabase
         .from('orders')
@@ -106,6 +106,6 @@ class OrderRepository {
         .eq('user_id', uid)
         .single();
 
-    return Order.fromJson(response);
+    return OrderModel.fromJson(response);
   }
 }

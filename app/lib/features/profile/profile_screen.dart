@@ -5,7 +5,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../providers/auth_provider.dart';
+import '../auth/providers/auth_provider.dart';
 import '../../core/theme/app_colors.dart';
 
 class ProfileScreen extends HookConsumerWidget {
@@ -14,8 +14,9 @@ class ProfileScreen extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authProvider).user;
-    final userName =
-        user != null && user.displayName.isNotEmpty ? user.displayName : 'Priyanshu Bindal';
+    final userName = user != null && user.displayName.isNotEmpty
+        ? user.displayName
+        : 'Priyanshu Bindal';
     final userEmail = user != null && (user.email?.isNotEmpty ?? false)
         ? user.email!
         : 'priyanshu.bindal@premium.com';
@@ -182,7 +183,7 @@ class ProfileScreen extends HookConsumerWidget {
                     iconColor: AppColors.primary,
                     iconBg: AppColors.primaryFixed,
                     label: 'My Orders',
-                    onTap: () => context.push('/order-history'),
+                    onTap: () => context.push('/OrderModel-history'),
                   ),
                 ),
                 const SizedBox(width: 20),

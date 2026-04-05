@@ -2,18 +2,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:riverpod/legacy.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../../models/cart_item.dart';
+import 'package:app/core/models/cart_item_model.dart';
 
-// ── Coupon discount state ────────────────────────────────────────────────────
+// ── CouponModel discount state ────────────────────────────────────────────────────
 /// Holds the flat discount amount (in ₹) from an applied coupon.
 final cartDiscountProvider = StateProvider<double>((ref) => 0.0);
 
-/// Holds the applied coupon code string (null = no coupon).
+/// Holds the applied CouponModel code string (null = no CouponModel).
 final appliedCouponCodeProvider = StateProvider<String?>((ref) => null);
 
 // ── Cart state ───────────────────────────────────────────────────────────────
 
-class CartNotifier extends AsyncNotifier<List<CartItem>> {
+class CartNotifier extends AsyncNotifier<List<CartItemModel>> {
   SupabaseClient get _supabase => Supabase.instance.client;
 
   /// Firebase UID - stored as TEXT in cart_items.user_id.
@@ -21,20 +21,20 @@ class CartNotifier extends AsyncNotifier<List<CartItem>> {
   String? get _uid => _supabase.auth.currentUser?.id;
 
   @override
-  Future<List<CartItem>> build() async {
+  Future<List<CartItemModel>> build() async {
     final uid = _uid;
     if (uid == null) return [];
     return _fetchCart(uid);
   }
 
-  Future<List<CartItem>> _fetchCart(String uid) async {
+  Future<List<CartItemModel>> _fetchCart(String uid) async {
     try {
       final response = await _supabase
           .from('cart_items')
           .select('*, products(*)')
           .eq('user_id', uid);
       return (response as List)
-          .map((json) => CartItem.fromJson(json as Map<String, dynamic>))
+          .map((json) => CartItemModel.fromJson(json as Map<String, dynamic>))
           .toList();
     } catch (e) {
       // Re-throw with a clearer message so the cart error state shows it.
@@ -94,14 +94,14 @@ class CartNotifier extends AsyncNotifier<List<CartItem>> {
   }
 
   /// Convenience: get current items list synchronously.
-  List<CartItem> get currentItems => state.asData?.value ?? [];
+  List<CartItemModel> get currentItems => state.asData?.value ?? [];
 
   /// Decrement or remove via cart item id + current quantity.
-  Future<void> decrementItem(CartItem item) =>
+  Future<void> decrementItem(CartItemModel item) =>
       updateQuantity(item.id, item.quantity - 1);
 }
 
-final cartProvider = AsyncNotifierProvider<CartNotifier, List<CartItem>>(
+final cartProvider = AsyncNotifierProvider<CartNotifier, List<CartItemModel>>(
   CartNotifier.new,
 );
 

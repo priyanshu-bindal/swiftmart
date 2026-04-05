@@ -1,0 +1,43 @@
+Analyzing app...                                                
+
+warning - Unused import: '../deals/providers/flash_deals_provider.dart' - lib\features\home\home_screen.dart:10:8 - unused_import
+   info - Unnecessary use of multiple underscores - lib\features\home\home_screen.dart:152:41 - unnecessary_underscores
+   info - Unnecessary use of multiple underscores - lib\features\home\home_screen.dart:152:45 - unnecessary_underscores
+   info - Unnecessary use of multiple underscores - lib\features\home\home_screen.dart:164:32 - unnecessary_underscores
+   info - Unnecessary use of multiple underscores - lib\features\home\home_screen.dart:176:22 - unnecessary_underscores
+   info - Unnecessary use of multiple underscores - lib\features\home\home_screen.dart:229:111 - unnecessary_underscores
+   info - Unnecessary use of multiple underscores - lib\features\home\home_screen.dart:229:115 - unnecessary_underscores
+   info - Unnecessary use of multiple underscores - lib\features\home\home_screen.dart:254:36 - unnecessary_underscores
+   info - Unnecessary use of multiple underscores - lib\features\home\home_screen.dart:267:26 - unnecessary_underscores
+   info - Unnecessary use of multiple underscores - lib\features\home\home_screen.dart:345:36 - unnecessary_underscores
+   info - Unnecessary use of multiple underscores - lib\features\home\home_screen.dart:352:26 - unnecessary_underscores
+   info - Unnecessary use of multiple underscores - lib\features\home\home_screen.dart:405:24 - unnecessary_underscores
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\home\widgets\animated_bottom_nav.dart:44:33 - deprecated_member_use
+   info - 'scale' is deprecated and shouldn't be used. Use scaleByVector3, scaleByVector4, or scaleByDouble instead - lib\features\home\widgets\animated_bottom_nav.dart:124:27 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\home\widgets\animated_bottom_nav.dart:134:40 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\home\widgets\animated_bottom_nav.dart:205:27 - deprecated_member_use
+   info - Statements in an if should be enclosed in a block - lib\features\home\widgets\animated_bottom_nav.dart:220:17 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\features\home\widgets\animated_bottom_nav.dart:222:17 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\features\home\widgets\animated_bottom_nav.dart:224:17 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\features\home\widgets\animated_bottom_nav.dart:231:17 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\features\home\widgets\animated_bottom_nav.dart:233:17 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\features\home\widgets\animated_bottom_nav.dart:235:17 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\features\home\widgets\animated_bottom_nav.dart:248:17 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\features\home\widgets\animated_bottom_nav.dart:250:17 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\features\home\widgets\animated_bottom_nav.dart:252:17 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\features\home\widgets\animated_bottom_nav.dart:254:17 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\features\home\widgets\animated_bottom_nav.dart:256:17 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\features\home\widgets\animated_bottom_nav.dart:258:17 - curly_braces_in_flow_control_structures
+   info - 'translate' is deprecated and shouldn't be used. Use translateByVector3, translateByVector4, or translateByDouble instead - lib\features\home\widgets\animated_bottom_nav.dart:271:19 - deprecated_member_use
+   info - 'scale' is deprecated and shouldn't be used. Use scaleByVector3, scaleByVector4, or scaleByDouble instead - lib\features\home\widgets\animated_bottom_nav.dart:272:19 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\home\widgets\animated_bottom_nav.dart:294:54 - deprecated_member_use
+   info - The variable name 'CouponModel' isn't a lowerCamelCase identifier - lib\features\offers\coupons_screen.dart:64:21 - non_constant_identifier_names
+  error - The property 'price' can't be unconditionally accessed because the receiver can be 'null' - lib\features\orders\checkout_screen.dart:64:36 - unchecked_use_of_nullable_value
+  error - The property 'name' can't be unconditionally accessed because the receiver can be 'null' - lib\features\orders\checkout_screen.dart:261:50 - unchecked_use_of_nullable_value
+  error - Expected an identifier - lib\features\orders\order_history_screen.dart:138:85 - missing_identifier
+warning - The receiver can't be null, so the null-aware operator '?.' is unnecessary - lib\features\profile\profile_screen.dart:17:55 - invalid_null_aware_operator
+warning - The '!' will have no effect because the receiver can't be null - lib\features\profile\profile_screen.dart:18:27 - unnecessary_non_null_assertion
+  error - Undefined name 'CartItemModel' - lib\shared\widgets\product_card.dart:257:37 - undefined_identifier
+  error - Undefined name 'CartItemModel' - lib\shared\widgets\product_card.dart:260:54 - undefined_identifier
+
+39 issues found. (ran in 12.4s)

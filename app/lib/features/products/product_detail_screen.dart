@@ -9,11 +9,11 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_colors.dart';
 import '../cart/providers/cart_provider.dart';
 import '../../repositories/product_repository.dart';
-import '../../models/product.dart';
+import 'package:app/core/models/product_model.dart';
 
 // No dummy fallback - always load from Supabase
 
-final productDetailProvider = FutureProvider.family<Product?, String>((
+final productDetailProvider = FutureProvider.family<ProductModel?, String>((
   ref,
   id,
 ) {
@@ -30,21 +30,21 @@ class ProductDetailScreen extends HookConsumerWidget {
     // Stage the local count purely for UI before committing to Cart
     final localCount = useState(1);
 
-    // Fetch right Product from repo
+    // Fetch right ProductModel from repo
     final productAsync = ref.watch(productDetailProvider(productId));
 
-    // Show loading or error before the product is ready
+    // Show loading or error before the ProductModel is ready
     if (productAsync.isLoading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
     if (productAsync.hasError || productAsync.value == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Product')),
+        appBar: AppBar(title: const Text('ProductModel')),
         body: Center(
           child: Text(
             productAsync.hasError
                 ? 'Failed to load product:\n${productAsync.error}'
-                : 'Product not found',
+                : 'ProductModel not found',
           ),
         ),
       );
@@ -242,8 +242,8 @@ class ProductDetailScreen extends HookConsumerWidget {
                           ),
                           clipBehavior: Clip.antiAlias,
                           child: Hero(
-                            tag: 'product-${product.id}',
-                            child: product.imagePath.isEmpty
+                            tag: 'ProductModel-${product.id}',
+                            child: (product.primaryImage?.isEmpty ?? true)
                                 ? Container(
                                     color: AppColors.surfaceContainerLow,
                                     child: const Center(
@@ -255,7 +255,7 @@ class ProductDetailScreen extends HookConsumerWidget {
                                     ),
                                   )
                                 : AppNetworkImage(
-                                    imageUrl: product.imagePath,
+                                    imageUrl: product.primaryImage!,
                                     fit: BoxFit.cover,
                                     fadeInDuration: const Duration(
                                       milliseconds: 200,
@@ -284,7 +284,7 @@ class ProductDetailScreen extends HookConsumerWidget {
                                   ),
                           ),
                         ),
-                        if (product.isOrganic)
+                        if (product.tags.contains('organic'))
                           Positioned(
                             top: 16,
                             left: 16,
@@ -320,7 +320,7 @@ class ProductDetailScreen extends HookConsumerWidget {
                   ),
                   const SizedBox(height: 32),
 
-                  // Product Info
+                  // ProductModel Info
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24.0),
                     child: Column(
@@ -382,7 +382,7 @@ class ProductDetailScreen extends HookConsumerWidget {
                           textBaseline: TextBaseline.alphabetic,
                           children: [
                             Text(
-                              '₹${product.price.toInt()}',
+                              '₹${product.salePrice.toInt()}',
                               style: GoogleFonts.manrope(
                                 fontSize: 32,
                                 fontWeight: FontWeight.w900,
@@ -390,7 +390,7 @@ class ProductDetailScreen extends HookConsumerWidget {
                               ),
                             ),
                             const SizedBox(width: 12),
-                            if (product.mrp > product.price)
+                            if (product.mrp > product.salePrice)
                               Text(
                                 '₹${product.mrp.toInt()}',
                                 style: const TextStyle(
@@ -400,7 +400,7 @@ class ProductDetailScreen extends HookConsumerWidget {
                                 ),
                               ),
                             const SizedBox(width: 12),
-                            if (product.mrp > product.price)
+                            if (product.mrp > product.salePrice)
                               Container(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 8,
@@ -422,7 +422,7 @@ class ProductDetailScreen extends HookConsumerWidget {
                           ],
                         ),
 
-                        if (product.cashback > 0)
+                        if (product.discountPercent > 0)
                           Padding(
                             padding: const EdgeInsets.only(top: 16.0),
                             child: Container(
@@ -450,7 +450,7 @@ class ProductDetailScreen extends HookConsumerWidget {
                                   ),
                                   const SizedBox(width: 8),
                                   Text(
-                                    'Get ₹${product.cashback} cashback',
+                                    'Get ₹${product.discountPercent} discountPercent',
                                     style: const TextStyle(
                                       color: AppColors.onSecondaryContainer,
                                       fontSize: 14,

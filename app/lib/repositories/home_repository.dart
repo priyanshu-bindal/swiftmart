@@ -1,7 +1,7 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/providers/supabase_provider.dart';
-import '../models/home_config.dart';
+import 'package:app/core/models/home_config_model.dart';
 
 final homeRepositoryProvider = Provider<HomeRepository>((ref) {
   final supabase = ref.watch(supabaseProvider);
@@ -13,7 +13,7 @@ class HomeRepository {
 
   HomeRepository({required this.supabase});
 
-  Future<HomeConfig?> fetchHomeConfig() async {
+  Future<HomeConfigModel?> fetchHomeConfigModel() async {
     try {
       final response = await supabase
           .from('home_config')
@@ -21,7 +21,7 @@ class HomeRepository {
           .eq('is_active', true)
           .single();
 
-      return HomeConfig.fromJson(response);
+      return HomeConfigModel.fromJson(response);
     } catch (_) {
       return null;
     }

@@ -1,7 +1,7 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/providers/supabase_provider.dart';
-import '../models/cart_item.dart';
+import 'package:app/core/models/cart_item_model.dart';
 
 final cartRepositoryProvider = Provider<CartRepository>((ref) {
   final supabase = ref.watch(supabaseProvider);
@@ -19,7 +19,7 @@ class CartRepository {
     return id;
   }
 
-  Future<List<CartItem>> fetchCart() async {
+  Future<List<CartItemModel>> fetchCart() async {
     try {
       final uid = _getUid();
       final response = await supabase
@@ -28,7 +28,7 @@ class CartRepository {
           .eq('user_id', uid);
 
       return (response as List<dynamic>)
-          .map((e) => CartItem.fromJson(e as Map<String, dynamic>))
+          .map((e) => CartItemModel.fromJson(e as Map<String, dynamic>))
           .toList();
     } catch (_) {
       return [];

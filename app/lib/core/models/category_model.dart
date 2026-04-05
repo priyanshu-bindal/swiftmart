@@ -2,24 +2,24 @@ class CategoryModel {
   final String id;
   final String name;
   final String? iconUrl;
-  final int sortOrder;
+  final int sortOrderModel;
   final String? parentId;
 
   CategoryModel({
     required this.id,
     required this.name,
     this.iconUrl,
-    this.sortOrder = 0,
+    this.sortOrderModel = 0,
     this.parentId,
   });
 
   factory CategoryModel.fromJson(Map<String, dynamic> json) {
     return CategoryModel(
-      id: json['id']?.toString() ?? '',
-      name: json['name']?.toString() ?? '',
-      iconUrl: json['icon_url']?.toString(),
-      sortOrder: (json['sort_order'] as num?)?.toInt() ?? 0,
-      parentId: json['parent_id']?.toString(),
+      id: json['id'] as String,
+      name: json['name'] as String,
+      iconUrl: json['icon_url'] as String?,
+      sortOrderModel: json['sort_OrderModel'] as int? ?? 0,
+      parentId: json['parent_id'] as String?,
     );
   }
 
@@ -28,7 +28,7 @@ class CategoryModel {
       'id': id,
       'name': name,
       'icon_url': iconUrl,
-      'sort_order': sortOrder,
+      'sort_OrderModel': sortOrderModel,
       'parent_id': parentId,
     };
   }

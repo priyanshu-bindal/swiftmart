@@ -8,10 +8,10 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 import '../../core/theme/app_colors.dart';
-import '../../models/category.dart';
-import '../../providers/products_provider.dart';
+import 'package:app/core/models/category_model.dart';
+import 'providers/products_provider.dart';
 
-// ─── Category visual metadata (icon + pastel colors per name) ─────────────────
+// ─── CategoryModel visual metadata (icon + pastel colors per name) ─────────────────
 
 class _CategoryMeta {
   final IconData icon;
@@ -104,9 +104,9 @@ _CategoryMeta _metaFor(String name) {
 
 // ─── Mock skeleton categories ─────────────────────────────────────────────────
 
-List<Category> _mockCategories() => List.generate(
+List<CategoryModel> _mockCategories() => List.generate(
   8,
-  (i) => Category(id: 'mock$i', name: 'Loading...', sortOrder: i),
+  (i) => CategoryModel(id: 'mock$i', name: 'Loading...', sortOrderModel: i),
 );
 
 // ─── Main Screen ──────────────────────────────────────────────────────────────
@@ -173,7 +173,7 @@ class BrowseCategoriesScreen extends HookConsumerWidget {
                 ),
               ),
 
-              // Category grid
+              // CategoryModel grid
               SliverPadding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 sliver: Skeletonizer.sliver(
@@ -276,10 +276,10 @@ class _BrowseAppBar extends StatelessWidget implements PreferredSizeWidget {
   }
 }
 
-// ─── Category Card ────────────────────────────────────────────────────────────
+// ─── CategoryModel Card ────────────────────────────────────────────────────────────
 
 class _CategoryCard extends StatefulWidget {
-  final Category category;
+  final CategoryModel category;
   final int index;
   final bool isLoading;
 
@@ -336,7 +336,9 @@ class _CategoryCardState extends State<_CategoryCard>
         onTapCancel: _onTapCancel,
         onTap: () {
           HapticFeedback.lightImpact();
-          context.push('/category/${widget.category.id}?name=${Uri.encodeComponent(widget.category.name)}');
+          context.push(
+            '/CategoryModel/${widget.category.id}?name=${Uri.encodeComponent(widget.category.name)}',
+          );
         },
         child:
             Container(

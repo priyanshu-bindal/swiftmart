@@ -30,7 +30,9 @@ class AppNetworkImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (imageUrl.isEmpty) {
-      return errorWidget != null ? errorWidget!(context, imageUrl, null) : const Icon(Icons.broken_image);
+      return errorWidget != null
+          ? errorWidget!(context, imageUrl, null)
+          : const Icon(Icons.broken_image);
     }
     return CachedNetworkImage(
       imageUrl: imageUrl,
@@ -41,16 +43,19 @@ class AppNetworkImage extends StatelessWidget {
       fadeOutDuration: fadeOutDuration,
       memCacheWidth: memCacheWidth,
       memCacheHeight: memCacheHeight,
-      placeholder: placeholder ?? (context, url) => const Center(
-        child: SizedBox(
-          width: 20, 
-          height: 20, 
-          child: CircularProgressIndicator(strokeWidth: 2),
-        ),
-      ),
-      errorWidget: errorWidget ?? (context, url, error) => const Center(
-        child: Icon(Icons.broken_image, color: Colors.grey),
-      ),
+      placeholder:
+          placeholder ??
+          (context, url) => const Center(
+            child: SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+          ),
+      errorWidget:
+          errorWidget ??
+          (context, url, error) =>
+              const Center(child: Icon(Icons.broken_image, color: Colors.grey)),
     );
   }
 }

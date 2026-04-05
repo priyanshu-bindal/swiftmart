@@ -18,6 +18,6 @@ class SupabaseConstants {
   static const String deliveryPartnersTable = 'delivery_partners';
 
   // Edge Functions
-  static const String validateCouponFn = 'validate-coupon';
-  static const String placeOrderFn = 'place-order';
+  static const String validateCouponFn = 'validate-CouponModel';
+  static const String placeOrderFn = 'place-OrderModel';
 }

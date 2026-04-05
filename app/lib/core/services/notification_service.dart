@@ -29,10 +29,13 @@ class NotificationService {
       if (token == null) return;
 
       try {
-        await _supabase.from(SupabaseConstants.profileTable).update({
-          'fcm_token': token,
-          'updated_at': DateTime.now().toIso8601String(),
-        }).eq('id', session.user.id);
+        await _supabase
+            .from(SupabaseConstants.profileTable)
+            .update({
+              'fcm_token': token,
+              'updated_at': DateTime.now().toIso8601String(),
+            })
+            .eq('id', session.user.id);
         debugPrint('NotificationService: FCM token synced for user');
       } catch (e) {
         debugPrint('NotificationService: token sync failed: $e');
@@ -76,10 +79,13 @@ class NotificationService {
     if (userId == null) return;
 
     try {
-      await _supabase.from(SupabaseConstants.profileTable).update({
-        'fcm_token': token,
-        'updated_at': DateTime.now().toIso8601String(),
-      }).eq('id', userId);
+      await _supabase
+          .from(SupabaseConstants.profileTable)
+          .update({
+            'fcm_token': token,
+            'updated_at': DateTime.now().toIso8601String(),
+          })
+          .eq('id', userId);
       debugPrint('FCM token refreshed and saved');
     } catch (e) {
       debugPrint('Error saving FCM token: $e');
@@ -93,7 +99,7 @@ class NotificationService {
     final String? type = message.data['type'];
     if (type == 'flash_deal') {
       _router!.go('/flash-deals');
-    } else if (type == 'coupon') {
+    } else if (type == 'CouponModel') {
       _router!.go('/coupons');
     }
   }

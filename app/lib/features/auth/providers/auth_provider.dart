@@ -83,7 +83,10 @@ class AuthNotifier extends Notifier<AppAuthState> {
 
       final user = row != null
           ? UserModel.fromJson(row)
-          : UserModel(id: userId, email: Supabase.instance.client.auth.currentUser?.email);
+          : UserModel(
+              id: userId,
+              email: Supabase.instance.client.auth.currentUser?.email,
+            );
 
       state = AppAuthState(status: AuthStatus.authenticated, user: user);
 
@@ -109,10 +112,7 @@ class AuthNotifier extends Notifier<AppAuthState> {
     try {
       await _auth.signUpWithEmail(email, password, fullName);
     } on AuthException catch (e) {
-      state = AppAuthState(
-        status: AuthStatus.error,
-        errorMessage: e.message,
-      );
+      state = AppAuthState(status: AuthStatus.error, errorMessage: e.message);
     } catch (e) {
       state = AppAuthState(
         status: AuthStatus.error,
@@ -126,10 +126,7 @@ class AuthNotifier extends Notifier<AppAuthState> {
     try {
       await _auth.signInWithEmail(email, password);
     } on AuthException catch (e) {
-      state = AppAuthState(
-        status: AuthStatus.error,
-        errorMessage: e.message,
-      );
+      state = AppAuthState(status: AuthStatus.error, errorMessage: e.message);
     } catch (e) {
       state = AppAuthState(
         status: AuthStatus.error,
@@ -143,10 +140,7 @@ class AuthNotifier extends Notifier<AppAuthState> {
     try {
       await _auth.signInWithGoogle();
     } on AuthException catch (e) {
-      state = AppAuthState(
-        status: AuthStatus.error,
-        errorMessage: e.message,
-      );
+      state = AppAuthState(status: AuthStatus.error, errorMessage: e.message);
     } catch (e) {
       state = AppAuthState(
         status: AuthStatus.error,
@@ -160,10 +154,7 @@ class AuthNotifier extends Notifier<AppAuthState> {
     try {
       await _auth.signOut();
     } on AuthException catch (e) {
-      state = AppAuthState(
-        status: AuthStatus.error,
-        errorMessage: e.message,
-      );
+      state = AppAuthState(status: AuthStatus.error, errorMessage: e.message);
     } catch (e) {
       state = AppAuthState(
         status: AuthStatus.error,
@@ -176,10 +167,7 @@ class AuthNotifier extends Notifier<AppAuthState> {
     try {
       await _auth.resetPasswordForEmail(email);
     } on AuthException catch (e) {
-      state = AppAuthState(
-        status: AuthStatus.error,
-        errorMessage: e.message,
-      );
+      state = AppAuthState(status: AuthStatus.error, errorMessage: e.message);
       rethrow;
     }
   }

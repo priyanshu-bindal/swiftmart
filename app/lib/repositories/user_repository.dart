@@ -1,7 +1,7 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/providers/supabase_provider.dart';
-import '../models/user_profile.dart';
+import 'package:app/core/models/user_profile_model.dart';
 
 final userRepositoryProvider = Provider<UserRepository>((ref) {
   final supabase = ref.watch(supabaseProvider);
@@ -39,7 +39,7 @@ class UserRepository {
     });
   }
 
-  Future<UserProfile?> fetchProfile() async {
+  Future<UserProfileModel?> fetchProfile() async {
     try {
       final uid = _getUid();
       final response = await supabase
@@ -47,7 +47,7 @@ class UserRepository {
           .select()
           .eq('id', uid)
           .single();
-      return UserProfile.fromJson(response);
+      return UserProfileModel.fromJson(response);
     } catch (_) {
       return null;
     }

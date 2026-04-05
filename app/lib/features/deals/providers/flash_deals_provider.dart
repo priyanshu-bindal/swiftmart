@@ -2,16 +2,16 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../../models/flash_deal.dart';
+import 'package:app/core/models/flash_deal_model.dart';
 
 final flashDealsProvider =
-    AsyncNotifierProvider<FlashDealsNotifier, List<FlashDeal>>(() {
+    AsyncNotifierProvider<FlashDealsNotifier, List<FlashDealModel>>(() {
       return FlashDealsNotifier();
     });
 
-class FlashDealsNotifier extends AsyncNotifier<List<FlashDeal>> {
+class FlashDealsNotifier extends AsyncNotifier<List<FlashDealModel>> {
   @override
-  Future<List<FlashDeal>> build() async {
+  Future<List<FlashDealModel>> build() async {
     final supabase = Supabase.instance.client;
     final now = DateTime.now().toIso8601String();
 
@@ -24,7 +24,7 @@ class FlashDealsNotifier extends AsyncNotifier<List<FlashDeal>> {
           .order('end_time', ascending: true);
 
       return (response as List)
-          .map((e) => FlashDeal.fromJson(e as Map<String, dynamic>))
+          .map((e) => FlashDealModel.fromJson(e as Map<String, dynamic>))
           .toList();
     } catch (e) {
       debugPrint('Supabase error: ${e.toString()}');

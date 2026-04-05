@@ -28,7 +28,7 @@ class CheckoutScreen extends HookConsumerWidget {
 
     // ── State ────────────────────────────────────────────────────────────────
     final paymentMethod = useState(_PaymentMethod.upi);
-    final isPlacingOrder = useState(false);
+    final isPlacingOrderModel = useState(false);
 
     // ── Cart data ────────────────────────────────────────────────────────────
     final cartAsync = ref.watch(cartProvider);
@@ -39,11 +39,11 @@ class CheckoutScreen extends HookConsumerWidget {
     final appliedCode = ref.watch(appliedCouponCodeProvider);
     final cartNotifier = ref.read(cartProvider.notifier);
 
-    Future<void> placeOrder() async {
+    Future<void> placeOrderModel() async {
       if (!formKey.currentState!.validate()) return;
       if (cartAsync.value == null || cartAsync.value!.isEmpty) return;
 
-      isPlacingOrder.value = true;
+      isPlacingOrderModel.value = true;
       try {
         final uid = Supabase.instance.client.auth.currentUser?.id;
         if (uid == null) throw Exception('Not authenticated');
@@ -61,7 +61,7 @@ class CheckoutScreen extends HookConsumerWidget {
               (i) => {
                 'product_id': i.productId,
                 'quantity': i.quantity,
-                'price': i.product.price,
+                'price': i.product?.salePrice ?? 0.0,
               },
             )
             .toList();
@@ -99,7 +99,7 @@ class CheckoutScreen extends HookConsumerWidget {
 
           orderId = response['id']?.toString() ?? orderId;
         } catch (e) {
-          debugPrint('Unable to insert order into DB (mock fallback used): $e');
+          debugPrint('Unable to insert OrderModel into DB (mock fallback used): $e');
         }
 
         await cartNotifier.clearCart();
@@ -120,18 +120,18 @@ class CheckoutScreen extends HookConsumerWidget {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Order failed: $e'),
+              content: Text('OrderModel failed: $e'),
               backgroundColor: AppColors.error,
               action: SnackBarAction(
                 label: 'Retry',
                 textColor: Colors.white,
-                onPressed: placeOrder,
+                onPressed: placeOrderModel,
               ),
             ),
           );
         }
       } finally {
-        isPlacingOrder.value = false;
+        isPlacingOrderModel.value = false;
       }
     }
 
@@ -216,10 +216,10 @@ class CheckoutScreen extends HookConsumerWidget {
 
             const SizedBox(height: 28),
 
-            // ── Section 2: Order Summary ────────────────────────────────
+            // ── Section 2: OrderModel Summary ────────────────────────────────
             _SectionHeader(
               icon: LucideIcons.receipt,
-              title: 'Order Summary',
+              title: 'OrderModel Summary',
             ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.1),
             const SizedBox(height: 12),
             cartAsync
@@ -258,7 +258,7 @@ class CheckoutScreen extends HookConsumerWidget {
                               children: [
                                 Expanded(
                                   child: Text(
-                                    item.product.name,
+                                    item.product?.name ?? 'Unknown Item',
                                     style: const TextStyle(
                                       fontWeight: FontWeight.w600,
                                       color: AppColors.onSurface,
@@ -419,8 +419,8 @@ class CheckoutScreen extends HookConsumerWidget {
       ),
       bottomNavigationBar: _PlaceOrderBar(
         total: total,
-        isLoading: isPlacingOrder.value,
-        onPressed: placeOrder,
+        isLoading: isPlacingOrderModel.value,
+        onPressed: placeOrderModel,
       ),
     );
   }
@@ -595,7 +595,7 @@ class _PlaceOrderBar extends StatelessWidget {
                         ),
                       )
                     : Text(
-                        'Place Order  •  ₹${total.toStringAsFixed(0)}',
+                        'Place OrderModel  •  ₹${total.toStringAsFixed(0)}',
                         style: const TextStyle(
                           fontFamily: 'Manrope',
                           fontWeight: FontWeight.w800,

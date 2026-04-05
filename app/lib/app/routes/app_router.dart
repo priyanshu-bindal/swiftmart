@@ -68,14 +68,13 @@ final routerProvider = Provider<GoRouter>((ref) {
         name: 'browseCategories',
         builder: (context, state) => const BrowseCategoriesScreen(),
       ),
-      // /category/:categoryId?name=CategoryName
+      // /CategoryModel/:categoryId?name=CategoryName
       GoRoute(
-        path: '/category/:categoryId',
-        name: 'category',
+        path: '/CategoryModel/:categoryId',
+        name: 'CategoryModel',
         builder: (context, state) {
           final categoryId = state.pathParameters['categoryId']!;
-          final categoryName =
-              state.uri.queryParameters['name'] ?? 'Category';
+          final categoryName = (state.extra as String?) ?? state.uri.queryParameters['name'] ?? 'Category';
           return CategoryScreen(
             categoryId: categoryId,
             categoryName: categoryName,
@@ -83,7 +82,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
-        path: '/product/:productId',
+        path: '/ProductModel/:productId',
         name: 'productDetail',
         builder: (context, state) {
           final id = state.pathParameters['productId']!;
@@ -122,7 +121,7 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       // ── Orders ────────────────────────────────────────────────────────────
       GoRoute(
-        path: '/order-confirm/:orderId',
+        path: '/OrderModel-confirm/:orderId',
         name: 'orderConfirm',
         builder: (context, state) {
           final orderId = state.pathParameters['orderId'];
@@ -130,7 +129,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
-        path: '/order-success',
+        path: '/OrderModel-success',
         name: 'orderSuccess',
         builder: (context, state) {
           final extra = state.extra as Map<String, dynamic>?;
@@ -139,13 +138,13 @@ final routerProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
-        path: '/order-history',
+        path: '/OrderModel-history',
         name: 'orderHistory',
         // userId is fetched inside OrderHistoryScreen from Supabase auth
         builder: (context, state) => const OrderHistoryScreen(),
       ),
       GoRoute(
-        path: '/order-track/:orderId',
+        path: '/OrderModel-track/:orderId',
         name: 'orderTracking',
         builder: (context, state) {
           final orderId = state.pathParameters['orderId'] ?? '';
@@ -154,7 +153,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       // Legacy route without path param (keep for backward compat)
       GoRoute(
-        path: '/order-tracking',
+        path: '/OrderModel-tracking',
         name: 'orderTrackingLegacy',
         builder: (context, state) => const OrderTrackingScreen(orderId: ''),
       ),

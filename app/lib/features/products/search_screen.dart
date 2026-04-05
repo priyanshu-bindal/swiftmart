@@ -9,11 +9,11 @@ import 'package:go_router/go_router.dart';
 
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import '../../widgets/product_card.dart';
-import '../../models/product.dart';
+import 'package:app/shared/widgets/product_card.dart';
+import 'package:app/core/models/product_model.dart';
 import '../../repositories/product_repository.dart';
 
-final searchResultsProvider = FutureProvider.family<List<Product>, String>((
+final searchResultsProvider = FutureProvider.family<List<ProductModel>, String>((
   ref,
   query,
 ) async {
@@ -24,15 +24,15 @@ final searchResultsProvider = FutureProvider.family<List<Product>, String>((
 
 class SearchStorage {
   static const _storage = FlutterSecureStorage();
-  
+
   static Future<void> addRecentSearch(String query) async {
     final list = await getRecentSearches();
     list.remove(query);
     list.insert(0, query);
-    if(list.length > 10) list.removeLast();
+    if (list.length > 10) list.removeLast();
     await _storage.write(key: 'recent_searches', value: jsonEncode(list));
   }
-  
+
   static Future<List<String>> getRecentSearches() async {
     final str = await _storage.read(key: 'recent_searches');
     if (str == null) return [];
@@ -459,7 +459,7 @@ class SearchScreen extends HookConsumerWidget {
     );
   }
 
-  Widget _buildGrid(List<Product> products, {required bool isSkeleton}) {
+  Widget _buildGrid(List<ProductModel> products, {required bool isSkeleton}) {
     return Skeletonizer(
       enabled: isSkeleton,
       child: GridView.builder(
@@ -573,16 +573,17 @@ class SearchScreen extends HookConsumerWidget {
     );
   }
 
-  List<Product> mockProducts() {
+  List<ProductModel> mockProducts() {
     return List.generate(
       4,
-      (index) => Product(
+      (index) => ProductModel(
         id: 'mock$index',
         name: 'Loading...',
-        imagePath: '',
-        price: 9.99,
+        mrp: 9.99,
+        salePrice: 9.99,
+        stockQty: 10,
         unit: '500 g',
-        isOrganic: false,
+        tags: const [],
       ),
     );
   }

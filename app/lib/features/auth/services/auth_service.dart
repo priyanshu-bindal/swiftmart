@@ -105,13 +105,13 @@ class AuthService {
     }
 
     _fcmTokenRefreshSub?.cancel();
-    _fcmTokenRefreshSub = FirebaseMessaging.instance.onTokenRefresh.listen(
-      (newToken) async {
-        final id = _client.auth.currentUser?.id;
-        if (id == null) return;
-        await _persistFcmToken(newToken);
-      },
-    );
+    _fcmTokenRefreshSub = FirebaseMessaging.instance.onTokenRefresh.listen((
+      newToken,
+    ) async {
+      final id = _client.auth.currentUser?.id;
+      if (id == null) return;
+      await _persistFcmToken(newToken);
+    });
   }
 
   Future<void> signOut() async {
@@ -143,10 +143,13 @@ class AuthService {
     if (uid == null) return;
 
     try {
-      await _client.from(SupabaseConstants.profileTable).update({
-        'fcm_token': token,
-        'updated_at': DateTime.now().toIso8601String(),
-      }).eq('id', uid);
+      await _client
+          .from(SupabaseConstants.profileTable)
+          .update({
+            'fcm_token': token,
+            'updated_at': DateTime.now().toIso8601String(),
+          })
+          .eq('id', uid);
     } catch (e) {
       debugPrint('AuthService: could not persist FCM token: $e');
     }

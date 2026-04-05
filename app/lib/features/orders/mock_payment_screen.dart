@@ -28,7 +28,7 @@ class MockPaymentScreen extends HookWidget {
       isProcessing.value = true;
       await Future.delayed(const Duration(seconds: 2));
       if (context.mounted) {
-        context.pushReplacement('/order-success', extra: {'order_id': orderId});
+        context.pushReplacement('/OrderModel-success', extra: {'order_id': orderId});
       }
     }
 
@@ -447,7 +447,7 @@ class _CodPaymentView extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Text(
-            'Pay ₹${total.toStringAsFixed(0)} to the delivery partner when your order arrives.',
+            'Pay ₹${total.toStringAsFixed(0)} to the delivery partner when your OrderModel arrives.',
             textAlign: TextAlign.center,
             style: const TextStyle(
               fontSize: 14,
@@ -491,7 +491,7 @@ class _CodPaymentView extends StatelessWidget {
         const SizedBox(height: 40),
         _AmountDisplay(total: total),
         const SizedBox(height: 32),
-        _PayButton(label: 'Confirm Order', onPay: onConfirm),
+        _PayButton(label: 'Confirm OrderModel', onPay: onConfirm),
       ],
     );
   }

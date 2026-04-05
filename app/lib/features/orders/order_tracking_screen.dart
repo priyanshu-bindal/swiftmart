@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import '../../widgets/eta_countdown.dart';
-import '../../widgets/order_status_timeline.dart';
-import '../../widgets/rider_marker_painter.dart';
+import '../../shared/widgets/eta_countdown.dart';
+import '../../shared/widgets/order_status_timeline.dart';
+import '../../shared/widgets/rider_marker_painter.dart';
 
 class OrderTrackingScreen extends StatefulWidget {
   final String orderId;
@@ -207,7 +207,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen>
                           strokeWidth: 4.0,
                           borderColor: const Color(
                             0xFF00D4AA,
-                          ), // Teal Mint border (glow)
+                          ), // Teal Mint Border (glow)
                           borderStrokeWidth: 1.5,
                           strokeJoin: StrokeJoin.round,
                           strokeCap: StrokeCap.round,
@@ -276,7 +276,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen>
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Order #${widget.orderId}',
+                                'OrderModel #${widget.orderId}',
                                 style: const TextStyle(
                                   color: Colors.white54,
                                   fontSize: 12,

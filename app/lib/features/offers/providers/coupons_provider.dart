@@ -1,9 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../../models/coupon.dart';
+import 'package:app/core/models/coupon_model.dart';
 
-final couponsProvider = FutureProvider<List<Coupon>>((ref) async {
+final couponsProvider = FutureProvider<List<CouponModel>>((ref) async {
   final supabase = Supabase.instance.client;
   final now = DateTime.now().toIso8601String();
 
@@ -16,13 +16,13 @@ final couponsProvider = FutureProvider<List<Coupon>>((ref) async {
         .order('value', ascending: false);
 
     return (response as List)
-        .map((e) => Coupon.fromJson(e as Map<String, dynamic>))
+        .map((e) => CouponModel.fromJson(e as Map<String, dynamic>))
         .toList();
   } catch (e) {
     debugPrint('Supabase coupons error: \$e');
     // Fallback dummy data
     return [
-      Coupon(
+      CouponModel(
         id: '1',
         code: 'WELCOME50',
         discountType: 'flat',
@@ -32,7 +32,7 @@ final couponsProvider = FutureProvider<List<Coupon>>((ref) async {
         usedCount: 0,
         validUntil: DateTime.now().add(const Duration(days: 30)),
       ),
-      Coupon(
+      CouponModel(
         id: '2',
         code: 'FRESH20',
         discountType: 'percent',
@@ -42,7 +42,7 @@ final couponsProvider = FutureProvider<List<Coupon>>((ref) async {
         usedCount: 5,
         validUntil: DateTime.now().add(const Duration(days: 7)),
       ),
-      Coupon(
+      CouponModel(
         id: '3',
         code: 'TRYME100',
         discountType: 'flat',

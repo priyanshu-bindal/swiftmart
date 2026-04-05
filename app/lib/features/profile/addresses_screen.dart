@@ -10,21 +10,22 @@ import '../../core/theme/app_colors.dart';
 
 // ── Provider ──────────────────────────────────────────────────────────────────
 
-final addressesProvider = FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
-  final uid = Supabase.instance.client.auth.currentUser?.id;
-  if (uid == null) return [];
-  try {
-    final data = await Supabase.instance.client
-        .from('addresses')
-        .select()
-        .eq('user_id', uid)
-        .order('is_default', ascending: false);
-    return List<Map<String, dynamic>>.from(data as List);
-  } catch (e, st) {
-    debugPrint('addressesProvider error: $e\n$st');
-    return [];
-  }
-});
+final addressesProvider =
+    FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
+      final uid = Supabase.instance.client.auth.currentUser?.id;
+      if (uid == null) return [];
+      try {
+        final data = await Supabase.instance.client
+            .from('addresses')
+            .select()
+            .eq('user_id', uid)
+            .order('is_default', ascending: false);
+        return List<Map<String, dynamic>>.from(data as List);
+      } catch (e, st) {
+        debugPrint('addressesProvider error: $e\n$st');
+        return [];
+      }
+    });
 
 // ── Screen ────────────────────────────────────────────────────────────────────
 
@@ -54,7 +55,10 @@ class AddressesScreen extends ConsumerWidget {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.add_circle_outline, color: AppColors.primary),
+            icon: const Icon(
+              Icons.add_circle_outline,
+              color: AppColors.primary,
+            ),
             onPressed: () => _showAddAddressSheet(context, ref),
             tooltip: 'Add Address',
           ),
@@ -67,7 +71,11 @@ class AddressesScreen extends ConsumerWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.location_off_outlined, size: 72, color: Colors.grey.shade300),
+                  Icon(
+                    Icons.location_off_outlined,
+                    size: 72,
+                    color: Colors.grey.shade300,
+                  ),
                   const SizedBox(height: 16),
                   Text(
                     'No addresses saved',
@@ -87,7 +95,9 @@ class AddressesScreen extends ConsumerWidget {
                     onPressed: () => _showAddAddressSheet(context, ref),
                     icon: const Icon(Icons.add_location_alt_outlined),
                     label: const Text('Add Address'),
-                    style: FilledButton.styleFrom(backgroundColor: AppColors.primary),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                    ),
                   ),
                 ],
               ),
@@ -103,17 +113,21 @@ class AddressesScreen extends ConsumerWidget {
                   onPressed: () => _showAddAddressSheet(context, ref),
                   icon: const Icon(Icons.add_circle_outline),
                   label: const Text('Add New Address'),
-                  style: TextButton.styleFrom(foregroundColor: AppColors.primary),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.primary,
+                  ),
                 );
               }
               final addr = addresses[index];
               final isDefault = addr['is_default'] == true;
               return _AddressCard(
-                address: addr,
-                isDefault: isDefault,
-                onSetDefault: () => _setDefault(context, ref, addr['id'].toString()),
-                onDelete: () => _deleteAddress(context, ref, addr['id'].toString()),
-              )
+                    address: addr,
+                    isDefault: isDefault,
+                    onSetDefault: () =>
+                        _setDefault(context, ref, addr['id'].toString()),
+                    onDelete: () =>
+                        _deleteAddress(context, ref, addr['id'].toString()),
+                  )
                   .animate(delay: Duration(milliseconds: 60 * index))
                   .fadeIn(duration: 300.ms)
                   .slideY(begin: 0.06, end: 0, curve: Curves.easeOut);
@@ -132,12 +146,18 @@ class AddressesScreen extends ConsumerWidget {
             ),
           ),
         ),
-        error: (e, _) => Center(child: Text('Error: $e', style: const TextStyle(color: Colors.red))),
+        error: (e, _) => Center(
+          child: Text('Error: $e', style: const TextStyle(color: Colors.red)),
+        ),
       ),
     );
   }
 
-  Future<void> _setDefault(BuildContext context, WidgetRef ref, String addressId) async {
+  Future<void> _setDefault(
+    BuildContext context,
+    WidgetRef ref,
+    String addressId,
+  ) async {
     final uid = Supabase.instance.client.auth.currentUser?.id;
     if (uid == null) return;
     try {
@@ -155,20 +175,30 @@ class AddressesScreen extends ConsumerWidget {
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to set default: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('Failed to set default: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
   }
 
-  Future<void> _deleteAddress(BuildContext context, WidgetRef ref, String addressId) async {
+  Future<void> _deleteAddress(
+    BuildContext context,
+    WidgetRef ref,
+    String addressId,
+  ) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('Delete Address'),
         content: const Text('Are you sure you want to delete this address?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
             style: FilledButton.styleFrom(backgroundColor: Colors.red),
@@ -179,12 +209,18 @@ class AddressesScreen extends ConsumerWidget {
     );
     if (confirm != true) return;
     try {
-      await Supabase.instance.client.from('addresses').delete().eq('id', addressId);
+      await Supabase.instance.client
+          .from('addresses')
+          .delete()
+          .eq('id', addressId);
       unawaited(ref.refresh(addressesProvider.future));
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to delete: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('Failed to delete: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
@@ -195,7 +231,8 @@ class AddressesScreen extends ConsumerWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => _AddAddressSheet(onSaved: () => ref.refresh(addressesProvider)),
+      builder: (_) =>
+          _AddAddressSheet(onSaved: () => ref.refresh(addressesProvider)),
     );
   }
 }
@@ -225,7 +262,11 @@ class _AddressCard extends StatelessWidget {
             ? Border.all(color: AppColors.primary, width: 2)
             : Border.all(color: Colors.grey.shade200),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2)),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
         ],
       ),
       child: Padding(
@@ -244,12 +285,18 @@ class _AddressCard extends StatelessWidget {
                 Text(
                   address['label']?.toString() ??
                       _labelForType(address['address_type']?.toString()),
-                  style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                  ),
                 ),
                 if (isDefault) ...[
                   const SizedBox(width: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
@@ -270,7 +317,11 @@ class _AddressCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               _formatAddress(address),
-              style: TextStyle(color: Colors.grey.shade600, fontSize: 13, height: 1.4),
+              style: TextStyle(
+                color: Colors.grey.shade600,
+                fontSize: 13,
+                height: 1.4,
+              ),
             ),
             const SizedBox(height: 12),
             Row(
@@ -283,12 +334,19 @@ class _AddressCard extends StatelessWidget {
                       padding: EdgeInsets.zero,
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
-                    child: const Text('Set as Default', style: TextStyle(fontSize: 13)),
+                    child: const Text(
+                      'Set as Default',
+                      style: TextStyle(fontSize: 13),
+                    ),
                   ),
                 const Spacer(),
                 IconButton(
                   onPressed: onDelete,
-                  icon: const Icon(Icons.delete_outline, color: Colors.red, size: 20),
+                  icon: const Icon(
+                    Icons.delete_outline,
+                    color: Colors.red,
+                    size: 20,
+                  ),
                   tooltip: 'Delete',
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
@@ -327,11 +385,15 @@ class _AddressCard extends StatelessWidget {
 
   String _formatAddress(Map<String, dynamic> addr) {
     final parts = <String>[
-      if (addr['address_line1']?.toString().isNotEmpty == true) addr['address_line1'].toString(),
-      if (addr['address_line2']?.toString().isNotEmpty == true) addr['address_line2'].toString(),
+      if (addr['address_line1']?.toString().isNotEmpty == true)
+        addr['address_line1'].toString(),
+      if (addr['address_line2']?.toString().isNotEmpty == true)
+        addr['address_line2'].toString(),
       if (addr['city']?.toString().isNotEmpty == true) addr['city'].toString(),
-      if (addr['state']?.toString().isNotEmpty == true) addr['state'].toString(),
-      if (addr['pincode']?.toString().isNotEmpty == true) addr['pincode'].toString(),
+      if (addr['state']?.toString().isNotEmpty == true)
+        addr['state'].toString(),
+      if (addr['pincode']?.toString().isNotEmpty == true)
+        addr['pincode'].toString(),
     ];
     return parts.join(', ');
   }
@@ -386,7 +448,8 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
             children: [
               Center(
                 child: Container(
-                  width: 40, height: 4,
+                  width: 40,
+                  height: 4,
                   decoration: BoxDecoration(
                     color: Colors.grey.shade300,
                     borderRadius: BorderRadius.circular(2),
@@ -394,7 +457,13 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
                 ),
               ),
               const SizedBox(height: 20),
-              Text('Add New Address', style: GoogleFonts.manrope(fontSize: 18, fontWeight: FontWeight.w800)),
+              Text(
+                'Add New Address',
+                style: GoogleFonts.manrope(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
               const SizedBox(height: 20),
               // Type selector
               Row(
@@ -406,15 +475,22 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
                       onTap: () => setState(() => _type = t),
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 150),
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
                         decoration: BoxDecoration(
-                          color: selected ? AppColors.primary : Colors.grey.shade100,
+                          color: selected
+                              ? AppColors.primary
+                              : Colors.grey.shade100,
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
                           t[0].toUpperCase() + t.substring(1),
                           style: TextStyle(
-                            color: selected ? Colors.white : Colors.grey.shade700,
+                            color: selected
+                                ? Colors.white
+                                : Colors.grey.shade700,
                             fontWeight: FontWeight.w600,
                             fontSize: 13,
                           ),
@@ -429,18 +505,28 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
               const SizedBox(height: 12),
               _field(_line2, 'Address Line 2 (optional)'),
               const SizedBox(height: 12),
-              Row(children: [
-                Expanded(child: _field(_city, 'City*', required: true)),
-                const SizedBox(width: 12),
-                Expanded(child: _field(_state, 'State*', required: true)),
-              ]),
+              Row(
+                children: [
+                  Expanded(child: _field(_city, 'City*', required: true)),
+                  const SizedBox(width: 12),
+                  Expanded(child: _field(_state, 'State*', required: true)),
+                ],
+              ),
               const SizedBox(height: 12),
-              _field(_pincode, 'Pincode*', required: true, keyboardType: TextInputType.number),
+              _field(
+                _pincode,
+                'Pincode*',
+                required: true,
+                keyboardType: TextInputType.number,
+              ),
               const SizedBox(height: 12),
               SwitchListTile(
                 value: _isDefault,
                 onChanged: (v) => setState(() => _isDefault = v),
-                title: const Text('Set as default address', style: TextStyle(fontSize: 14)),
+                title: const Text(
+                  'Set as default address',
+                  style: TextStyle(fontSize: 14),
+                ),
                 activeThumbColor: AppColors.primary,
                 contentPadding: EdgeInsets.zero,
               ),
@@ -452,11 +538,26 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
                   onPressed: _saving ? null : _save,
                   style: FilledButton.styleFrom(
                     backgroundColor: AppColors.primary,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
                   ),
                   child: _saving
-                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : const Text('Save Address', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text(
+                          'Save Address',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                 ),
               ),
             ],
@@ -466,22 +567,38 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
     );
   }
 
-  Widget _field(TextEditingController ctrl, String label, {
+  Widget _field(
+    TextEditingController ctrl,
+    String label, {
     bool required = false,
     TextInputType? keyboardType,
   }) {
     return TextFormField(
       controller: ctrl,
       keyboardType: keyboardType,
-      validator: required ? (v) => (v == null || v.trim().isEmpty) ? 'Required' : null : null,
+      validator: required
+          ? (v) => (v == null || v.trim().isEmpty) ? 'Required' : null
+          : null,
       decoration: InputDecoration(
         labelText: label,
         filled: true,
         fillColor: Colors.grey.shade50,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.primary, width: 1.5)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 12,
+        ),
       ),
     );
   }
@@ -490,7 +607,10 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _saving = true);
     final uid = Supabase.instance.client.auth.currentUser?.id;
-    if (uid == null) { setState(() => _saving = false); return; }
+    if (uid == null) {
+      setState(() => _saving = false);
+      return;
+    }
 
     try {
       if (_isDefault) {
@@ -515,7 +635,10 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
       setState(() => _saving = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to save: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('Failed to save: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }

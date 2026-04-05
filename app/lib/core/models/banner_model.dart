@@ -2,7 +2,7 @@ class BannerModel {
   final String id;
   final String? imageUrl;
   final String? ctaUrl;
-  final int displayOrder;
+  final int displayOrderModel;
   final bool isFestive;
   final bool isActive;
 
@@ -10,7 +10,7 @@ class BannerModel {
     required this.id,
     this.imageUrl,
     this.ctaUrl,
-    this.displayOrder = 0,
+    this.displayOrderModel = 0,
     this.isFestive = false,
     this.isActive = true,
   });
@@ -20,7 +20,7 @@ class BannerModel {
       id: json['id']?.toString() ?? '',
       imageUrl: json['image_url']?.toString(),
       ctaUrl: json['cta_url']?.toString(),
-      displayOrder: (json['display_order'] as num?)?.toInt() ?? 0,
+      displayOrderModel: (json['display_OrderModel'] as num?)?.toInt() ?? 0,
       isFestive: json['is_festive'] as bool? ?? false,
       isActive: json['is_active'] as bool? ?? true,
     );
@@ -31,7 +31,7 @@ class BannerModel {
       'id': id,
       'image_url': imageUrl,
       'cta_url': ctaUrl,
-      'display_order': displayOrder,
+      'display_OrderModel': displayOrderModel,
       'is_festive': isFestive,
       'is_active': isActive,
     };

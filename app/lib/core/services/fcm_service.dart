@@ -64,10 +64,13 @@ class FcmService {
       final uid = Supabase.instance.client.auth.currentUser?.id;
       if (uid == null) return;
       try {
-        await Supabase.instance.client.from(SupabaseConstants.profileTable).update({
-          'fcm_token': newToken,
-          'updated_at': DateTime.now().toIso8601String(),
-        }).eq('id', uid);
+        await Supabase.instance.client
+            .from(SupabaseConstants.profileTable)
+            .update({
+              'fcm_token': newToken,
+              'updated_at': DateTime.now().toIso8601String(),
+            })
+            .eq('id', uid);
       } catch (_) {}
     });
   }

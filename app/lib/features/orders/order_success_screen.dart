@@ -107,7 +107,7 @@ class OrderSuccessScreen extends HookWidget {
               .fadeIn(duration: 200.ms),
           const SizedBox(height: 24),
           const Text(
-            'Order Confirmed!',
+            'OrderModel Confirmed!',
             style: TextStyle(
               fontFamily: 'Manrope',
               fontWeight: FontWeight.bold,
@@ -184,7 +184,7 @@ class OrderSuccessScreen extends HookWidget {
                           const SizedBox(height: 28),
 
                           const Text(
-                            'Order Placed! 🎉',
+                            'OrderModel Placed! 🎉',
                             style: TextStyle(
                               fontFamily: 'Manrope',
                               fontWeight: FontWeight.w900,
@@ -212,7 +212,7 @@ class OrderSuccessScreen extends HookWidget {
                               Expanded(
                                 child: _InfoCard(
                                   icon: LucideIcons.receipt,
-                                  title: 'Order ID',
+                                  title: 'OrderModel ID',
                                   value: orderId != null
                                       ? '#${orderId.substring(0, min(8, orderId.length)).toUpperCase()}'
                                       : '#—',
@@ -277,7 +277,7 @@ class OrderSuccessScreen extends HookWidget {
                                       ),
                                       SizedBox(height: 4),
                                       Text(
-                                        'Your order is being packed and will be dispatched shortly',
+                                        'Your OrderModel is being packed and will be dispatched shortly',
                                         style: TextStyle(
                                           fontSize: 12,
                                           color: AppColors.onSurfaceVariant,
@@ -301,17 +301,17 @@ class OrderSuccessScreen extends HookWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Track Order (primary) — pulses after 3s
+                      // Track OrderModel (primary) — pulses after 3s
                       AnimatedBuilder(
                         animation: const AlwaysStoppedAnimation(0),
                         builder: (context, _) {
                           Widget btn = SizedBox(
                             height: 56,
                             child: FilledButton.icon(
-                              onPressed: () => context.push('/order-tracking'),
+                              onPressed: () => context.push('/OrderModel-tracking'),
                               icon: const Icon(LucideIcons.mapPin, size: 18),
                               label: const Text(
-                                'Track Order',
+                                'Track OrderModel',
                                 style: TextStyle(
                                   fontFamily: 'Manrope',
                                   fontWeight: FontWeight.w800,

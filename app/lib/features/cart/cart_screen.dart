@@ -9,7 +9,7 @@ import 'package:app/shared/widgets/app_network_image.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/theme/app_colors.dart';
-import '../../models/cart_item.dart';
+import 'package:app/core/models/cart_item_model.dart';
 import 'providers/cart_provider.dart';
 
 class CartScreen extends HookConsumerWidget {
@@ -23,7 +23,7 @@ class CartScreen extends HookConsumerWidget {
     final discount = ref.watch(cartDiscountProvider);
     final total = ref.watch(cartTotalProvider);
     final appliedCode = ref.watch(appliedCouponCodeProvider);
-    final isValidatingCoupon = useState(false);
+    final isValidatingCouponModel = useState(false);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -154,7 +154,7 @@ class CartScreen extends HookConsumerWidget {
             discount: discount,
             total: total,
             appliedCode: appliedCode,
-            isValidatingCoupon: isValidatingCoupon,
+            isValidatingCouponModel: isValidatingCouponModel,
           );
         },
       ),
@@ -241,13 +241,13 @@ class _EmptyCartView extends StatelessWidget {
 // ── Scrollable cart list + sticky bottom bar ─────────────────────────────────
 
 class _CartListView extends HookConsumerWidget {
-  final List<CartItem> items;
+  final List<CartItemModel> items;
   final double subtotal;
   final double deliveryFee;
   final double discount;
   final double total;
   final String? appliedCode;
-  final ValueNotifier<bool> isValidatingCoupon;
+  final ValueNotifier<bool> isValidatingCouponModel;
 
   const _CartListView({
     required this.items,
@@ -256,7 +256,7 @@ class _CartListView extends HookConsumerWidget {
     required this.discount,
     required this.total,
     required this.appliedCode,
-    required this.isValidatingCoupon,
+    required this.isValidatingCouponModel,
   });
 
   Future<void> _handleCouponNavigation(
@@ -272,7 +272,7 @@ class _CartListView extends HookConsumerWidget {
     final uid = Supabase.instance.client.auth.currentUser?.id;
     if (uid == null) return;
 
-    isValidatingCoupon.value = true;
+    isValidatingCouponModel.value = true;
     try {
       // Direct client-side validation logic since Edge Function is not deployed
       final response = await Supabase.instance.client
@@ -283,7 +283,7 @@ class _CartListView extends HookConsumerWidget {
           .maybeSingle();
 
       if (response == null) {
-        throw Exception('Invalid or expired coupon');
+        throw Exception('Invalid or expired CouponModel');
       }
 
       final now = DateTime.now();
@@ -295,23 +295,25 @@ class _CartListView extends HookConsumerWidget {
           : null;
       final maxUses = response['max_uses'] as int? ?? 100;
       final usedCount = response['used_count'] as int? ?? 0;
-      final minOrder = (response['min_order'] as num?)?.toDouble() ?? 0.0;
+      final minOrderModel = (response['min_OrderModel'] as num?)?.toDouble() ?? 0.0;
       final type = response['type'] as String? ?? 'flat';
       final value = (response['value'] as num?)?.toDouble() ?? 0.0;
 
       if (validFrom != null && now.isBefore(validFrom)) {
-        throw Exception('Coupon not yet active');
+        throw Exception('CouponModel not yet active');
       }
       if (validTo != null && now.isAfter(validTo)) {
-        throw Exception('Coupon expired');
+        throw Exception('CouponModel expired');
       }
-      if (usedCount >= maxUses) { throw Exception('Coupon limit reached'); }
-      if (subtotal < minOrder) {
-        throw Exception('Minimum order value should be ₹$minOrder');
+      if (usedCount >= maxUses) {
+        throw Exception('CouponModel limit reached');
+      }
+      if (subtotal < minOrderModel) {
+        throw Exception('Minimum OrderModel value should be ₹$minOrderModel');
       }
 
       double discountVal = 0.0;
-      if (type == 'flat' || type == 'cashback') {
+      if (type == 'flat' || type == 'discountPercent') {
         discountVal = value;
       } else if (type == 'percent') {
         discountVal = (subtotal * value) / 100;
@@ -326,8 +328,8 @@ class _CartListView extends HookConsumerWidget {
           SnackBar(
             content: Text(
               discountVal > 0
-                  ? 'Coupon applied! You save ₹${discountVal.toStringAsFixed(0)}'
-                  : 'Coupon applied!',
+                  ? 'CouponModel applied! You save ₹${discountVal.toStringAsFixed(0)}'
+                  : 'CouponModel applied!',
             ),
             backgroundColor: AppColors.secondary,
           ),
@@ -343,7 +345,7 @@ class _CartListView extends HookConsumerWidget {
         );
       }
     } finally {
-      isValidatingCoupon.value = false;
+      isValidatingCouponModel.value = false;
     }
   }
 
@@ -394,9 +396,9 @@ class _CartListView extends HookConsumerWidget {
 
             const SizedBox(height: 8),
 
-            // ── Coupon row ───────────────────────────────────────────────
+            // ── CouponModel row ───────────────────────────────────────────────
             InkWell(
-              onTap: isValidatingCoupon.value
+              onTap: isValidatingCouponModel.value
                   ? null
                   : () => _handleCouponNavigation(context, ref),
               borderRadius: BorderRadius.circular(16),
@@ -440,7 +442,7 @@ class _CartListView extends HookConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            appliedCode ?? 'Apply Coupon',
+                            appliedCode ?? 'Apply CouponModel',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               color: appliedCode != null
@@ -450,7 +452,7 @@ class _CartListView extends HookConsumerWidget {
                           ),
                           Text(
                             appliedCode != null
-                                ? 'Saving ₹${discount.toStringAsFixed(0)} on this order'
+                                ? 'Saving ₹${discount.toStringAsFixed(0)} on this OrderModel'
                                 : 'Tap to view available offers',
                             style: const TextStyle(
                               fontSize: 12,
@@ -461,7 +463,7 @@ class _CartListView extends HookConsumerWidget {
                         ],
                       ),
                     ),
-                    if (isValidatingCoupon.value)
+                    if (isValidatingCouponModel.value)
                       const SizedBox(
                         width: 20,
                         height: 20,
@@ -515,7 +517,7 @@ class _CartListView extends HookConsumerWidget {
 // ── Single cart item row ─────────────────────────────────────────────────────
 
 class _CartItemRow extends HookConsumerWidget {
-  final CartItem item;
+  final CartItemModel item;
   final CartNotifier notifier;
 
   const _CartItemRow({required this.item, required this.notifier});
@@ -549,7 +551,7 @@ class _CartItemRow extends HookConsumerWidget {
       ),
       child: Row(
         children: [
-          // Product image
+          // ProductModel image
           Container(
             width: 88,
             height: 88,
@@ -558,9 +560,9 @@ class _CartItemRow extends HookConsumerWidget {
               borderRadius: BorderRadius.circular(14),
             ),
             clipBehavior: Clip.antiAlias,
-            child: item.product.imagePath.isNotEmpty
+            child: item.product?.primaryImage?.isNotEmpty == true
                 ? AppNetworkImage(
-                    imageUrl: item.product.imagePath,
+                    imageUrl: item.product!.primaryImage!,
                     fit: BoxFit.cover,
                     errorWidget: (context, url, error) =>
                         const Icon(LucideIcons.image, color: AppColors.outline),
@@ -578,7 +580,7 @@ class _CartItemRow extends HookConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  item.product.name,
+                  item.product?.name ?? 'Unknown item',
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
@@ -588,11 +590,11 @@ class _CartItemRow extends HookConsumerWidget {
                     color: AppColors.onSurface,
                   ),
                 ),
-                if (item.product.unit != null && item.product.unit!.isNotEmpty)
+                if (item.product?.unit != null && item.product!.unit!.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.only(top: 2),
                     child: Text(
-                      item.product.unit!,
+                      item.product!.unit!,
                       style: const TextStyle(
                         fontSize: 12,
                         color: AppColors.onSurfaceVariant,
@@ -604,7 +606,7 @@ class _CartItemRow extends HookConsumerWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      '₹${item.product.price.toStringAsFixed(0)}',
+                      '₹${(item.product?.salePrice ?? 0).toStringAsFixed(0)}',
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
@@ -746,7 +748,7 @@ class _SummaryBar extends StatelessWidget {
                 if (discount > 0) ...[
                   const SizedBox(height: 6),
                   _SummaryRow(
-                    'Coupon Discount',
+                    'CouponModel Discount',
                     '-₹${discount.toStringAsFixed(0)}',
                     valueColor: AppColors.secondary,
                   ),
