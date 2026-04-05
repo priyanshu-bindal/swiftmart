@@ -138,6 +138,6 @@ This project is licensed under the MIT License.
 ## 💡 Author
 
 **Priyanshu Bindal**
-| Aspiring Software Developer
+Aspiring Software Developer
 
-
+---
