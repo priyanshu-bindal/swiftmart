@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../shared/widgets/product_card.dart';
 import '../../shared/widgets/app_network_image.dart';
+import '../orders/widgets/active_order_banner.dart';
 
 
 // Provider to fetch banners
@@ -141,7 +142,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildAppBar(context),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
+                const ActiveOrderBanner(),
+                const SizedBox(height: 4),
                 _buildSearchBar(context),
                 const SizedBox(height: 24),
                 _buildHeroBanner(),
