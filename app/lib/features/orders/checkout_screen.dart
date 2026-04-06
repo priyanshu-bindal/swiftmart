@@ -48,45 +48,50 @@ class CheckoutScreen extends HookConsumerWidget {
         final uid = Supabase.instance.client.auth.currentUser?.id;
         if (uid == null) throw Exception('Not authenticated');
 
-        final cartItemsPayload = cartAsync.value!
-            .map((i) => {
-                  'product_id': i.productId,
-                  'name': i.product?.name ?? '',
-                  'quantity': i.quantity,
-                  'unit_price': i.product?.salePrice ?? 0.0,
-                  'subtotal': i.totalPrice,
-                  'image_url': i.product?.primaryImage ?? '',
-                })
-            .toList();
-
         final methodStr = switch (paymentMethod.value) {
           _PaymentMethod.cod => 'cod',
           _PaymentMethod.upi => 'upi',
           _PaymentMethod.card => 'card',
         };
 
-        String orderId = 'ORD-MOCK-123';
-        try {
-          final response =
-              await Supabase.instance.client.from('orders').insert({
-            'user_id': uid,
-            'status': 'PENDING',
-            'items': cartItemsPayload,
-            'subtotal': subtotal,
-            'discount': discount,
-            'total': total,
-            'coupon_code': appliedCode,
-            'payment_method': methodStr,
-            'address_id': selectedAddress.id,
-            'delivery_address': {
-              'label': selectedAddress.label,
-              'full_address': selectedAddress.formattedAddress,
-            },
-          }).select().single();
+        // 1) Insert order row
+        final orderResponse =
+            await Supabase.instance.client.from('orders').insert({
+          'user_id': uid,
+          'status': 'CONFIRMED',
+          'subtotal': subtotal,
+          'delivery_fee': deliveryFee,
+          'discount_amount': discount,
+          'total': total,
+          'coupon_code': appliedCode,
+          'payment_method': methodStr,
+          'address_id': selectedAddress.id,
+          'delivery_address': {
+            'label': selectedAddress.label,
+            'full_address': selectedAddress.formattedAddress,
+          },
+        }).select().single();
 
-          orderId = response['id']?.toString() ?? orderId;
-        } catch (e) {
-          debugPrint('Order insert error (mock fallback): $e');
+        final orderId = orderResponse['id']?.toString() ?? '';
+
+        // 2) Insert order items into the order_items table
+        if (orderId.isNotEmpty) {
+          final orderItemsPayload = cartAsync.value!
+              .map((i) => {
+                    'order_id': orderId,
+                    'product_id': i.productId,
+                    'name': i.product?.name ?? '',
+                    'image_url': i.product?.primaryImage ?? '',
+                    'unit': i.product?.unit ?? '',
+                    'quantity': i.quantity,
+                    'unit_price': i.product?.salePrice ?? 0.0,
+                    'total_price': i.totalPrice,
+                  })
+              .toList();
+
+          await Supabase.instance.client
+              .from('order_items')
+              .insert(orderItemsPayload);
         }
 
         await cartNotifier.clearCart();

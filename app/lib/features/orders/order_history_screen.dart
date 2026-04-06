@@ -1,389 +1,674 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'providers/order_provider.dart';
-import '../../core/models/order_model.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:go_router/go_router.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:intl/intl.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
-class OrderHistoryScreen extends ConsumerStatefulWidget {
+import '../../core/models/order_model.dart';
+import '../../shared/widgets/app_network_image.dart';
+import 'providers/order_provider.dart';
+
+// ── Color tokens ──────────────────────────────────────────────────────────────
+const _bg = Color(0xFFF8FAFC);
+const _card = Colors.white;
+const _primary = Color(0xFF0EA5E9);
+const _orange = Color(0xFFF97316);
+const _textPrimary = Color(0xFF0F172A);
+const _textSecondary = Color(0xFF64748B);
+const _green = Color(0xFF22C55E);
+const _red = Color(0xFFEF4444);
+
+// ── Screen ────────────────────────────────────────────────────────────────────
+
+class OrderHistoryScreen extends ConsumerWidget {
   const OrderHistoryScreen({super.key});
 
   @override
-  ConsumerState<OrderHistoryScreen> createState() => _OrderHistoryScreenState();
-}
-
-class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen>
-    with TickerProviderStateMixin {
-  late AnimationController _listController;
-
-  @override
-  void initState() {
-    super.initState();
-    _listController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 600),
-    );
-  }
-
-  @override
-  void dispose() {
-    _listController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final ordersAsync = ref.watch(orderHistoryProvider);
-    final disableAnimations = MediaQuery.of(context).disableAnimations;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final filter = ref.watch(orderFilterProvider);
+    final ordersAsync = ref.watch(filteredOrdersProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFF1A1A2E), // Background dark
+      backgroundColor: _bg,
       appBar: AppBar(
-        title: const Text(
-          'Order History',
-          style: TextStyle(color: Colors.white),
-        ),
-        backgroundColor: const Color(0xFF6C3CE1), // Primary Deep Violet
+        backgroundColor: _bg,
         elevation: 0,
-      ),
-      body: ordersAsync.when(
-        data: (orders) {
-          if (orders.isEmpty) {
-            return const Center(
-              child: Text(
-                'No orders found.',
-                style: TextStyle(color: Colors.white70),
-              ),
-            );
-          }
-
-          if (!disableAnimations) {
-            _listController.forward();
-          }
-
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: orders.length,
-            itemBuilder: (context, index) {
-              final order = orders[index];
-
-              if (disableAnimations) {
-                return _buildOrderItem(order, disableAnimations);
-              }
-
-              final Animation<double> animation =
-                  Tween<double>(begin: 0.0, end: 1.0).animate(
-                    CurvedAnimation(
-                      parent: _listController,
-                      curve: Interval(
-                        (index / orders.length).clamp(0.0, 1.0),
-                        1.0,
-                        curve: Curves.easeOut,
-                      ),
-                    ),
-                  );
-
-              return FadeTransition(
-                opacity: animation,
-                child: SlideTransition(
-                  position: Tween<Offset>(
-                    begin: const Offset(0, 0.2),
-                    end: Offset.zero,
-                  ).animate(animation),
-                  child: _buildOrderItem(order, disableAnimations),
-                ),
-              );
-            },
-          );
-        },
-        loading: () => _buildShimmer(disableAnimations),
-        error: (e, st) => Center(
-          child: Text(
-            'Error loading orders: $e',
-            style: const TextStyle(color: Color(0xFFFF6B6B)),
+        scrolledUnderElevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: _textPrimary),
+          onPressed: () => context.pop(),
+        ),
+        title: const Text(
+          'My Orders',
+          style: TextStyle(
+            fontFamily: 'Manrope',
+            fontWeight: FontWeight.w900,
+            fontSize: 22,
+            color: _textPrimary,
           ),
         ),
-      ),
-    );
-  }
 
-  Widget _buildOrderItem(OrderModel order, bool disableAnimations) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF2A2A3E),
-        borderRadius: BorderRadius.circular(16),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+
+      // ── Filter tabs ───────────────────────────────────────────────────────
+      body: Column(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Order #${order.id.substring(0, 8)}',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              AnimatedStatusChip(
-                status: order.status,
-                disableAnimations: disableAnimations,
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            '\$${order.total.toStringAsFixed(2)} • ${order.paymentMethod ?? 'N/A'}',
-            style: const TextStyle(color: Colors.white70),
-          ),
-          const SizedBox(height: 16),
-          TimelineDots(
-            status: order.status,
-            disableAnimations: disableAnimations,
-          ),
-          const SizedBox(height: 12),
-          Align(
-            alignment: Alignment.centerRight,
-            child: Text(
-              _formatDate(order.createdAt ?? DateTime.now()),
-              style: const TextStyle(color: Colors.white54, fontSize: 12),
+          _FilterRow(current: filter),
+          Expanded(
+            child: ordersAsync.when(
+              loading: () => _Shimmer(),
+              error: (e, _) => _ErrorView(error: e.toString()),
+              data: (orders) {
+                if (orders.isEmpty) return _EmptyState(filter: filter);
+                return ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+                  itemCount: orders.length,
+                  separatorBuilder: (_, _i) => const SizedBox(height: 12),
+                  itemBuilder: (ctx, i) => _OrderCard(order: orders[i])
+                      .animate(delay: Duration(milliseconds: 50 * i))
+                      .fadeIn(duration: 300.ms)
+                      .slideY(begin: 0.06),
+                );
+              },
             ),
           ),
         ],
       ),
     );
   }
+}
 
-  String _formatDate(DateTime date) {
-    return "${date.day}/${date.month}/${date.year} ${date.hour}:${date.minute.toString().padLeft(2, '0')}";
-  }
+// ── Filter row ────────────────────────────────────────────────────────────────
 
-  Widget _buildShimmer(bool disableAnimations) {
-    // Shimmer skeleton
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: 5,
-      itemBuilder: (context, index) {
-        return Container(
-          margin: const EdgeInsets.only(bottom: 16),
-          height: 120,
-          decoration: BoxDecoration(
-            color: const Color(0xFF2A2A3E),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: disableAnimations
-              ? const SizedBox.shrink()
-              : TweenAnimationBuilder<double>(
-                  tween: Tween<double>(begin: 0.3, end: 0.6),
-                  duration: const Duration(milliseconds: 800),
-                  curve: Curves.easeInOut,
-                  builder: (context, value, child) {
-                    return Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: value),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    );
-                  },
+class _FilterRow extends ConsumerWidget {
+  final OrderFilter current;
+  const _FilterRow({required this.current});
+
+  static const _tabs = [
+    (OrderFilter.all, 'All'),
+    (OrderFilter.active, 'Active'),
+    (OrderFilter.delivered, 'Delivered'),
+    (OrderFilter.cancelled, 'Cancelled'),
+  ];
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return SizedBox(
+      height: 56,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        children: _tabs.map((tab) {
+          final isSelected = current == tab.$1;
+          return Padding(
+            padding: const EdgeInsets.only(right: 10),
+            child: GestureDetector(
+              onTap: () =>
+                  ref.read(orderFilterProvider.notifier).state = tab.$1,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                alignment: Alignment.center,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+                decoration: BoxDecoration(
+                  color: isSelected ? _primary : Colors.white,
+                  borderRadius: BorderRadius.circular(30),
+                  border: Border.all(
+                    color: isSelected ? _primary : Colors.grey.shade300,
+                    width: 1.2,
+                  ),
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: _primary.withValues(alpha: 0.25),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          ),
+                        ]
+                      : [],
                 ),
-        );
-      },
+                child: Text(
+                  tab.$2,
+                  style: TextStyle(
+                    fontFamily: 'Manrope',
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                    color: isSelected ? Colors.white : _textSecondary,
+                  ),
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
     );
   }
 }
 
-class AnimatedStatusChip extends StatelessWidget {
-  final String status;
-  final bool disableAnimations;
-  const AnimatedStatusChip({
-    super.key,
-    required this.status,
-    required this.disableAnimations,
-  });
+// ── Order card ────────────────────────────────────────────────────────────────
 
-  Color _getStatusColor() {
+class _OrderCard extends StatelessWidget {
+  final OrderModel order;
+  const _OrderCard({required this.order});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: _card,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Top row: Order ID + Date + Status badge ───────────────
+            Row(
+              children: [
+                Text(
+                  '#${order.id.substring(0, 8).toUpperCase()}',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: _textSecondary,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const Spacer(),
+                if (order.createdAt != null)
+                  Text(
+                    DateFormat('d MMM, hh:mm a').format(order.createdAt!),
+                    style: const TextStyle(
+                        fontSize: 11, color: _textSecondary),
+                  ),
+                const SizedBox(width: 8),
+                _StatusBadge(status: order.status),
+              ],
+            ),
+
+            const SizedBox(height: 12),
+
+            // ── Product image row ─────────────────────────────────────
+            if (order.items.isNotEmpty) ...[
+              _ImageRow(items: order.items),
+              const SizedBox(height: 10),
+            ],
+
+            // ── Product summary ───────────────────────────────────────
+            Text(
+              order.productSummary,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: _textPrimary,
+                height: 1.3,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+
+            const SizedBox(height: 6),
+
+            // ── Item count + total ────────────────────────────────────
+            Row(
+              children: [
+                Text(
+                  '${order.items.length} item${order.items.length == 1 ? '' : 's'}',
+                  style: const TextStyle(fontSize: 12, color: _textSecondary),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                    width: 4, height: 4,
+                    decoration: const BoxDecoration(
+                        color: _textSecondary, shape: BoxShape.circle)),
+                const SizedBox(width: 8),
+                Text(
+                  '₹${order.total.toStringAsFixed(2)}',
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    color: _textPrimary,
+                  ),
+                ),
+              ],
+            ),
+
+            // ── Delivery address ──────────────────────────────────────
+            if (order.deliveryAddressLine.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  const Icon(LucideIcons.mapPin,
+                      size: 12, color: _textSecondary),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      order.deliveryAddressLine,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                          fontSize: 11, color: _textSecondary),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+
+            // ── Progress bar (active orders only) ───────────────────
+            if (order.isActive) ...[
+              const SizedBox(height: 12),
+              _ProgressBar(stepIndex: order.stepIndex),
+            ],
+
+            const SizedBox(height: 14),
+
+            // ── Action buttons ────────────────────────────────────────
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () =>
+                        context.push('/order-detail/${order.id}'),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: _primary),
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                    ),
+                    child: const Text(
+                      'View Details',
+                      style: TextStyle(
+                        color: _primary,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: FilledButton(
+                    onPressed: () => context.push('/home'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: _primary,
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                    ),
+                    child: const Text(
+                      'Reorder',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Status badge ──────────────────────────────────────────────────────────────
+
+class _StatusBadge extends StatelessWidget {
+  final String status;
+  const _StatusBadge({required this.status});
+
+  Color get _color {
     switch (status) {
       case 'DELIVERED':
-        return const Color(0xFF2ECC71); // Success
-      case 'PENDING':
-      case 'PREPARING':
+        return _green;
       case 'OUT_FOR_DELIVERY':
+        return _primary;
       case 'CONFIRMED':
-        return const Color(0xFFF39C12); // Warning
+      case 'PREPARING':
+        return _orange;
       case 'CANCELLED':
-      case 'FAILED':
-        return const Color(0xFFFF6B6B); // Accent Coral Red
+        return _red;
       default:
-        return const Color(0xFF00D4AA); // Secondary Teal Mint
+        return _textSecondary;
+    }
+  }
+
+  String get _label {
+    switch (status) {
+      case 'DELIVERED':
+        return 'Delivered';
+      case 'OUT_FOR_DELIVERY':
+        return 'Out for Delivery';
+      case 'CONFIRMED':
+        return 'Confirmed';
+      case 'PREPARING':
+        return 'Preparing';
+      case 'CANCELLED':
+        return 'Cancelled';
+      default:
+        return status;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (disableAnimations) {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: _getStatusColor().withValues(alpha: 0.2),
-          borderRadius: BorderRadius.circular(20),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: _color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: _color.withValues(alpha: 0.3)),
+      ),
+      child: Text(
+        _label,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w800,
+          color: _color,
+          letterSpacing: 0.2,
         ),
-        child: Text(
-          status,
-          style: TextStyle(
-            color: _getStatusColor(),
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      );
-    }
-    return TweenAnimationBuilder<Color?>(
-      tween: ColorTween(begin: const Color(0xFF00D4AA), end: _getStatusColor()),
-      duration: const Duration(milliseconds: 400), // Medium
-      builder: (context, color, child) {
-        return AnimatedContainer(
-          duration: const Duration(milliseconds: 400),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: (color ?? _getStatusColor()).withValues(alpha: 0.2),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Text(
-            status,
-            style: TextStyle(
-              color: color ?? _getStatusColor(),
-              fontWeight: FontWeight.bold,
-              fontSize: 12,
-            ),
-          ),
-        );
-      },
+      ),
     );
   }
 }
 
-class TimelineDots extends StatefulWidget {
-  final String status;
-  final bool disableAnimations;
-  const TimelineDots({
-    super.key,
-    required this.status,
-    required this.disableAnimations,
-  });
+// ── Product image row ─────────────────────────────────────────────────────────
+
+class _ImageRow extends StatelessWidget {
+  final List<OrderItem> items;
+  const _ImageRow({required this.items});
 
   @override
-  State<TimelineDots> createState() => _TimelineDotsState();
+  Widget build(BuildContext context) {
+    const maxShow = 4;
+    final shown = items.take(maxShow).toList();
+    final extra = items.length - maxShow;
+
+    return Row(
+      children: [
+        ...shown.map((item) => Padding(
+              padding: const EdgeInsets.only(right: 6),
+              child: Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  shape: BoxShape.circle,
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: item.imageUrl?.isNotEmpty == true
+                    ? AppNetworkImage(
+                        imageUrl: item.imageUrl!,
+                        fit: BoxFit.cover,
+                        errorWidget: (_, __, ___) => const Icon(
+                            LucideIcons.shoppingBag,
+                            size: 18,
+                            color: _textSecondary),
+                      )
+                    : const Icon(LucideIcons.shoppingBag,
+                        size: 18, color: _textSecondary),
+              ),
+            )),
+        if (extra > 0)
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: _primary.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Text(
+                '+$extra',
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  color: _primary,
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
 }
 
-class _TimelineDotsState extends State<TimelineDots>
-    with TickerProviderStateMixin {
-  late AnimationController _dotsController;
+// ── Progress bar ──────────────────────────────────────────────────────────────
 
-  final List<String> _stages = [
-    'PENDING',
-    'CONFIRMED',
-    'PREPARING',
-    'OUT_FOR_DELIVERY',
-    'DELIVERED',
-  ];
+class _ProgressBar extends StatelessWidget {
+  final int stepIndex;
+  const _ProgressBar({required this.stepIndex});
+
+  static const _steps = ['Confirmed', 'Preparing', 'Out for Delivery', 'Delivered'];
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: List.generate(_steps.length * 2 - 1, (i) {
+            if (i.isOdd) {
+              // Line
+              final lineStep = i ~/ 2;
+              final done = lineStep < stepIndex;
+              return Expanded(
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  height: 3,
+                  decoration: BoxDecoration(
+                    color: done ? _primary : Colors.grey.shade200,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              );
+            } else {
+              // Dot
+              final dotStep = i ~/ 2;
+              final done = dotStep <= stepIndex;
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                width: 10,
+                height: 10,
+                decoration: BoxDecoration(
+                  color: done ? _primary : Colors.grey.shade300,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: done ? _primary : Colors.grey.shade300,
+                    width: done ? 0 : 1,
+                  ),
+                ),
+              );
+            }
+          }),
+        ),
+        const SizedBox(height: 4),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: _steps.asMap().entries.map((e) {
+            final active = e.key <= stepIndex;
+            return Flexible(
+              child: Text(
+                e.value,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 9,
+                  fontWeight: active ? FontWeight.w700 : FontWeight.w400,
+                  color: active ? _primary : _textSecondary,
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Empty state ───────────────────────────────────────────────────────────────
+
+class _EmptyState extends StatelessWidget {
+  final OrderFilter filter;
+  const _EmptyState({required this.filter});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(40),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 100,
+              height: 100,
+              decoration: BoxDecoration(
+                color: _primary.withValues(alpha: 0.08),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(LucideIcons.shoppingBag,
+                  size: 44, color: _primary),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              filter == OrderFilter.all
+                  ? 'No orders yet!'
+                  : 'No ${filter.name} orders',
+              style: const TextStyle(
+                fontFamily: 'Manrope',
+                fontWeight: FontWeight.w800,
+                fontSize: 20,
+                color: _textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Your order history will\nappear here',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: _textSecondary, height: 1.5),
+            ),
+            const SizedBox(height: 28),
+            FilledButton.icon(
+              onPressed: () => context.go('/home'),
+              icon: const Icon(LucideIcons.shoppingCart, size: 18),
+              label: const Text('Start Shopping',
+                  style: TextStyle(
+                      fontFamily: 'Manrope', fontWeight: FontWeight.w700)),
+              style: FilledButton.styleFrom(
+                backgroundColor: _primary,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30)),
+              ),
+            ),
+          ],
+        ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.1),
+      ),
+    );
+  }
+}
+
+// ── Shimmer skeleton ──────────────────────────────────────────────────────────
+
+class _Shimmer extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+      itemCount: 4,
+      separatorBuilder: (_, _i) => const SizedBox(height: 12),
+      itemBuilder: (_, _i) => _ShimmerCard(),
+    );
+  }
+}
+
+class _ShimmerCard extends StatefulWidget {
+  @override
+  State<_ShimmerCard> createState() => _ShimmerCardState();
+}
+
+class _ShimmerCardState extends State<_ShimmerCard>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _anim;
 
   @override
   void initState() {
     super.initState();
-    _dotsController = AnimationController(
+    _ctrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 800),
-    ); // Slow
-    if (!widget.disableAnimations) {
-      _dotsController.forward();
-    }
-  }
-
-  @override
-  void didUpdateWidget(TimelineDots oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.status != widget.status && !widget.disableAnimations) {
-      _dotsController.reset();
-      _dotsController.forward();
-    }
+      duration: const Duration(milliseconds: 1200),
+    )..repeat(reverse: true);
+    _anim = Tween(begin: 0.04, end: 0.12).animate(
+      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
+    );
   }
 
   @override
   void dispose() {
-    _dotsController.dispose();
+    _ctrl.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    int currentStageIndex = _stages.indexOf(widget.status);
-    if (currentStageIndex == -1) currentStageIndex = 0; // fallback if cancelled
+    return AnimatedBuilder(
+      animation: _anim,
+      builder: (_, __) => Container(
+        height: 180,
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: _anim.value),
+          borderRadius: BorderRadius.circular(16),
+        ),
+      ),
+    );
+  }
+}
 
-    return Row(
-      children: List.generate(_stages.length, (index) {
-        bool isActive = index <= currentStageIndex;
+// ── Error view ────────────────────────────────────────────────────────────────
 
-        Widget dot = Container(
-          width: 12,
-          height: 12,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: isActive ? const Color(0xFF00D4AA) : const Color(0xFF4A4A6A),
-          ),
-        );
+class _ErrorView extends ConsumerWidget {
+  final String error;
+  const _ErrorView({required this.error});
 
-        if (widget.disableAnimations) {
-          return Expanded(
-            child: Row(
-              children: [
-                dot,
-                if (index < _stages.length - 1)
-                  Expanded(
-                    child: Container(
-                      height: 2,
-                      color: isActive
-                          ? const Color(0xFF00D4AA)
-                          : const Color(0xFF4A4A6A),
-                    ),
-                  ),
-              ],
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(LucideIcons.xCircle, size: 48, color: _red),
+            const SizedBox(height: 12),
+            Text(
+              'Failed to load orders:\n$error',
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: _red, fontSize: 13),
             ),
-          );
-        }
-
-        final Animation<double> animation = Tween<double>(begin: 0.0, end: 1.0)
-            .animate(
-              CurvedAnimation(
-                parent: _dotsController,
-                curve: Interval(
-                  (index / _stages.length).clamp(0.0, 1.0),
-                  1.0,
-                  curve: Curves.easeOut,
-                ),
-              ),
-            );
-
-        return Expanded(
-          child: Row(
-            children: [
-              ScaleTransition(scale: animation, child: dot),
-              if (index < _stages.length - 1)
-                Expanded(
-                  child: FadeTransition(
-                    opacity: animation,
-                    child: Container(
-                      height: 2,
-                      color: isActive
-                          ? const Color(0xFF00D4AA)
-                          : const Color(0xFF4A4A6A),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        );
-      }),
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              onPressed: () => ref.invalidate(ordersStreamProvider),
+              icon: const Icon(Icons.refresh, size: 16),
+              label: const Text('Retry'),
+              style: FilledButton.styleFrom(backgroundColor: _primary),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

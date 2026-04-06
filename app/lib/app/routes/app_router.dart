@@ -15,6 +15,7 @@ import '../../features/orders/mock_payment_screen.dart';
 import '../../features/orders/order_success_screen.dart';
 import '../../features/orders/order_tracking_screen.dart';
 import '../../features/orders/order_history_screen.dart';
+import '../../features/orders/order_detail_screen.dart';
 import '../../features/products/search_screen.dart';
 import '../../features/profile/profile_screen.dart';
 import '../../features/profile/addresses_screen.dart';
@@ -84,7 +85,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/OrderModel-history',
+                path: '/order-history',
                 name: 'orderHistory',
                 builder: (context, state) => const OrderHistoryScreen(),
               ),
@@ -173,9 +174,17 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       // Legacy route without path param (keep for backward compat)
       GoRoute(
-        path: '/OrderModel-tracking',
+        path: '/order-tracking',
         name: 'orderTrackingLegacy',
         builder: (context, state) => const OrderTrackingScreen(orderId: ''),
+      ),
+      GoRoute(
+        path: '/order-detail/:orderId',
+        name: 'orderDetail',
+        builder: (context, state) {
+          final orderId = state.pathParameters['orderId'] ?? '';
+          return OrderDetailScreen(orderId: orderId);
+        },
       ),
 
       // ── Profile ───────────────────────────────────────────────────────────
