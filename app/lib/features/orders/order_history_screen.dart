@@ -38,7 +38,7 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen>
       backgroundColor: const Color(0xFF1A1A2E), // Background dark
       appBar: AppBar(
         title: const Text(
-          'OrderModel History',
+          'Order History',
           style: TextStyle(color: Colors.white),
         ),
         backgroundColor: const Color(0xFF6C3CE1), // Primary Deep Violet
@@ -120,7 +120,7 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen>
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'OrderModel #${order.id.substring(0, 8)}',
+                'Order #${order.id.substring(0, 8)}',
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 16,

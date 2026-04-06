@@ -1,6 +1,15 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
+  // ── New Design System (Cart/Checkout flow) ──────────────────────────────
+  /// Fresh Sky Blue — primary buttons & accents
+  static const Color skyBlue = Color(0xFF0EA5E9);
+  /// Warm Orange — highlights, badges, discount text
+  static const Color warmOrange = Color(0xFFF97316);
+  /// Soft clean light gray — background for redesigned screens
+  static const Color cleanBackground = Color(0xFFF8FAFC);
+
+  // ── Legacy palette (kept for backward compat with other screens) ────────
   static const Color background = Color(0xFFFBF8FF);
   static const Color onSecondary = Color(0xFFFFFFFF);
   static const Color onError = Color(0xFFFFFFFF);

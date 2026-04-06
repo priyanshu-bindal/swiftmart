@@ -5,53 +5,23 @@ import 'package:app/core/models/coupon_model.dart';
 
 final couponsProvider = FutureProvider<List<CouponModel>>((ref) async {
   final supabase = Supabase.instance.client;
-  final now = DateTime.now().toIso8601String();
+  // Use UTC ISO string to avoid timezone mismatch with Supabase timestamptz
+  final now = DateTime.now().toUtc().toIso8601String();
 
   try {
     final response = await supabase
         .from('coupons')
         .select()
         .eq('is_active', true)
-        .gte('valid_to', now)
-        .order('value', ascending: false);
+        .gte('valid_to', now) // only filter expiry, not valid_from
+        .order('discount_value', ascending: false);
 
-    return (response as List)
-        .map((e) => CouponModel.fromJson(e as Map<String, dynamic>))
-        .toList();
-  } catch (e) {
-    debugPrint('Supabase coupons error: \$e');
-    // Fallback dummy data
-    return [
-      CouponModel(
-        id: '1',
-        code: 'WELCOME50',
-        discountType: 'flat',
-        discountValue: 50.0,
-        minOrderValue: 200.0,
-        maxUses: 100,
-        usedCount: 0,
-        validUntil: DateTime.now().add(const Duration(days: 30)),
-      ),
-      CouponModel(
-        id: '2',
-        code: 'FRESH20',
-        discountType: 'percent',
-        discountValue: 20.0,
-        minOrderValue: 500.0,
-        maxUses: 100,
-        usedCount: 5,
-        validUntil: DateTime.now().add(const Duration(days: 7)),
-      ),
-      CouponModel(
-        id: '3',
-        code: 'TRYME100',
-        discountType: 'flat',
-        discountValue: 100.0,
-        minOrderValue: 1000.0,
-        maxUses: 50,
-        usedCount: 49,
-        validUntil: DateTime.now().add(const Duration(hours: 12)),
-      ),
-    ];
+    final list = List<Map<String, dynamic>>.from(response as List);
+    debugPrint('Coupons fetched: ${list.length}');
+    return list.map((e) => CouponModel.fromJson(e)).toList();
+  } catch (e, st) {
+    // Re-throw so the UI shows the actual error instead of silently returning []
+    debugPrint('Supabase coupons error: $e\n$st');
+    rethrow;
   }
 });

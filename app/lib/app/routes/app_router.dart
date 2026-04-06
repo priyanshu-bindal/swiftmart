@@ -18,6 +18,7 @@ import '../../features/orders/order_history_screen.dart';
 import '../../features/products/search_screen.dart';
 import '../../features/profile/profile_screen.dart';
 import '../../features/profile/addresses_screen.dart';
+import '../../features/profile/add_address_screen.dart';
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/auth/screens/signup_screen.dart';
 import '../../features/deals/flash_deals_screen.dart';
@@ -187,6 +188,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/addresses',
         name: 'addresses',
         builder: (context, state) => const AddressesScreen(),
+      ),
+      GoRoute(
+        path: '/add-address',
+        name: 'addAddress',
+        builder: (context, state) => const AddAddressScreen(),
       ),
 
       // ── Deals & Offers ────────────────────────────────────────────────────

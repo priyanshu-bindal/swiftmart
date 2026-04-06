@@ -49,10 +49,13 @@ class _CouponCardState extends State<CouponCard>
 
   @override
   Widget build(BuildContext context) {
-    final isPercent = widget.coupon.discountType == 'percent';
-    final stripColor = isPercent
-        ? const Color(0xFF6C3CE1)
-        : const Color(0xFF00D4AA);
+    final isPercent = widget.coupon.discountType == 'percentage';
+    final isFreeDelivery = widget.coupon.discountType == 'free_delivery';
+    final stripColor = isFreeDelivery
+        ? const Color(0xFF22C55E)
+        : isPercent
+            ? AppColors.skyBlue
+            : AppColors.warmOrange;
 
     final formattedDate = DateFormat(
       'dd MMM yyyy',
@@ -87,9 +90,9 @@ class _CouponCardState extends State<CouponCard>
                       children: [
                         Flexible(
                           child: Text(
-                            isPercent
-                                ? 'Get ${widget.coupon.discountValue.toInt()}% off'
-                                : 'Flat ₹${widget.coupon.discountValue.toInt()} off',
+                            widget.coupon.description.isNotEmpty
+                                ? widget.coupon.description
+                                : widget.coupon.discountLabel,
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
@@ -108,11 +111,11 @@ class _CouponCardState extends State<CouponCard>
                             ),
                             child: Text(
                               widget.coupon.code,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontFamily: 'monospace',
                                 fontWeight: FontWeight.w900,
                                 fontSize: 14,
-                                color: AppColors.primary,
+                                color: stripColor,
                                 letterSpacing: 2,
                               ),
                             ),
@@ -122,12 +125,22 @@ class _CouponCardState extends State<CouponCard>
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Min OrderModel ₹${widget.coupon.minOrderValue.toInt()}',
+                      'Min Order ₹${widget.coupon.minOrderValue.toInt()}',
                       style: const TextStyle(
                         fontSize: 12,
                         color: AppColors.outline,
                       ),
                     ),
+                    if (widget.coupon.terms.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        widget.coupon.terms,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.grey.shade500,
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 12),
                     Divider(color: Colors.grey.shade200),
                     const SizedBox(height: 12),

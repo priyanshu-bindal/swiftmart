@@ -276,7 +276,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen>
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'OrderModel #${widget.orderId}',
+                                'Order #${widget.orderId}',
                                 style: const TextStyle(
                                   color: Colors.white54,
                                   fontSize: 12,

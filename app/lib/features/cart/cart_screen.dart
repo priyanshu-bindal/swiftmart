@@ -1,16 +1,17 @@
-import 'dart:ui';
+import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:app/shared/widgets/app_network_image.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/theme/app_colors.dart';
 import 'package:app/core/models/cart_item_model.dart';
 import 'providers/cart_provider.dart';
+import 'widgets/promo_code_bottom_sheet.dart';
 
 class CartScreen extends HookConsumerWidget {
   const CartScreen({super.key});
@@ -23,87 +24,31 @@ class CartScreen extends HookConsumerWidget {
     final discount = ref.watch(cartDiscountProvider);
     final total = ref.watch(cartTotalProvider);
     final appliedCode = ref.watch(appliedCouponCodeProvider);
-    final isValidatingCouponModel = useState(false);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
-      extendBodyBehindAppBar: true,
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(kToolbarHeight),
-        child: ClipRRect(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
-            child: AppBar(
-              backgroundColor: AppColors.primaryFixedDim.withValues(alpha: 0.7),
-              elevation: 0,
-              centerTitle: true,
-              leading: IconButton(
-                icon: const Icon(
-                  LucideIcons.arrowLeft,
-                  color: AppColors.primary,
-                ),
-                onPressed: () => context.pop(),
-              ),
-              title: const Text(
-                'Your Basket',
-                style: TextStyle(
-                  fontFamily: 'Manrope',
-                  fontWeight: FontWeight.bold,
-                  fontSize: 22,
-                  color: AppColors.primary,
-                ),
-              ),
-              actions: [
-                cartAsync.maybeWhen(
-                  data: (items) => items.isEmpty
-                      ? const SizedBox.shrink()
-                      : TextButton(
-                          onPressed: () async {
-                            final confirmed = await showDialog<bool>(
-                              context: context,
-                              builder: (ctx) => AlertDialog(
-                                title: const Text('Clear cart?'),
-                                content: const Text(
-                                  'Remove all items from your basket?',
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => ctx.pop(false),
-                                    child: const Text('Cancel'),
-                                  ),
-                                  TextButton(
-                                    onPressed: () => ctx.pop(true),
-                                    child: const Text(
-                                      'Clear',
-                                      style: TextStyle(color: AppColors.error),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                            if (confirmed == true) {
-                              await ref.read(cartProvider.notifier).clearCart();
-                            }
-                          },
-                          child: const Text(
-                            'Clear',
-                            style: TextStyle(
-                              color: AppColors.error,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                  orElse: () => const SizedBox.shrink(),
-                ),
-                const SizedBox(width: 8),
-              ],
-            ),
+      backgroundColor: AppColors.cleanBackground,
+      appBar: AppBar(
+        backgroundColor: AppColors.cleanBackground,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: AppColors.onSurface),
+          onPressed: () => context.pop(),
+        ),
+        title: const Text(
+          'Your Cart',
+          style: TextStyle(
+            fontFamily: 'Manrope',
+            fontWeight: FontWeight.w800,
+            fontSize: 22,
+            color: AppColors.onSurface,
           ),
         ),
+        centerTitle: false,
       ),
       body: cartAsync.when(
         loading: () => const Center(
-          child: CircularProgressIndicator(color: AppColors.primary),
+          child: CircularProgressIndicator(color: AppColors.skyBlue),
         ),
         error: (e, _) => Center(
           child: Padding(
@@ -111,32 +56,23 @@ class CartScreen extends HookConsumerWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(
-                  LucideIcons.alertCircle,
-                  size: 48,
-                  color: AppColors.error,
-                ),
+                const Icon(LucideIcons.alertCircle,
+                    size: 48, color: AppColors.error),
                 const SizedBox(height: 16),
-                const Text(
-                  'Failed to load cart',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                    color: AppColors.onSurface,
-                  ),
-                ),
+                const Text('Failed to load cart',
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 16)),
                 const SizedBox(height: 8),
-                Text(
-                  e.toString(),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: AppColors.onSurfaceVariant,
-                  ),
-                ),
+                Text(e.toString(),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                        fontSize: 12, color: AppColors.onSurfaceVariant)),
                 const SizedBox(height: 20),
                 FilledButton(
                   onPressed: () => ref.invalidate(cartProvider),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.skyBlue,
+                  ),
                   child: const Text('Retry'),
                 ),
               ],
@@ -144,17 +80,14 @@ class CartScreen extends HookConsumerWidget {
           ),
         ),
         data: (items) {
-          if (items.isEmpty) {
-            return _EmptyCartView();
-          }
-          return _CartListView(
+          if (items.isEmpty) return _EmptyCartView();
+          return _CartBody(
             items: items,
             subtotal: subtotal,
             deliveryFee: deliveryFee,
             discount: discount,
             total: total,
             appliedCode: appliedCode,
-            isValidatingCouponModel: isValidatingCouponModel,
           );
         },
       ),
@@ -177,58 +110,47 @@ class _EmptyCartView extends StatelessWidget {
                   width: 120,
                   height: 120,
                   decoration: BoxDecoration(
-                    color: AppColors.primaryFixed,
+                    color: AppColors.skyBlue.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
-                    LucideIcons.shoppingCart,
-                    size: 56,
-                    color: AppColors.primary,
-                  ),
+                  child: const Icon(LucideIcons.shoppingCart,
+                      size: 56, color: AppColors.skyBlue),
                 )
                 .animate()
                 .scale(
-                  begin: const Offset(0.5, 0.5),
-                  curve: Curves.elasticOut,
-                  duration: 700.ms,
-                )
+                    begin: const Offset(0.5, 0.5),
+                    curve: Curves.elasticOut,
+                    duration: 700.ms)
                 .fadeIn(),
             const SizedBox(height: 32),
             const Text(
               'Your cart is empty',
               style: TextStyle(
-                fontFamily: 'Manrope',
-                fontWeight: FontWeight.bold,
-                fontSize: 22,
-                color: AppColors.onSurface,
-              ),
+                  fontFamily: 'Manrope',
+                  fontWeight: FontWeight.bold,
+                  fontSize: 22,
+                  color: AppColors.onSurface),
             ).animate(delay: 200.ms).fadeIn().slideY(begin: 0.2),
             const SizedBox(height: 8),
             const Text(
               'Browse our products and add\nsomething delicious!',
               textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.onSurfaceVariant, height: 1.5),
+              style:
+                  TextStyle(color: AppColors.onSurfaceVariant, height: 1.5),
             ).animate(delay: 300.ms).fadeIn().slideY(begin: 0.2),
             const SizedBox(height: 40),
             FilledButton.icon(
               onPressed: () => context.go('/home'),
               icon: const Icon(LucideIcons.shoppingBag, size: 18),
-              label: const Text(
-                'Shop Now',
-                style: TextStyle(
-                  fontFamily: 'Manrope',
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              label: const Text('Shop Now',
+                  style: TextStyle(
+                      fontFamily: 'Manrope', fontWeight: FontWeight.bold)),
               style: FilledButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 32,
-                  vertical: 14,
-                ),
+                backgroundColor: AppColors.skyBlue,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(28),
-                ),
+                    borderRadius: BorderRadius.circular(30)),
               ),
             ).animate(delay: 400.ms).fadeIn().slideY(begin: 0.3),
           ],
@@ -238,289 +160,232 @@ class _EmptyCartView extends StatelessWidget {
   }
 }
 
-// ── Scrollable cart list + sticky bottom bar ─────────────────────────────────
+// ── Cart body with items + sticky bottom ─────────────────────────────────────
 
-class _CartListView extends HookConsumerWidget {
+class _CartBody extends HookConsumerWidget {
   final List<CartItemModel> items;
   final double subtotal;
   final double deliveryFee;
   final double discount;
   final double total;
   final String? appliedCode;
-  final ValueNotifier<bool> isValidatingCouponModel;
 
-  const _CartListView({
+  const _CartBody({
     required this.items,
     required this.subtotal,
     required this.deliveryFee,
     required this.discount,
     required this.total,
     required this.appliedCode,
-    required this.isValidatingCouponModel,
   });
-
-  Future<void> _handleCouponNavigation(
-    BuildContext context,
-    WidgetRef ref,
-  ) async {
-    final result = await context.push<String>(
-      '/coupons',
-      extra: {'fromCart': true},
-    );
-    if (result == null || !context.mounted) return;
-
-    final uid = Supabase.instance.client.auth.currentUser?.id;
-    if (uid == null) return;
-
-    isValidatingCouponModel.value = true;
-    try {
-      // Direct client-side validation logic since Edge Function is not deployed
-      final response = await Supabase.instance.client
-          .from('coupons')
-          .select('*')
-          .eq('code', result)
-          .eq('is_active', true)
-          .maybeSingle();
-
-      if (response == null) {
-        throw Exception('Invalid or expired CouponModel');
-      }
-
-      final now = DateTime.now();
-      final validFrom = response['valid_from'] != null
-          ? DateTime.parse(response['valid_from'])
-          : null;
-      final validTo = response['valid_to'] != null
-          ? DateTime.parse(response['valid_to'])
-          : null;
-      final maxUses = response['max_uses'] as int? ?? 100;
-      final usedCount = response['used_count'] as int? ?? 0;
-      final minOrderModel = (response['min_OrderModel'] as num?)?.toDouble() ?? 0.0;
-      final type = response['type'] as String? ?? 'flat';
-      final value = (response['value'] as num?)?.toDouble() ?? 0.0;
-
-      if (validFrom != null && now.isBefore(validFrom)) {
-        throw Exception('CouponModel not yet active');
-      }
-      if (validTo != null && now.isAfter(validTo)) {
-        throw Exception('CouponModel expired');
-      }
-      if (usedCount >= maxUses) {
-        throw Exception('CouponModel limit reached');
-      }
-      if (subtotal < minOrderModel) {
-        throw Exception('Minimum OrderModel value should be ₹$minOrderModel');
-      }
-
-      double discountVal = 0.0;
-      if (type == 'flat' || type == 'discountPercent') {
-        discountVal = value;
-      } else if (type == 'percent') {
-        discountVal = (subtotal * value) / 100;
-      } else if (type == 'free_delivery') {
-        discountVal = value;
-      }
-
-      ref.read(cartDiscountProvider.notifier).state = discountVal;
-      ref.read(appliedCouponCodeProvider.notifier).state = result;
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              discountVal > 0
-                  ? 'CouponModel applied! You save ₹${discountVal.toStringAsFixed(0)}'
-                  : 'CouponModel applied!',
-            ),
-            backgroundColor: AppColors.secondary,
-          ),
-        );
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Could not apply coupon: $e'),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
-    } finally {
-      isValidatingCouponModel.value = false;
-    }
-  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final notifier = ref.read(cartProvider.notifier);
+    final showConfetti = useState(false);
+    final confettiKey = useState(UniqueKey());
 
     return Stack(
       children: [
-        ListView(
-          padding: const EdgeInsets.only(
-            top: 100,
-            left: 20,
-            right: 20,
-            bottom: 260,
-          ),
+        Column(
           children: [
-            // ── Cart items ───────────────────────────────────────────────
-            ...items.asMap().entries.map((entry) {
-              final idx = entry.key;
-              final item = entry.value;
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child:
-                    Dismissible(
-                          key: Key(item.id),
-                          direction: DismissDirection.endToStart,
-                          onDismissed: (_) => notifier.removeFromCart(item.id),
-                          background: Container(
-                            decoration: BoxDecoration(
-                              color: AppColors.error,
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            alignment: Alignment.centerRight,
-                            padding: const EdgeInsets.only(right: 24),
-                            child: const Icon(
-                              LucideIcons.trash2,
-                              color: AppColors.onError,
-                            ),
-                          ),
-                          child: _CartItemRow(item: item, notifier: notifier),
-                        )
-                        .animate(delay: (60 * idx).ms)
-                        .fadeIn(duration: 300.ms)
-                        .slideX(begin: -0.05),
-              );
-            }),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+                children: [
+                  // ── Cart items ─────────────────────────────────────────
+                  ...items.asMap().entries.map((entry) {
+                    final idx = entry.key;
+                    final item = entry.value;
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _CartItemCard(item: item, notifier: notifier)
+                          .animate(delay: (60 * idx).ms)
+                          .fadeIn(duration: 300.ms)
+                          .slideX(begin: -0.04),
+                    );
+                  }),
 
-            const SizedBox(height: 8),
+                  const SizedBox(height: 8),
 
-            // ── CouponModel row ───────────────────────────────────────────────
-            InkWell(
-              onTap: isValidatingCouponModel.value
-                  ? null
-                  : () => _handleCouponNavigation(context, ref),
-              borderRadius: BorderRadius.circular(16),
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: appliedCode != null
-                      ? AppColors.secondary.withValues(alpha: 0.08)
-                      : AppColors.surfaceContainerLow,
-                  borderRadius: BorderRadius.circular(16),
-                  border: appliedCode != null
-                      ? Border.all(
-                          color: AppColors.secondary.withValues(alpha: 0.4),
-                        )
-                      : null,
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 40,
-                      height: 40,
+                  // ── Apply Promo Code row ───────────────────────────────
+                  InkWell(
+                    onTap: () => _openPromoSheet(context, ref, showConfetti, confettiKey),
+                    borderRadius: BorderRadius.circular(16),
+                    child: Container(
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                       decoration: BoxDecoration(
-                        color: appliedCode != null
-                            ? AppColors.secondary.withValues(alpha: 0.15)
-                            : AppColors.secondaryContainer,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        appliedCode != null
-                            ? LucideIcons.checkCircle
-                            : LucideIcons.ticket,
-                        color: appliedCode != null
-                            ? AppColors.secondary
-                            : AppColors.onSecondaryContainer,
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            appliedCode ?? 'Apply CouponModel',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: appliedCode != null
-                                  ? AppColors.secondary
-                                  : AppColors.onSurface,
-                            ),
-                          ),
-                          Text(
-                            appliedCode != null
-                                ? 'Saving ₹${discount.toStringAsFixed(0)} on this OrderModel'
-                                : 'Tap to view available offers',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.onSurfaceVariant,
-                            ),
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.04),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
                           ),
                         ],
                       ),
-                    ),
-                    if (isValidatingCouponModel.value)
-                      const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: AppColors.secondary,
-                        ),
-                      )
-                    else if (appliedCode != null)
-                      InkWell(
-                        onTap: () {
-                          ref.read(cartDiscountProvider.notifier).state = 0.0;
-                          ref.read(appliedCouponCodeProvider.notifier).state =
-                              null;
-                        },
-                        child: const Icon(
-                          LucideIcons.x,
-                          size: 18,
-                          color: AppColors.outline,
-                        ),
-                      )
-                    else
-                      const Icon(
-                        LucideIcons.chevronRight,
-                        color: AppColors.outline,
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: AppColors.skyBlue.withValues(alpha: 0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              appliedCode != null
+                                  ? LucideIcons.checkCircle
+                                  : LucideIcons.tag,
+                              color: AppColors.skyBlue,
+                              size: 20,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              appliedCode != null
+                                  ? 'Coupon "$appliedCode" applied'
+                                  : 'Apply Promo Code',
+                              style: TextStyle(
+                                fontFamily: 'Manrope',
+                                fontWeight: FontWeight.w700,
+                                fontSize: 15,
+                                color: appliedCode != null
+                                    ? AppColors.skyBlue
+                                    : AppColors.onSurface,
+                              ),
+                            ),
+                          ),
+                          if (appliedCode != null)
+                            GestureDetector(
+                              onTap: () {
+                                ref.read(cartDiscountProvider.notifier).state = 0.0;
+                                ref.read(appliedCouponCodeProvider.notifier).state =
+                                    null;
+                              },
+                              child: const Icon(LucideIcons.x,
+                                  size: 18, color: AppColors.outline),
+                            )
+                          else
+                            const Icon(LucideIcons.chevronRight,
+                                color: AppColors.outline),
+                        ],
                       ),
-                  ],
-                ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // ── Price breakdown ─────────────────────────────────────
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.04),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        _PriceRow(
+                            'Subtotal', '₹${subtotal.toStringAsFixed(2)}'),
+                        const SizedBox(height: 8),
+                        _PriceRow(
+                            'Delivery Fee', '₹${deliveryFee.toStringAsFixed(2)}'),
+                        if (discount > 0) ...[
+                          const SizedBox(height: 8),
+                          _PriceRow(
+                            'Discount',
+                            '-₹${discount.toStringAsFixed(2)}',
+                            valueColor: AppColors.warmOrange,
+                          ),
+                        ],
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 12),
+                          child:
+                              Divider(height: 1, color: AppColors.outlineVariant),
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('Total Amount',
+                                style: TextStyle(
+                                    fontFamily: 'Manrope',
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 16,
+                                    color: AppColors.onSurface)),
+                            Text('₹${total.toStringAsFixed(2)}',
+                                style: const TextStyle(
+                                    fontFamily: 'Manrope',
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 20,
+                                    color: AppColors.skyBlue)),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
+
+            // ── Sticky bottom bar ────────────────────────────────────────
+            _BottomBar(total: total),
           ],
         ),
 
-        // ── Sticky summary + CTA ─────────────────────────────────────────
-        Positioned(
-          left: 0,
-          right: 0,
-          bottom: 0,
-          child: _SummaryBar(
-            subtotal: subtotal,
-            deliveryFee: deliveryFee,
-            discount: discount,
-            total: total,
+        // ── Confetti overlay ──────────────────────────────────────────
+        if (showConfetti.value)
+          _CouponConfetti(
+            key: confettiKey.value,
+            onComplete: () => showConfetti.value = false,
           ),
-        ),
       ],
     );
   }
+
+  void _openPromoSheet(
+    BuildContext context,
+    WidgetRef ref,
+    ValueNotifier<bool> showConfetti,
+    ValueNotifier<UniqueKey> confettiKey,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => PromoCodeBottomSheet(subtotal: subtotal),
+    ).then((result) {
+      if (result != null && result is Map<String, dynamic>) {
+        ref.read(appliedCouponCodeProvider.notifier).state =
+            result['code'] as String;
+        ref.read(cartDiscountProvider.notifier).state =
+            result['discount'] as double;
+
+        // 🎉 Trigger celebration confetti + haptic
+        HapticFeedback.mediumImpact();
+        confettiKey.value = UniqueKey();
+        showConfetti.value = true;
+      }
+    });
+  }
 }
 
-// ── Single cart item row ─────────────────────────────────────────────────────
+// ── Single cart item card ─────────────────────────────────────────────────────
 
-class _CartItemRow extends HookConsumerWidget {
+class _CartItemCard extends HookConsumerWidget {
   final CartItemModel item;
   final CartNotifier notifier;
 
-  const _CartItemRow({required this.item, required this.notifier});
+  const _CartItemCard({required this.item, required this.notifier});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -537,131 +402,160 @@ class _CartItemRow extends HookConsumerWidget {
     }
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(20),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
-      child: Row(
+      child: Stack(
         children: [
-          // ProductModel image
-          Container(
-            width: 88,
-            height: 88,
-            decoration: BoxDecoration(
-              color: AppColors.surfaceContainerLow,
-              borderRadius: BorderRadius.circular(14),
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: item.product?.primaryImage?.isNotEmpty == true
-                ? AppNetworkImage(
-                    imageUrl: item.product!.primaryImage!,
-                    fit: BoxFit.cover,
-                    errorWidget: (context, url, error) =>
-                        const Icon(LucideIcons.image, color: AppColors.outline),
-                  )
-                : const Icon(
-                    LucideIcons.shoppingBag,
-                    color: AppColors.outline,
-                    size: 32,
-                  ),
-          ),
-          const SizedBox(width: 14),
-          // Details
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item.product?.name ?? 'Unknown item',
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontFamily: 'Manrope',
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
-                    color: AppColors.onSurface,
-                  ),
+          Row(
+            children: [
+              // Product image
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                if (item.product?.unit != null && item.product!.unit!.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 2),
-                    child: Text(
-                      item.product!.unit!,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppColors.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
-                const SizedBox(height: 10),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                clipBehavior: Clip.antiAlias,
+                child: item.product?.primaryImage?.isNotEmpty == true
+                    ? AppNetworkImage(
+                        imageUrl: item.product!.primaryImage!,
+                        fit: BoxFit.cover,
+                        errorWidget: (context, url, error) => const Icon(
+                            LucideIcons.image,
+                            color: AppColors.outline),
+                      )
+                    : const Icon(LucideIcons.shoppingBag,
+                        color: AppColors.outline, size: 32),
+              ),
+              const SizedBox(width: 12),
+              // Details
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '₹${(item.product?.salePrice ?? 0).toStringAsFixed(0)}',
+                      item.product?.name ?? 'Unknown item',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: AppColors.primary,
+                        fontFamily: 'Manrope',
+                        fontWeight: FontWeight.w800,
+                        fontSize: 15,
+                        color: AppColors.onSurface,
                       ),
                     ),
-                    // Quantity stepper
-                    Container(
-                      decoration: BoxDecoration(
-                        color: AppColors.surfaceContainerHigh,
-                        borderRadius: BorderRadius.circular(24),
+                    if (item.product?.brand != null &&
+                        item.product!.brand!.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Text(
+                          item.product!.brand!,
+                          style: const TextStyle(
+                              fontSize: 12,
+                              color: AppColors.onSurfaceVariant,
+                              fontWeight: FontWeight.w500),
+                        ),
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _StepButton(
-                            icon: LucideIcons.minus,
-                            color: AppColors.primary,
-                            bg: AppColors.surfaceContainerLowest,
-                            onTap: isUpdating.value
-                                ? null
-                                : () => changeQty(-1),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 12),
-                            child: isUpdating.value
-                                ? const SizedBox(
-                                    width: 16,
-                                    height: 16,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: AppColors.primary,
-                                    ),
-                                  )
-                                : Text(
-                                    '${item.quantity}',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 15,
-                                      color: AppColors.onSurface,
-                                    ),
-                                  ),
-                          ),
-                          _StepButton(
-                            icon: LucideIcons.plus,
-                            color: AppColors.onPrimary,
-                            bg: AppColors.primary,
-                            onTap: isUpdating.value ? null : () => changeQty(1),
-                          ),
-                        ],
+                    if (item.product?.unit != null &&
+                        item.product!.unit!.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 1),
+                        child: Text(
+                          item.product!.unit!,
+                          style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey.shade400),
+                        ),
                       ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '₹${(item.product?.salePrice ?? 0).toStringAsFixed(2)}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 16,
+                            color: AppColors.skyBlue,
+                          ),
+                        ),
+                        // Quantity stepper
+                        Container(
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF1F5F9),
+                            borderRadius: BorderRadius.circular(24),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              _StepBtn(
+                                icon: LucideIcons.minus,
+                                color: AppColors.onSurface,
+                                bg: Colors.white,
+                                onTap: isUpdating.value
+                                    ? null
+                                    : () => changeQty(-1),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12),
+                                child: isUpdating.value
+                                    ? const SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: AppColors.skyBlue))
+                                    : Text('${item.quantity}',
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 15,
+                                            color: AppColors.onSurface)),
+                              ),
+                              _StepBtn(
+                                icon: LucideIcons.plus,
+                                color: Colors.white,
+                                bg: AppColors.skyBlue,
+                                onTap: isUpdating.value
+                                    ? null
+                                    : () => changeQty(1),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
+              ),
+            ],
+          ),
+          // Remove X button — top right
+          Positioned(
+            top: 0,
+            right: 0,
+            child: GestureDetector(
+              onTap: () => notifier.removeFromCart(item.id),
+              child: Container(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade200,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(LucideIcons.x, size: 14, color: Colors.grey),
+              ),
             ),
           ),
         ],
@@ -670,177 +564,313 @@ class _CartItemRow extends HookConsumerWidget {
   }
 }
 
-class _StepButton extends StatelessWidget {
+class _StepBtn extends StatelessWidget {
   final IconData icon;
   final Color color;
   final Color bg;
   final VoidCallback? onTap;
 
-  const _StepButton({
-    required this.icon,
-    required this.color,
-    required this.bg,
-    this.onTap,
-  });
+  const _StepBtn(
+      {required this.icon, required this.color, required this.bg, this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
+    return GestureDetector(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(24),
       child: Container(
         padding: const EdgeInsets.all(6),
-        decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
+        decoration: BoxDecoration(
+          color: bg,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+                color: Colors.black.withValues(alpha: 0.06),
+                blurRadius: 4,
+                offset: const Offset(0, 1)),
+          ],
+        ),
         child: Icon(icon, size: 16, color: color),
       ),
     );
   }
 }
 
-// ── Sticky summary card ──────────────────────────────────────────────────────
+// ── Price row ─────────────────────────────────────────────────────────────────
 
-class _SummaryBar extends StatelessWidget {
-  final double subtotal;
-  final double deliveryFee;
-  final double discount;
-  final double total;
-
-  const _SummaryBar({
-    required this.subtotal,
-    required this.deliveryFee,
-    required this.discount,
-    required this.total,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-          decoration: BoxDecoration(
-            color: AppColors.surfaceContainerLowest.withValues(alpha: 0.9),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.primary.withValues(alpha: 0.08),
-                blurRadius: 24,
-                offset: const Offset(0, -6),
-              ),
-            ],
-          ),
-          child: SafeArea(
-            top: false,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _SummaryRow('Subtotal', '₹${subtotal.toStringAsFixed(0)}'),
-                const SizedBox(height: 6),
-                _SummaryRow(
-                  'Delivery',
-                  deliveryFee == 0
-                      ? 'FREE'
-                      : '₹${deliveryFee.toStringAsFixed(0)}',
-                  valueColor: deliveryFee == 0 ? AppColors.secondary : null,
-                ),
-                if (discount > 0) ...[
-                  const SizedBox(height: 6),
-                  _SummaryRow(
-                    'CouponModel Discount',
-                    '-₹${discount.toStringAsFixed(0)}',
-                    valueColor: AppColors.secondary,
-                  ),
-                ],
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 10),
-                  child: Divider(height: 1, color: AppColors.outlineVariant),
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Total',
-                      style: TextStyle(
-                        fontFamily: 'Manrope',
-                        fontWeight: FontWeight.w900,
-                        fontSize: 17,
-                        color: AppColors.onSurface,
-                      ),
-                    ),
-                    Text(
-                      '₹${total.toStringAsFixed(0)}',
-                      style: const TextStyle(
-                        fontFamily: 'Manrope',
-                        fontWeight: FontWeight.w900,
-                        fontSize: 20,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  height: 54,
-                  child: FilledButton.icon(
-                    onPressed: () => context.push('/checkout'),
-                    icon: const Icon(LucideIcons.arrowRight, size: 20),
-                    label: const Text(
-                      'Proceed to Checkout',
-                      style: TextStyle(
-                        fontFamily: 'Manrope',
-                        fontWeight: FontWeight.w800,
-                        fontSize: 16,
-                      ),
-                    ),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFF6C3CE1),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(28),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _SummaryRow extends StatelessWidget {
+class _PriceRow extends StatelessWidget {
   final String label;
   final String value;
   final Color? valueColor;
 
-  const _SummaryRow(this.label, this.value, {this.valueColor});
+  const _PriceRow(this.label, this.value, {this.valueColor});
 
   @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 13,
-            color: AppColors.onSurfaceVariant,
-          ),
-        ),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
-            color: valueColor ?? AppColors.onSurface,
-          ),
-        ),
+        Text(label,
+            style: const TextStyle(
+                fontSize: 14, color: AppColors.onSurfaceVariant)),
+        Text(value,
+            style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: valueColor ?? AppColors.onSurface)),
       ],
     );
   }
+}
+
+// ── Sticky bottom bar ─────────────────────────────────────────────────────────
+
+class _BottomBar extends StatelessWidget {
+  final double total;
+
+  const _BottomBar({required this.total});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 16,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Row(
+          children: [
+            // Left: total
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('TOTAL TO PAY',
+                      style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey.shade500,
+                          letterSpacing: 0.5)),
+                  const SizedBox(height: 2),
+                  Text('₹${total.toStringAsFixed(2)}',
+                      style: const TextStyle(
+                          fontFamily: 'Manrope',
+                          fontWeight: FontWeight.w900,
+                          fontSize: 22,
+                          color: AppColors.onSurface)),
+                ],
+              ),
+            ),
+            // Right: checkout button
+            FilledButton(
+              onPressed: () => context.push('/checkout'),
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.skyBlue,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30)),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('Proceed to Checkout',
+                      style: TextStyle(
+                          fontFamily: 'Manrope',
+                          fontWeight: FontWeight.w800,
+                          fontSize: 15,
+                          color: Colors.white)),
+                  SizedBox(width: 6),
+                  Icon(LucideIcons.arrowRight, size: 18, color: Colors.white),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Coupon celebration confetti overlay ───────────────────────────────────────
+
+class _CouponConfetti extends StatefulWidget {
+  final VoidCallback onComplete;
+  const _CouponConfetti({super.key, required this.onComplete});
+
+  @override
+  State<_CouponConfetti> createState() => _CouponConfettiState();
+}
+
+class _CouponConfettiState extends State<_CouponConfetti>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+
+  static const _colors = [
+    Color(0xFF0EA5E9), // sky blue
+    Color(0xFFF97316), // warm orange
+    Color(0xFF22C55E), // green
+    Color(0xFFFBBC04), // yellow
+    Color(0xFFEC4899), // pink
+    Color(0xFFA855F7), // purple
+    Color(0xFF14B8A6), // teal
+    Color(0xFFEF4444), // red
+  ];
+
+  final _rng = Random();
+  late final List<_Particle> _particles;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2800),
+    )..forward().whenComplete(() {
+        widget.onComplete();
+      });
+
+    _particles = List.generate(48, (i) {
+      return _Particle(
+        x: _rng.nextDouble(),
+        size: 6 + _rng.nextDouble() * 9,
+        color: _colors[i % _colors.length],
+        delay: _rng.nextDouble() * 0.35,
+        speed: 0.55 + _rng.nextDouble() * 0.45,
+        isSquare: i % 3 != 0,
+        sway: (_rng.nextDouble() - 0.5) * 0.15,
+        rotation: _rng.nextDouble() * 2 * pi,
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+
+    return IgnorePointer(
+      child: AnimatedBuilder(
+        animation: _ctrl,
+        builder: (context, _) {
+          final t = _ctrl.value;
+          return Stack(
+            children: [
+              // ── Particles ──────────────────────────────────────────────
+              ..._particles.map((p) {
+                final progress =
+                    ((t - p.delay) / p.speed).clamp(0.0, 1.0);
+                if (progress <= 0) return const SizedBox.shrink();
+
+                final opacity =
+                    progress < 0.15 ? progress / 0.15 : (1 - progress);
+                final top = -20.0 + (size.height + 40) * progress;
+                final left =
+                    size.width * p.x + sin(progress * pi * 3) * size.width * p.sway;
+
+                return Positioned(
+                  left: left,
+                  top: top,
+                  child: Transform.rotate(
+                    angle: p.rotation + progress * pi * 4,
+                    child: Opacity(
+                      opacity: opacity.clamp(0.0, 1.0),
+                      child: Container(
+                        width: p.size,
+                        height: p.isSquare ? p.size : p.size * 0.45,
+                        decoration: BoxDecoration(
+                          color: p.color,
+                          borderRadius: p.isSquare
+                              ? BorderRadius.circular(2)
+                              : BorderRadius.circular(p.size),
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }),
+
+              // ── "🎉 Coupon Applied!" banner ────────────────────────────
+              if (t > 0.05 && t < 0.85)
+                Positioned(
+                  top: size.height * 0.38,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: Opacity(
+                      opacity: t < 0.15
+                          ? (t - 0.05) / 0.1
+                          : (t > 0.75 ? (0.85 - t) / 0.1 : 1.0),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 28, vertical: 14),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF0EA5E9), Color(0xFF38BDF8)],
+                          ),
+                          borderRadius: BorderRadius.circular(40),
+                          boxShadow: [
+                            BoxShadow(
+                              color:
+                                  const Color(0xFF0EA5E9).withValues(alpha: 0.4),
+                              blurRadius: 20,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
+                        ),
+                        child: const Text(
+                          '🎉  Coupon Applied!',
+                          style: TextStyle(
+                            fontFamily: 'Manrope',
+                            fontWeight: FontWeight.w900,
+                            fontSize: 20,
+                            color: Colors.white,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _Particle {
+  final double x;
+  final double size;
+  final Color color;
+  final double delay;
+  final double speed;
+  final bool isSquare;
+  final double sway;
+  final double rotation;
+
+  const _Particle({
+    required this.x,
+    required this.size,
+    required this.color,
+    required this.delay,
+    required this.speed,
+    required this.isSquare,
+    required this.sway,
+    required this.rotation,
+  });
 }

@@ -118,8 +118,7 @@ final cartSubtotalProvider = Provider<double>((ref) {
 });
 
 final cartDeliveryFeeProvider = Provider<double>((ref) {
-  final subtotal = ref.watch(cartSubtotalProvider);
-  return subtotal > 299.0 ? 0.0 : 29.0;
+  return 40.0; // Flat ₹40 delivery fee
 });
 
 final cartTotalProvider = Provider<double>((ref) {
