@@ -30,7 +30,7 @@ class CheckoutScreen extends HookConsumerWidget {
     final selectedAddress = ref.watch(selectedAddressProvider);
     final cartNotifier = ref.read(cartProvider.notifier);
 
-    final itemCount = cartAsync.asData?.value?.fold<int>(0, (sum, i) => sum + i.quantity) ?? 0;
+    final itemCount = cartAsync.asData?.value.fold<int>(0, (sum, i) => sum + i.quantity) ?? 0;
 
     Future<void> placeOrder() async {
       if (selectedAddress == null) {

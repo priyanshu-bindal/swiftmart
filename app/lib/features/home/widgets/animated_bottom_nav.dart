@@ -57,7 +57,7 @@ class SwiftmartBottomNav extends StatelessWidget {
         color: Colors.transparent,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             offset: const Offset(0, -10),
             blurRadius: 40,
           ),
@@ -68,7 +68,7 @@ class SwiftmartBottomNav extends StatelessWidget {
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
           child: Container(
-            color: Colors.white.withOpacity(0.9),
+            color: Colors.white.withValues(alpha: 0.9),
             padding: EdgeInsets.only(
               left: 20,
               right: 20,
@@ -336,7 +336,7 @@ class _HomePainter extends CustomPainter {
       ..strokeJoin = StrokeJoin.round;
 
     final paintFill = Paint()
-      ..color = color.withOpacity(progress)
+      ..color = color.withValues(alpha: progress)
       ..style = PaintingStyle.fill;
 
     // Door punch-out effect
@@ -425,7 +425,7 @@ class _CategoryPainter extends CustomPainter {
       ..strokeJoin = StrokeJoin.round;
 
     final fill = Paint()
-      ..color = color.withOpacity(progress)
+      ..color = color.withValues(alpha: progress)
       ..style = PaintingStyle.fill;
 
     // Helper to draw a single staggered animated square
@@ -484,7 +484,7 @@ class _CartPainter extends CustomPainter {
       ..strokeJoin = StrokeJoin.round;
 
     final paintFill = Paint()
-      ..color = color.withOpacity(progress)
+      ..color = color.withValues(alpha: progress)
       ..style = PaintingStyle.fill;
 
     Path handle = Path()
@@ -586,7 +586,7 @@ class _HistoryPainter extends CustomPainter {
       ..strokeJoin = StrokeJoin.round;
 
     final paintFill = Paint()
-      ..color = color.withOpacity(progress)
+      ..color = color.withValues(alpha: progress)
       ..style = PaintingStyle.fill;
 
     // Draw solid circle filling from behind

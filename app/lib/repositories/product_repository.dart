@@ -46,7 +46,7 @@ class ProductRepository {
     }
 
     if (limit != null) {
-      finalQuery = finalQuery.limit(limit) as PostgrestTransformBuilder<PostgrestList>;
+      finalQuery = finalQuery.limit(limit);
     }
 
     final response = await finalQuery;

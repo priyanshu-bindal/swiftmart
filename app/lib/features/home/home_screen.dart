@@ -5,7 +5,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../../shared/widgets/product_card.dart';
 import '../../shared/widgets/app_network_image.dart';
 import '../orders/widgets/active_order_banner.dart';
 

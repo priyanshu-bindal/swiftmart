@@ -21,13 +21,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
 
-  @override
-  void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
-    super.dispose();
-  }
-
   Future<void> _submitLogin() async {
     if (!_formKey.currentState!.validate()) return;
     FocusScope.of(context).unfocus();
