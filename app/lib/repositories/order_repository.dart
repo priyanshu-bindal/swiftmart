@@ -20,10 +20,13 @@ class OrderRepository {
   }
 
   Future<OrderModel> placeOrderModel({
+    required double subtotal,
+    required double discount,
+    required double total,
+    String? couponCode,
+    required double lat,
+    required double lng,
     required String deliveryAddress,
-    double? lat,
-    double? lng,
-    String paymentMethod = 'cod',
   }) async {
     final uid = _getUid();
 
@@ -36,26 +39,21 @@ class OrderRepository {
     final cartList = cartRes as List<dynamic>;
     if (cartList.isEmpty) throw Exception("Cart is empty");
 
-    // 2. Calculate local total
-    double totalAmount = 0.0;
-    for (var item in cartList) {
-      final price = (item['products']['price'] as num).toDouble();
-      final quantity = item['quantity'] as int;
-      totalAmount += price * quantity;
-    }
-
     // 3. Insert OrderModel
     final orderRes = await supabase
         .from('orders')
         .insert({
           'user_id': uid,
-          'status': 'placed',
-          'total_amount': totalAmount,
-          'delivery_address': deliveryAddress,
-          'delivery_lat': lat,
-          'delivery_lng': lng,
-          'payment_method': paymentMethod,
-          'estimated_minutes': 28, // mock estimate
+          'status': 'confirmed',
+          'subtotal': subtotal,
+          'discount': discount,
+          'total': total,
+          'coupon_code': couponCode,
+          'delivery_address': {
+            'lat': lat,
+            'lng': lng,
+            'address': deliveryAddress,
+          },
         })
         .select()
         .single();

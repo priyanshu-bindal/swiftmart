@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:go_router/go_router.dart';
 import 'providers/flash_deals_provider.dart';
 import 'widgets/deal_card.dart';
 
@@ -24,6 +25,16 @@ class FlashDealsScreen extends HookConsumerWidget {
           ),
         ),
         backgroundColor: const Color(0xFF6C3CE1),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/home');
+            }
+          },
+        ),
         iconTheme: const IconThemeData(color: Colors.white),
         elevation: 0,
       ),

@@ -130,12 +130,13 @@ class _BannerContent extends StatelessWidget {
   }
 
   String _statusTitle(String status) {
-    switch (status) {
-      case 'CONFIRMED':
+    switch (status.toLowerCase()) {
+      case 'confirmed':
         return 'Order Confirmed! 📦';
-      case 'PREPARING':
+      case 'preparing':
+      case 'packed':
         return 'Packing your groceries 🧺';
-      case 'OUT_FOR_DELIVERY':
+      case 'out_for_delivery':
         return 'Your order is on the way! 🚴';
       default:
         return 'Order in progress';
@@ -143,12 +144,13 @@ class _BannerContent extends StatelessWidget {
   }
 
   String _statusSubtitle(String status) {
-    switch (status) {
-      case 'CONFIRMED':
+    switch (status.toLowerCase()) {
+      case 'confirmed':
         return 'Being prepared for you';
-      case 'PREPARING':
+      case 'preparing':
+      case 'packed':
         return 'Fresh items being packed';
-      case 'OUT_FOR_DELIVERY':
+      case 'out_for_delivery':
         return 'Arriving soon — track live';
       default:
         return 'Sit tight!';
@@ -178,8 +180,8 @@ class _AnimatedStatusIcon extends StatelessWidget {
   }
 
   Widget _buildIcon() {
-    switch (status) {
-      case 'CONFIRMED':
+    switch (status.toLowerCase()) {
+      case 'confirmed':
         // Pulsing package icon
         return const Text('📦', style: TextStyle(fontSize: 22))
             .animate(onPlay: (c) => c.repeat(reverse: true))
@@ -189,12 +191,13 @@ class _AnimatedStatusIcon extends StatelessWidget {
               duration: 800.ms,
               curve: Curves.easeInOut,
             );
-      case 'PREPARING':
+      case 'preparing':
+      case 'packed':
         // Bouncing chef icon
         return const Text('👨‍🍳', style: TextStyle(fontSize: 22))
             .animate(onPlay: (c) => c.repeat(reverse: true))
             .moveY(begin: 0, end: -4, duration: 600.ms, curve: Curves.easeInOut);
-      case 'OUT_FOR_DELIVERY':
+      case 'out_for_delivery':
         // Sliding bike icon
         return const Text('🚴', style: TextStyle(fontSize: 22))
             .animate(onPlay: (c) => c.repeat(reverse: true))

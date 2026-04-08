@@ -318,13 +318,16 @@ class _CategoryScreenState extends ConsumerState<CategoryScreen> {
         if (discount < 0) discount = 0;
         int stock = (p['stock_qty'] ?? 0).toInt();
 
-        return Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey.shade300, width: 0.5),
-          ),
-          child: Column(
+        return GestureDetector(
+          onTap: () => context.push('/ProductModel/${p['id']}'),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey.shade300, width: 0.5),
+            ),
+          
+            child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               SizedBox(
@@ -440,6 +443,7 @@ class _CategoryScreenState extends ConsumerState<CategoryScreen> {
               ),
             ],
           ),
+        ),
         );
       },
     );

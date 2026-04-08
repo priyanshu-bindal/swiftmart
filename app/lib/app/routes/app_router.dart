@@ -11,7 +11,6 @@ import '../../features/products/browse_categories_screen.dart';
 import '../../features/products/product_detail_screen.dart';
 import '../../features/cart/cart_screen.dart';
 import '../../features/orders/checkout_screen.dart';
-import '../../features/orders/mock_payment_screen.dart';
 import '../../features/orders/order_success_screen.dart';
 import '../../features/orders/order_tracking_screen.dart';
 import '../../features/orders/order_history_screen.dart';
@@ -133,15 +132,6 @@ final routerProvider = Provider<GoRouter>((ref) {
         name: 'checkout',
         builder: (context, state) => const CheckoutScreen(),
       ),
-      GoRoute(
-        path: '/mock-payment',
-        name: 'mockPayment',
-        builder: (context, state) {
-          final orderData =
-              (state.extra as Map<String, dynamic>?) ?? {};
-          return MockPaymentScreen(orderData: orderData);
-        },
-      ),
 
       // ── Orders ────────────────────────────────────────────────────────────
       GoRoute(
@@ -167,6 +157,13 @@ final routerProvider = Provider<GoRouter>((ref) {
           final orderId = extra?['order_id']?.toString();
           return OrderSuccessScreen(orderId: orderId);
         },
+      ),
+
+      // ── Flash Deals ────────────────────────────────────────────────────────
+      GoRoute(
+        path: '/flash-deals',
+        name: 'flashDeals',
+        builder: (context, state) => const FlashDealsScreen(),
       ),
       GoRoute(
         path: '/order-track/:orderId',

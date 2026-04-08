@@ -45,58 +45,51 @@ class CheckoutScreen extends HookConsumerWidget {
 
       isPlacing.value = true;
       try {
-        final uid = Supabase.instance.client.auth.currentUser?.id;
-        if (uid == null) throw Exception('Not authenticated');
+        final supabase = Supabase.instance.client;
+        final user = supabase.auth.currentUser;
+        if (user == null) throw Exception('Not authenticated');
 
-        final methodStr = switch (paymentMethod.value) {
-          _PaymentMethod.cod => 'cod',
-          _PaymentMethod.upi => 'upi',
-          _PaymentMethod.card => 'card',
-        };
+        // 1. Direct insert to orders table
+        final orderResponse = await supabase.from('orders').insert({
+          'user_id': user.id,
+          'status': 'CONFIRMED',
+          'subtotal': subtotal,
+          'discount': discount,
+          'total': total,
+          'coupon_code': appliedCode,
+          'delivery_address': {
+            'lat': selectedAddress!.lat,
+            'lng': selectedAddress!.lng,
+            'address': selectedAddress!.fullAddress,
+          },
+        }).select('id').single();
 
-        // Snapshot cart items BEFORE clearing the cart.
-        final orderItemsData = cartAsync.value!
-            .map((i) => {
-                  'product_id': i.productId,
-                  'name': i.product?.name ?? '',
-                  'image_url': i.product?.primaryImage ?? '',
-                  'unit': i.product?.unit ?? '',
-                  'quantity': i.quantity,
-                  'unit_price': i.product?.salePrice ?? 0.0,
-                  'total_price': i.totalPrice,
-                })
-            .toList();
+        final orderId = orderResponse['id'].toString();
 
-        // Clear cart & discount state immediately for good UX.
+        // 2. Direct insert to order_items table
+        final orderItems = cartAsync.value!.map((item) => {
+          'order_id': orderId,
+          'product_id': item.productId,
+          'quantity': item.quantity,
+          'unit_price': item.product?.salePrice ?? 0.0,
+          'total_price': (item.product?.salePrice ?? 0.0) * item.quantity,
+        }).toList();
+
+        await supabase.from('order_items').insert(orderItems);
+
+        // 3. Clear cart and handle success
         await cartNotifier.clearCart();
         ref.read(cartDiscountProvider.notifier).state = 0.0;
         ref.read(appliedCouponCodeProvider.notifier).state = null;
 
-        // Navigate to payment — NO DB write yet.
-        // The order is inserted into Supabase only after the user
-        // confirms payment in MockPaymentScreen.
         if (context.mounted) {
-          context.pushReplacement('/mock-payment', extra: {
-            'uid': uid,
-            'subtotal': subtotal,
-            'delivery_fee': deliveryFee,
-            'discount': discount,
-            'total': total,
-            'coupon_code': appliedCode,
-            'payment_method': methodStr,
-            'address_id': selectedAddress!.id,
-            'delivery_address': {
-              'label': selectedAddress!.label,
-              'full_address': selectedAddress!.formattedAddress,
-            },
-            'order_items': orderItemsData,
-          });
+          context.pushReplacement('/order-success', extra: {'order_id': orderId});
         }
       } catch (e) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-                content: Text('Failed to proceed: $e'),
+                content: Text('Failed to place order: $e'),
                 backgroundColor: AppColors.error),
           );
         }

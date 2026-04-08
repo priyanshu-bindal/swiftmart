@@ -18,7 +18,7 @@ final activeOrderProvider = StreamProvider<OrderModel?>((ref) {
           .from('orders')
           .select('*, order_items(*)')
           .eq('user_id', uid)
-          .inFilter('status', ['CONFIRMED', 'PREPARING', 'OUT_FOR_DELIVERY'])
+          .inFilter('status', ['CONFIRMED', 'PREPARING', 'OUT_FOR_DELIVERY', 'confirmed', 'preparing', 'packed', 'out_for_delivery'])
           .order('created_at', ascending: false)
           .limit(1)
           .maybeSingle();

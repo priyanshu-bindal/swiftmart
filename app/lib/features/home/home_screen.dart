@@ -371,7 +371,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('Daily Savings', style: GoogleFonts.plusJakartaSans(fontSize: 20, fontWeight: FontWeight.w800, color: const Color(0xFF180331))),
-              const Text('View All', style: TextStyle(color: Color(0xFF006B5C), fontWeight: FontWeight.bold, fontSize: 14)),
+              GestureDetector(
+                onTap: () => context.push('/flash-deals'),
+                child: const Text('View All', style: TextStyle(color: Color(0xFF006B5C), fontWeight: FontWeight.bold, fontSize: 14)),
+              ),
             ],
           ),
         ),
@@ -412,9 +415,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _buildSavingsCard({required String title, required String subtitle, required IconData icon, required Color bgColor, required Color iconBgColor}) {
-    return Container(
-      width: 160,
-      margin: const EdgeInsets.symmetric(horizontal: 4),
+    return GestureDetector(
+      onTap: () => context.push('/flash-deals'),
+      child: Container(
+        width: 160,
+        margin: const EdgeInsets.symmetric(horizontal: 4),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: bgColor,
@@ -441,7 +446,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           )
         ],
       ),
-    );
+    ));
   }
 
   Widget _buildShopByCategory(WidgetRef ref) {
@@ -574,9 +579,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
      if (type == 'category') {
         context.push('/CategoryModel/${b['redirect_id'] ?? ''}', extra: b['title']);
      } else if (type == 'product') {
-        context.push('/ProductDetail/${b['redirect_id']}'); 
+        context.push('/ProductModel/${b['redirect_id']}'); 
      } else if (type == 'url') {
         // Handle URL launch if needed
+     } else {
+        context.push('/flash-deals');
      }
   }
 
@@ -625,9 +632,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _buildSaleBanner(Map<String, dynamic> banner) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 16),
-      padding: const EdgeInsets.symmetric(vertical: 24),
+    return GestureDetector(
+      onTap: () => context.push('/flash-deals'),
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 16),
+        padding: const EdgeInsets.symmetric(vertical: 24),
       decoration: BoxDecoration(
         gradient: const LinearGradient(colors: [Color(0xFFFF9A44), Color(0xFFFC6076)]),
         borderRadius: BorderRadius.circular(16),
@@ -677,7 +686,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           )
         ],
       )
-    );
+    ));
   }
 
   Widget _buildEventsBanner(List<Map<String, dynamic>> banners) {

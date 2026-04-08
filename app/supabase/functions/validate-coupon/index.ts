@@ -45,7 +45,7 @@ serve(async (req) => {
 
     const now = new Date()
     const validFrom = coupon.valid_from ? new Date(coupon.valid_from) : null
-    const validTo = coupon.valid_to ? new Date(coupon.valid_to) : null
+    const validTo = coupon.valid_until ? new Date(coupon.valid_until) : null
 
     if (validFrom && now < validFrom) {
       return new Response(
@@ -68,20 +68,20 @@ serve(async (req) => {
       )
     }
 
-    if (cart_total < coupon.min_order) {
+    if (cart_total < coupon.min_order_value) {
       return new Response(
-        JSON.stringify({ valid: false, message: `Minimum order value should be ₹${coupon.min_order}` }),
+        JSON.stringify({ valid: false, message: `Minimum order value should be ₹${coupon.min_order_value}` }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
       )
     }
 
     let discount_amount = 0
-    if (coupon.type === 'flat' || coupon.type === 'cashback') {
+    if (coupon.discount_type === 'flat' || coupon.discount_type === 'cashback') {
       discount_amount = coupon.value
-    } else if (coupon.type === 'percent') {
+    } else if (coupon.discount_type === 'percent') {
       discount_amount = (cart_total * coupon.value) / 100
       // In a real app we might cap max discount
-    } else if (coupon.type === 'free_delivery') {
+    } else if (coupon.discount_type === 'free_delivery') {
       discount_amount = coupon.value // Assume value holds base delivery charge
     }
 
@@ -93,7 +93,7 @@ serve(async (req) => {
         discount_amount,
         final_total,
         message: 'Coupon applied successfully',
-        coupon_type: coupon.type
+        coupon_type: coupon.discount_type
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     )
