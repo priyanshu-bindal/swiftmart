@@ -20,7 +20,7 @@ class BannerModel {
       id: json['id']?.toString() ?? '',
       imageUrl: json['image_url']?.toString(),
       ctaUrl: json['cta_url']?.toString(),
-      displayOrderModel: (json['display_OrderModel'] as num?)?.toInt() ?? 0,
+      displayOrderModel: (json['display_order'] as num?)?.toInt() ?? 0,
       isFestive: json['is_festive'] as bool? ?? false,
       isActive: json['is_active'] as bool? ?? true,
     );
@@ -31,7 +31,7 @@ class BannerModel {
       'id': id,
       'image_url': imageUrl,
       'cta_url': ctaUrl,
-      'display_OrderModel': displayOrderModel,
+      'display_order': displayOrderModel,
       'is_festive': isFestive,
       'is_active': isActive,
     };

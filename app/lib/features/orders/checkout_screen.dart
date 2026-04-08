@@ -54,62 +54,49 @@ class CheckoutScreen extends HookConsumerWidget {
           _PaymentMethod.card => 'card',
         };
 
-        // 1) Insert order row
-        final orderResponse =
-            await Supabase.instance.client.from('orders').insert({
-          'user_id': uid,
-          'status': 'CONFIRMED',
-          'subtotal': subtotal,
-          'delivery_fee': deliveryFee,
-          'discount_amount': discount,
-          'total': total,
-          'coupon_code': appliedCode,
-          'payment_method': methodStr,
-          'address_id': selectedAddress.id,
-          'delivery_address': {
-            'label': selectedAddress.label,
-            'full_address': selectedAddress.formattedAddress,
-          },
-        }).select().single();
+        // Snapshot cart items BEFORE clearing the cart.
+        final orderItemsData = cartAsync.value!
+            .map((i) => {
+                  'product_id': i.productId,
+                  'name': i.product?.name ?? '',
+                  'image_url': i.product?.primaryImage ?? '',
+                  'unit': i.product?.unit ?? '',
+                  'quantity': i.quantity,
+                  'unit_price': i.product?.salePrice ?? 0.0,
+                  'total_price': i.totalPrice,
+                })
+            .toList();
 
-        final orderId = orderResponse['id']?.toString() ?? '';
-
-        // 2) Insert order items into the order_items table
-        if (orderId.isNotEmpty) {
-          final orderItemsPayload = cartAsync.value!
-              .map((i) => {
-                    'order_id': orderId,
-                    'product_id': i.productId,
-                    'name': i.product?.name ?? '',
-                    'image_url': i.product?.primaryImage ?? '',
-                    'unit': i.product?.unit ?? '',
-                    'quantity': i.quantity,
-                    'unit_price': i.product?.salePrice ?? 0.0,
-                    'total_price': i.totalPrice,
-                  })
-              .toList();
-
-          await Supabase.instance.client
-              .from('order_items')
-              .insert(orderItemsPayload);
-        }
-
+        // Clear cart & discount state immediately for good UX.
         await cartNotifier.clearCart();
         ref.read(cartDiscountProvider.notifier).state = 0.0;
         ref.read(appliedCouponCodeProvider.notifier).state = null;
 
+        // Navigate to payment — NO DB write yet.
+        // The order is inserted into Supabase only after the user
+        // confirms payment in MockPaymentScreen.
         if (context.mounted) {
           context.pushReplacement('/mock-payment', extra: {
-            'order_id': orderId,
+            'uid': uid,
+            'subtotal': subtotal,
+            'delivery_fee': deliveryFee,
+            'discount': discount,
             'total': total,
+            'coupon_code': appliedCode,
             'payment_method': methodStr,
+            'address_id': selectedAddress!.id,
+            'delivery_address': {
+              'label': selectedAddress!.label,
+              'full_address': selectedAddress!.formattedAddress,
+            },
+            'order_items': orderItemsData,
           });
         }
       } catch (e) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-                content: Text('Order failed: $e'),
+                content: Text('Failed to proceed: $e'),
                 backgroundColor: AppColors.error),
           );
         }
@@ -618,7 +605,7 @@ class _PlaceOrderBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [

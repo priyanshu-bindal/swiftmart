@@ -71,7 +71,7 @@ class OrderRepository {
         'product_image': item['products']['image_url'],
         'unit_size': item['products']['unit_size'],
         'quantity': item['quantity'],
-        'price_at_OrderModel': item['products']['price'],
+        'price_at_order': item['products']['price'],
       };
     }).toList();
 

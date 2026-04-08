@@ -183,7 +183,7 @@ class ProfileScreen extends HookConsumerWidget {
                     iconColor: AppColors.primary,
                     iconBg: AppColors.primaryFixed,
                     label: 'My Orders',
-                    onTap: () => context.push('/OrderModel-history'),
+                    onTap: () => context.push('/order-history'),
                   ),
                 ),
                 const SizedBox(width: 20),

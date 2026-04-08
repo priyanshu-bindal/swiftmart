@@ -20,8 +20,8 @@ class AnimatedSearchBar extends HookWidget {
       final hour = DateTime.now().hour;
       if (hour >= 5 && hour < 12) return 'Search for breakfast items ☀️';
       if (hour >= 12 && hour < 17) return 'Find lunch essentials fast 🍱';
-      if (hour >= 17 && hour < 21) return 'OrderModel snacks & beverages 🍿';
-      return 'Late night cravings? OrderModel now 🌙';
+      if (hour >= 17 && hour < 21) return 'order snacks & beverages 🍿';
+      return 'Late night cravings? order now 🌙';
     });
 
     final placeholders = useMemoized(
@@ -29,7 +29,7 @@ class AnimatedSearchBar extends HookWidget {
         timeContext,
         'Search for milk, bread, eggs...',
         'Find fruits, vegetables, snacks...',
-        'OrderModel fresh groceries in minutes ⚡',
+        'order fresh groceries in minutes ⚡',
         'Get daily essentials fast',
         'Search & save with coupons 🎉',
         'Flash deals ending soon 🔥',

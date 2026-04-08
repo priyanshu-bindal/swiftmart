@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
@@ -11,6 +12,7 @@ import '../../core/theme/app_colors.dart';
 import 'package:app/core/models/category_model.dart';
 import 'providers/products_provider.dart';
 import '../../shared/widgets/app_network_image.dart';
+import '../../shared/providers/nav_visibility_provider.dart';
 
 // ─── CategoryModel visual metadata (icon + pastel colors per name) ─────────────────
 
@@ -127,10 +129,19 @@ class BrowseCategoriesScreen extends HookConsumerWidget {
         backgroundColor: const Color(0xFFF9F7FF),
         extendBodyBehindAppBar: true,
         appBar: _BrowseAppBar(),
-        body: RefreshIndicator(
-          color: AppColors.primary,
-          onRefresh: () async => ref.invalidate(categoriesProvider),
-          child: CustomScrollView(
+        body: NotificationListener<UserScrollNotification>(
+          onNotification: (notification) {
+            if (notification.direction == ScrollDirection.forward) {
+              ref.read(navVisibilityProvider.notifier).show();
+            } else if (notification.direction == ScrollDirection.reverse) {
+              ref.read(navVisibilityProvider.notifier).hide();
+            }
+            return false;
+          },
+          child: RefreshIndicator(
+            color: AppColors.primary,
+            onRefresh: () async => ref.invalidate(categoriesProvider),
+            child: CustomScrollView(
             physics: const BouncingScrollPhysics(),
             slivers: [
               // Top padding for AppBar
@@ -208,6 +219,7 @@ class BrowseCategoriesScreen extends HookConsumerWidget {
               ),
             ],
           ),
+        ),
         ),
       ),
     );

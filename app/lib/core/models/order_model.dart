@@ -159,10 +159,10 @@ class OrderModel {
           : null,
       paymentMethod: json['payment_method']?.toString(),
       createdAt: json['created_at'] != null
-          ? DateTime.tryParse(json['created_at'].toString())
+          ? DateTime.tryParse(json['created_at'].toString())?.toLocal()
           : null,
       updatedAt: json['updated_at'] != null
-          ? DateTime.tryParse(json['updated_at'].toString())
+          ? DateTime.tryParse(json['updated_at'].toString())?.toLocal()
           : null,
     );
   }

@@ -18,7 +18,7 @@ class CategoryModel {
       id: json['id'] as String,
       name: json['name'] as String,
       iconUrl: json['icon_url'] as String?,
-      sortOrderModel: json['sort_OrderModel'] as int? ?? 0,
+      sortOrderModel: json['sort_order'] as int? ?? 0,
       parentId: json['parent_id'] as String?,
     );
   }
@@ -28,7 +28,7 @@ class CategoryModel {
       'id': id,
       'name': name,
       'icon_url': iconUrl,
-      'sort_OrderModel': sortOrderModel,
+      'sort_order': sortOrderModel,
       'parent_id': parentId,
     };
   }

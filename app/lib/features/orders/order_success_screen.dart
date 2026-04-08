@@ -31,21 +31,24 @@ class OrderSuccessScreen extends HookWidget {
       return null;
     }, const []);
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF9F7FF),
-      body: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 500),
-        switchInCurve: Curves.easeOutCubic,
-        switchOutCurve: Curves.easeIn,
-        child: switch (step.value) {
-          1 => _buildConfirming(),
-          2 => _buildCheckmark(),
-          _ => _buildSuccessScreen(
-            context,
-            orderId: orderId,
-            showTrackPulse: showTrackPulse.value,
-          ),
-        },
+    return PopScope(
+      canPop: false, // ← Back button / swipe-back are disabled on this screen.
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF9F7FF),
+        body: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 500),
+          switchInCurve: Curves.easeOutCubic,
+          switchOutCurve: Curves.easeIn,
+          child: switch (step.value) {
+            1 => _buildConfirming(),
+            2 => _buildCheckmark(),
+            _ => _buildSuccessScreen(
+              context,
+              orderId: orderId,
+              showTrackPulse: showTrackPulse.value,
+            ),
+          },
+        ),
       ),
     );
   }

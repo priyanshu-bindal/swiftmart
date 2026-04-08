@@ -52,30 +52,36 @@ class SwiftmartBottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      // The floating margin
+      margin: EdgeInsets.only(
+        left: 24,
+        right: 24,
+        // Lift above gesture bar
+        bottom: MediaQuery.of(context).padding.bottom + 16,
+      ),
       // Shadow applied outside the clip so it doesn't get cut off
       decoration: BoxDecoration(
         color: Colors.transparent,
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.8),
+          width: 1.0,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            offset: const Offset(0, -10),
-            blurRadius: 40,
+            color: Colors.black.withValues(alpha: 0.1),
+            offset: const Offset(0, 8),
+            blurRadius: 24,
           ),
         ],
       ),
       child: ClipRRect(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.circular(32),
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: Container(
-            color: Colors.white.withValues(alpha: 0.9),
-            padding: EdgeInsets.only(
-              left: 20,
-              right: 20,
-              top: 16,
-              // Accommodate for iOS home indicator
-              bottom: MediaQuery.of(context).padding.bottom + 16,
-            ),
+            color: Colors.blueGrey[100]!.withValues(alpha: 0.7),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: items.map((item) {
@@ -116,10 +122,10 @@ class _ExpandingPillTabState extends State<_ExpandingPillTab> {
 
   @override
   Widget build(BuildContext context) {
-    // Colors mapped directly from your React Tailwind canvas
-    const activeColor = Color(0xFF4F46E5); // indigo-600
-    const inactiveColor = Color(0xFF94A3B8); // slate-400
-    const activeBgColor = Color(0xFFEEF2FF); // indigo-50
+    // New Dark Blue Theme
+    final activeColor = Colors.blue[900]!; 
+    const inactiveColor = Color(0xFF78909C); // blueGrey[400] roughly
+    final activeBgColor = Colors.blue[50]!; 
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
@@ -207,7 +213,7 @@ class _ExpandingPillTabState extends State<_ExpandingPillTab> {
                     child: Text(
                       widget.item.label,
                       maxLines: 1,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: activeColor,
                         fontWeight: FontWeight.w600,
                         fontSize: 14,

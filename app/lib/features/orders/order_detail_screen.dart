@@ -58,6 +58,9 @@ class OrderDetailScreen extends ConsumerWidget {
           if (order == null) {
             return const Center(child: Text('Order not found'));
           }
+          if (order.status == 'DELIVERED') {
+            return _OrderDeliveredBody(order: order);
+          }
           return _OrderDetailBody(order: order);
         },
       ),
@@ -324,6 +327,215 @@ class _OrderDetailBody extends StatelessWidget {
       default:
         return method;
     }
+  }
+}
+
+// ── Delivered UI ──────────────────────────────────────────────────────────────
+
+class _OrderDeliveredBody extends StatelessWidget {
+  final OrderModel order;
+  const _OrderDeliveredBody({required this.order});
+
+  @override
+  Widget build(BuildContext context) {
+    // If we have an exact updated date for delivery we could use it, else fallback
+    final String timeStr = order.updatedAt != null 
+        ? DateFormat('h:mm a').format(order.updatedAt!)
+        : DateFormat('h:mm a').format(order.createdAt ?? DateTime.now());
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          const SizedBox(height: 20),
+          
+          // Theme'd Checkmark
+          Container(
+            width: 140,
+            height: 140,
+            decoration: const BoxDecoration(
+              color: Color(0xFFE8FDF0), // Very light green background
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Container(
+                width: 80,
+                height: 80,
+                decoration: const BoxDecoration(
+                  color: Color(0xFF22C55E), // Solid green
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.check,
+                  color: Colors.white,
+                  size: 48,
+                ),
+              ),
+            ),
+          ).animate().scale(duration: 400.ms, curve: Curves.easeOutBack),
+          
+          const SizedBox(height: 32),
+          
+          const Text(
+            'Order Delivered!',
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.w900,
+              fontFamily: 'Manrope',
+              color: _textPrimary,
+            ),
+          ).animate(delay: 200.ms).fadeIn().slideY(begin: 0.1),
+          
+          const SizedBox(height: 8),
+          
+          Text(
+            'Enjoy your order. Delivered at $timeStr',
+            style: const TextStyle(
+              fontSize: 15,
+              color: _textSecondary,
+              fontFamily: 'Manrope',
+            ),
+          ).animate(delay: 300.ms).fadeIn().slideY(begin: 0.1),
+          
+          const SizedBox(height: 40),
+          
+          // ── Order Details Card ──────────────────────────────────────
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 16,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Order ID',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: _textSecondary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF22C55E).withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Text(
+                        'Paid',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF22C55E),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '#${order.id.substring(0, 12).toUpperCase()}',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    fontFamily: 'Manrope',
+                    color: _textPrimary,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 20),
+                  child: Divider(color: Color(0xFFF1F5F9), height: 1, thickness: 1.5),
+                ),
+                Row(
+                  children: [
+                    Container(
+                      width: 52,
+                      height: 52,
+                      decoration: BoxDecoration(
+                        color: _primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: const Icon(LucideIcons.shoppingBag, color: _primary, size: 24),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${order.items.length} Items',
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: _textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            order.productSummary,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: _textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Text(
+                      '₹${order.total.toStringAsFixed(2)}',
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900,
+                        fontFamily: 'Manrope',
+                        color: _textPrimary, // Matching deep color from screenshot
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ).animate(delay: 400.ms).fadeIn().slideY(begin: 0.1),
+          
+          const Spacer(),
+          
+          // ── Back to Home Button ──────────────────────────────────────
+          OutlinedButton.icon(
+            onPressed: () => context.go('/home'),
+            icon: const Icon(LucideIcons.home, size: 20, color: _primary),
+            label: const Text('Back to Home'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: _primary,
+              side: const BorderSide(color: _primary, width: 1.5),
+              minimumSize: const Size(double.infinity, 56),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(28), // Pill shape
+              ),
+              textStyle: const TextStyle(
+                fontFamily: 'Manrope',
+                fontWeight: FontWeight.w800,
+                fontSize: 15,
+              ),
+            ),
+          ).animate(delay: 500.ms).fadeIn().slideY(begin: 0.1),
+        ],
+      ),
+    );
   }
 }
 

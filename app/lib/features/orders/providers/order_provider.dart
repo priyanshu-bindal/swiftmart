@@ -85,11 +85,14 @@ final orderHistoryProvider = FutureProvider<List<OrderModel>>((ref) async {
 final orderByIdProvider =
     FutureProvider.family<OrderModel?, String>((ref, orderId) async {
   final supabase = Supabase.instance.client;
+  final uid = supabase.auth.currentUser?.id;
+  if (uid == null) return null;
   try {
     final response = await supabase
         .from('orders')
         .select('*, order_items(*)')
         .eq('id', orderId)
+        .eq('user_id', uid)
         .single();
     return OrderModel.fromJson(response);
   } catch (e) {

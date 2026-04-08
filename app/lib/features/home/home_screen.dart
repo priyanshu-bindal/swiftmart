@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -7,6 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../shared/widgets/app_network_image.dart';
 import '../orders/widgets/active_order_banner.dart';
+import '../../shared/providers/nav_visibility_provider.dart';
 
 
 // Provider to fetch banners
@@ -128,33 +130,43 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF9F9FB),
       body: SafeArea(
-        child: RefreshIndicator(
-          color: const Color(0xFF006B5C),
-          onRefresh: () async {
-            ref.invalidate(homeCategoriesProvider);
-            ref.invalidate(groupedProductsProvider);
-            ref.invalidate(bannersProvider);
+        child: NotificationListener<UserScrollNotification>(
+          onNotification: (notification) {
+            if (notification.direction == ScrollDirection.forward) {
+              ref.read(navVisibilityProvider.notifier).show();
+            } else if (notification.direction == ScrollDirection.reverse) {
+              ref.read(navVisibilityProvider.notifier).hide();
+            }
+            return false;
           },
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildAppBar(context),
-                const SizedBox(height: 8),
-                const ActiveOrderBanner(),
-                const SizedBox(height: 4),
-                _buildSearchBar(context),
-                const SizedBox(height: 24),
-                _buildHeroBanner(),
-                const SizedBox(height: 32),
-                _buildDailySavings(),
-                const SizedBox(height: 32),
-                _buildShopByCategory(ref),
-                _buildBannerSection(ref, 'categories'),
-                _buildGroupedProducts(ref),
-                const SizedBox(height: 120), // Spacing for bottom nav
-              ],
+          child: RefreshIndicator(
+            color: const Color(0xFF006B5C),
+            onRefresh: () async {
+              ref.invalidate(homeCategoriesProvider);
+              ref.invalidate(groupedProductsProvider);
+              ref.invalidate(bannersProvider);
+            },
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildAppBar(context),
+                  const SizedBox(height: 8),
+                  const ActiveOrderBanner(),
+                  const SizedBox(height: 4),
+                  _buildSearchBar(context),
+                  const SizedBox(height: 24),
+                  _buildHeroBanner(),
+                  const SizedBox(height: 32),
+                  _buildDailySavings(),
+                  const SizedBox(height: 32),
+                  _buildShopByCategory(ref),
+                  _buildBannerSection(ref, 'categories'),
+                  _buildGroupedProducts(ref),
+                  const SizedBox(height: 120), // Spacing for bottom nav
+                ],
+              ),
             ),
           ),
         ),

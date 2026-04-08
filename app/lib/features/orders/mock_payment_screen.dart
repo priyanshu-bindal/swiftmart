@@ -5,30 +5,70 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/theme/app_colors.dart';
 
 class MockPaymentScreen extends HookWidget {
-  final String orderId;
-  final double total;
-  final String paymentMethod; // 'upi' | 'card' | 'cod'
+  /// All data required to create the order in Supabase.
+  /// Passed from CheckoutScreen so the DB write happens AFTER payment.
+  final Map<String, dynamic> orderData;
 
-  const MockPaymentScreen({
-    super.key,
-    required this.orderId,
-    required this.total,
-    required this.paymentMethod,
-  });
+  const MockPaymentScreen({super.key, required this.orderData});
 
   @override
   Widget build(BuildContext context) {
     final isProcessing = useState(false);
 
+    // Convenience getters read from orderData
+    final double total = (orderData['total'] as num?)?.toDouble() ?? 0.0;
+    final String paymentMethod =
+        orderData['payment_method']?.toString() ?? 'upi';
+
     Future<void> processPayment() async {
       isProcessing.value = true;
+      // Simulate payment gateway delay
       await Future.delayed(const Duration(seconds: 2));
-      if (context.mounted) {
-        context.pushReplacement('/OrderModel-success', extra: {'order_id': orderId});
+      try {
+        final supabase = Supabase.instance.client;
+
+        // 1) Insert the order row — status CONFIRMED only NOW after payment
+        final orderResponse = await supabase.from('orders').insert({
+          'user_id': orderData['uid'],
+          'status': 'CONFIRMED',
+          'subtotal': orderData['subtotal'],
+          'delivery_fee': orderData['delivery_fee'],
+          'discount_amount': orderData['discount'],
+          'total': orderData['total'],
+          'coupon_code': orderData['coupon_code'],
+          'payment_method': orderData['payment_method'],
+          'address_id': orderData['address_id'],
+          'delivery_address': orderData['delivery_address'],
+        }).select().single();
+
+        final orderId = orderResponse['id'].toString();
+
+        // 2) Insert order items with the newly created order_id
+        final rawItems = orderData['order_items'] as List<dynamic>;
+        final itemsPayload = rawItems.map((item) {
+          return Map<String, dynamic>.from(item as Map)
+            ..['order_id'] = orderId;
+        }).toList();
+        await supabase.from('order_items').insert(itemsPayload);
+
+        if (context.mounted) {
+          context.pushReplacement(
+              '/order-success', extra: {'order_id': orderId});
+        }
+      } catch (e) {
+        isProcessing.value = false;
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+                content: Text('Payment failed: $e'),
+                backgroundColor: Colors.red),
+          );
+        }
       }
     }
 

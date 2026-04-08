@@ -137,18 +137,15 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/mock-payment',
         name: 'mockPayment',
         builder: (context, state) {
-          final extra = state.extra as Map<String, dynamic>? ?? {};
-          return MockPaymentScreen(
-            orderId: extra['order_id']?.toString() ?? '',
-            total: (extra['total'] as num?)?.toDouble() ?? 0.0,
-            paymentMethod: extra['payment_method']?.toString() ?? 'upi',
-          );
+          final orderData =
+              (state.extra as Map<String, dynamic>?) ?? {};
+          return MockPaymentScreen(orderData: orderData);
         },
       ),
 
       // ── Orders ────────────────────────────────────────────────────────────
       GoRoute(
-        path: '/OrderModel-confirm/:orderId',
+        path: '/order-confirm/:orderId',
         name: 'orderConfirm',
         builder: (context, state) {
           final orderId = state.pathParameters['orderId'];
@@ -156,8 +153,15 @@ final routerProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
-        path: '/OrderModel-success',
+        path: '/order-success',
         name: 'orderSuccess',
+        redirect: (context, state) {
+          // Guard: if navigated to directly without a valid order_id, go home.
+          final extra = state.extra as Map<String, dynamic>?;
+          final orderId = extra?['order_id']?.toString();
+          if (orderId == null || orderId.isEmpty) return '/home';
+          return null;
+        },
         builder: (context, state) {
           final extra = state.extra as Map<String, dynamic>?;
           final orderId = extra?['order_id']?.toString();
@@ -165,7 +169,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
-        path: '/OrderModel-track/:orderId',
+        path: '/order-track/:orderId',
         name: 'orderTracking',
         builder: (context, state) {
           final orderId = state.pathParameters['orderId'] ?? '';

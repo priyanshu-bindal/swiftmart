@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../core/models/order_model.dart';
+import '../../shared/providers/nav_visibility_provider.dart';
 import '../../shared/widgets/app_network_image.dart';
 import 'providers/order_provider.dart';
 
@@ -21,13 +23,16 @@ const _red = Color(0xFFEF4444);
 
 // ── Screen ────────────────────────────────────────────────────────────────────
 
-class OrderHistoryScreen extends ConsumerWidget {
+class OrderHistoryScreen extends HookConsumerWidget {
   const OrderHistoryScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final filter = ref.watch(orderFilterProvider);
     final ordersAsync = ref.watch(filteredOrdersProvider);
+
+    // Track the last scroll offset to determine direction.
+    final lastScrollOffset = useRef<double>(0.0);
 
     return Scaffold(
       backgroundColor: _bg,
@@ -37,7 +42,11 @@ class OrderHistoryScreen extends ConsumerWidget {
         scrolledUnderElevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: _textPrimary),
-          onPressed: () => context.pop(),
+          onPressed: () {
+            // Always restore nav when leaving this screen.
+            ref.read(navVisibilityProvider.notifier).show();
+            context.pop();
+          },
         ),
         title: const Text(
           'My Orders',
@@ -48,29 +57,53 @@ class OrderHistoryScreen extends ConsumerWidget {
             color: _textPrimary,
           ),
         ),
-
       ),
 
-      // ── Filter tabs ───────────────────────────────────────────────────────
+      // ── Filter tabs + Scroll-aware list ───────────────────────────────────
       body: Column(
         children: [
           _FilterRow(current: filter),
           Expanded(
-            child: ordersAsync.when(
-              loading: () => _Shimmer(),
-              error: (e, _) => _ErrorView(error: e.toString()),
-              data: (orders) {
-                if (orders.isEmpty) return _EmptyState(filter: filter);
-                return ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
-                  itemCount: orders.length,
-                  separatorBuilder: (_, _i) => const SizedBox(height: 12),
-                  itemBuilder: (ctx, i) => _OrderCard(order: orders[i])
-                      .animate(delay: Duration(milliseconds: 50 * i))
-                      .fadeIn(duration: 300.ms)
-                      .slideY(begin: 0.06),
-                );
+            child: NotificationListener<ScrollNotification>(
+              onNotification: (notification) {
+                if (notification is ScrollUpdateNotification) {
+                  final current = notification.metrics.pixels;
+                  final delta = current - lastScrollOffset.value;
+                  // Only trigger if the delta is large enough to avoid jitter.
+                  if (delta.abs() > 4) {
+                    final isScrollingDown = delta > 0;
+                    if (isScrollingDown) {
+                      ref.read(navVisibilityProvider.notifier).hide();
+                    } else {
+                      ref.read(navVisibilityProvider.notifier).show();
+                    }
+                    lastScrollOffset.value = current;
+                  }
+                } else if (notification is ScrollEndNotification) {
+                  lastScrollOffset.value = notification.metrics.pixels;
+                }
+                return false;
               },
+              child: ordersAsync.when(
+                loading: () => _Shimmer(),
+                error: (e, _) => _ErrorView(error: e.toString()),
+                data: (orders) {
+                  if (orders.isEmpty) return _EmptyState(filter: filter);
+                  // Bottom padding = navbar height (80) + safe area + buffer,
+                  // so the last card is never hidden behind the navbar.
+                  final bottomPad =
+                      MediaQuery.of(context).padding.bottom + 96;
+                  return ListView.separated(
+                    padding: EdgeInsets.fromLTRB(16, 12, 16, bottomPad),
+                    itemCount: orders.length,
+                    separatorBuilder: (_, _i) => const SizedBox(height: 12),
+                    itemBuilder: (ctx, i) => _OrderCard(order: orders[i])
+                        .animate(delay: Duration(milliseconds: 50 * i))
+                        .fadeIn(duration: 300.ms)
+                        .slideY(begin: 0.06),
+                  );
+                },
+              ),
             ),
           ),
         ],
@@ -173,23 +206,41 @@ class _OrderCard extends StatelessWidget {
           children: [
             // ── Top row: Order ID + Date + Status badge ───────────────
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  '#${order.id.substring(0, 8).toUpperCase()}',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: _textSecondary,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.5,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '#${order.id.substring(0, 8).toUpperCase()}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: _textSecondary,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      if (order.createdAt != null)
+                        Text(
+                          'Ordered: ${DateFormat('d MMM, hh:mm a').format(order.createdAt!)}',
+                          style: const TextStyle(fontSize: 11, color: _textSecondary),
+                        ),
+                      if (order.isDelivered && order.updatedAt != null) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          'Delivered: ${DateFormat('d MMM, hh:mm a').format(order.updatedAt!)}',
+                          style: const TextStyle(
+                            fontSize: 11, 
+                            color: _green, 
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
-                const Spacer(),
-                if (order.createdAt != null)
-                  Text(
-                    DateFormat('d MMM, hh:mm a').format(order.createdAt!),
-                    style: const TextStyle(
-                        fontSize: 11, color: _textSecondary),
-                  ),
                 const SizedBox(width: 8),
                 _StatusBadge(status: order.status),
               ],
