@@ -116,7 +116,6 @@ class _ExpandingPillTab extends StatefulWidget {
 class _ExpandingPillTabState extends State<_ExpandingPillTab>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
-  late final Animation<double> _pressScale;
 
   // FIX 6: Unified curve — smoother on mid-range devices than easeOutCubic
   static const _curve = Curves.easeInOutCubic;
@@ -133,9 +132,6 @@ class _ExpandingPillTabState extends State<_ExpandingPillTab>
     );
     // Subtle press feedback via a Tween on the same controller
     // Handled via GestureDetector scale wrapper below (separate, lightweight)
-    _pressScale = Tween<double>(begin: 1.0, end: 0.95).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.0, 0.1)),
-    );
   }
 
   @override

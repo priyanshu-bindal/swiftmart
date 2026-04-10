@@ -1,0 +1,88 @@
+@import "tailwindcss";
+
+@theme inline {
+  /* Design System Colors */
+  --color-surface: #f7f9ff;
+  --color-surface-bright: #f7f9ff;
+  --color-surface-dim: #d7dae1;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f1f4fb;
+  --color-surface-container: #ebeef5;
+  --color-surface-container-high: #e5e8ef;
+  --color-surface-container-highest: #dfe2e9;
+  --color-surface-variant: #dfe2e9;
+  --color-surface-tint: #4459a8;
+
+  --color-on-surface: #181c21;
+  --color-on-surface-variant: #444651;
+  --color-on-background: #181c21;
+
+  --color-primary: #233a87;
+  --color-primary-fixed: #dce1ff;
+  --color-primary-fixed-dim: #b7c4ff;
+  --color-primary-container: #3d52a0;
+  --color-on-primary: #ffffff;
+  --color-on-primary-fixed: #001552;
+  --color-on-primary-fixed-variant: #2b418e;
+  --color-on-primary-container: #c0cbff;
+  --color-inverse-primary: #b7c4ff;
+
+  --color-secondary: #755b00;
+  --color-secondary-fixed: #ffdf90;
+  --color-secondary-fixed-dim: #f0c12c;
+  --color-secondary-container: #fccc38;
+  --color-on-secondary: #ffffff;
+  --color-on-secondary-fixed: #241a00;
+  --color-on-secondary-fixed-variant: #584400;
+  --color-on-secondary-container: #6f5600;
+
+  --color-tertiary: #613600;
+  --color-tertiary-fixed: #ffdcbf;
+  --color-tertiary-fixed-dim: #ffb872;
+  --color-tertiary-container: #824a00;
+  --color-on-tertiary: #ffffff;
+  --color-on-tertiary-fixed: #2d1600;
+  --color-on-tertiary-fixed-variant: #6a3b00;
+  --color-on-tertiary-container: #ffc289;
+
+  --color-error: #ba1a1a;
+  --color-error-container: #ffdad6;
+  --color-on-error: #ffffff;
+  --color-on-error-container: #93000a;
+
+  --color-outline: #757682;
+  --color-outline-variant: #c5c5d3;
+  --color-background: #f7f9ff;
+  --color-inverse-surface: #2d3136;
+  --color-inverse-on-surface: #eef1f8;
+
+  /* Typography */
+  --font-sans: 'Inter', sans-serif;
+  --font-headline: 'Inter', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-label: 'Inter', sans-serif;
+
+  /* Border Radius */
+  --radius: 0.25rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: #f7f9ff;
+  color: #181c21;
+}
+
+/* Custom scrollbar */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+.custom-scrollbar::-webkit-scrollbar { width: 4px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: #c5c5d3; border-radius: 10px; }
+
+/* Glass panel */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
+}

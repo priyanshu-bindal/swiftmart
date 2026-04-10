@@ -185,7 +185,7 @@ class ProductDetailScreen extends HookConsumerWidget {
                                   ),
                           ),
                         ),
-                        if (product.tags.contains('organic'))
+                        if (product.isOrganic)
                           Positioned(
                             top: 16,
                             left: 16,
@@ -323,7 +323,7 @@ class ProductDetailScreen extends HookConsumerWidget {
                           ],
                         ),
 
-                        if (product.discountPercent > 0)
+                        if (product.cashback > 0)
                           Padding(
                             padding: const EdgeInsets.only(top: 16.0),
                             child: Container(
@@ -351,7 +351,7 @@ class ProductDetailScreen extends HookConsumerWidget {
                                   ),
                                   const SizedBox(width: 8),
                                   Text(
-                                    'Get ₹${product.discountPercent} discountPercent',
+                                    'Get ₹${product.cashback.toInt()} Cashback',
                                     style: const TextStyle(
                                       color: AppColors.onSecondaryContainer,
                                       fontSize: 14,

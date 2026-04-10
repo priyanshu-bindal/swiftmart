@@ -54,13 +54,14 @@ class CheckoutScreen extends HookConsumerWidget {
           'user_id': user.id,
           'status': 'CONFIRMED',
           'subtotal': subtotal,
-          'discount': discount,
+          'delivery_fee': deliveryFee,
+          'discount_amount': discount,
           'total': total,
           'coupon_code': appliedCode,
           'delivery_address': {
-            'lat': selectedAddress!.lat,
-            'lng': selectedAddress!.lng,
-            'address': selectedAddress!.fullAddress,
+            'lat': selectedAddress.lat,
+            'lng': selectedAddress.lng,
+            'address': selectedAddress.fullAddress,
           },
         }).select('id').single();
 
@@ -73,6 +74,9 @@ class CheckoutScreen extends HookConsumerWidget {
           'quantity': item.quantity,
           'unit_price': item.product?.salePrice ?? 0.0,
           'total_price': (item.product?.salePrice ?? 0.0) * item.quantity,
+          'name': item.product?.name ?? 'Unknown Product',
+          'image_url': item.product?.primaryImage ?? '',
+          'unit': item.product?.unit ?? '',
         }).toList();
 
         await supabase.from('order_items').insert(orderItems);

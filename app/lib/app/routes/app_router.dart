@@ -159,12 +159,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         },
       ),
 
-      // ── Flash Deals ────────────────────────────────────────────────────────
-      GoRoute(
-        path: '/flash-deals',
-        name: 'flashDeals',
-        builder: (context, state) => const FlashDealsScreen(),
-      ),
+
       GoRoute(
         path: '/order-track/:orderId',
         name: 'orderTracking',

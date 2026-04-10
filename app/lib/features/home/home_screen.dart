@@ -14,7 +14,7 @@ import '../../shared/providers/nav_visibility_provider.dart';
 // Provider to fetch banners
 final bannersProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
   final supabase = Supabase.instance.client;
-  return await supabase.from('banners').select().eq('is_active', true).order('sort_order', ascending: true);
+  return await supabase.from('banners').select().eq('is_active', true);
 });
 
 // Provides lists of maps representing categories with images
@@ -83,6 +83,17 @@ final groupedProductsProvider = FutureProvider<List<Map<String, dynamic>>>((ref)
   }
   return res;
 });
+
+enum HomeItemType { banner, category }
+
+class HomeItem {
+  final HomeItemType type;
+  final Map<String, dynamic>? banner;
+  final Map<String, dynamic>? categoryGroup;
+
+  HomeItem.banner(this.banner) : type = HomeItemType.banner, categoryGroup = null;
+  HomeItem.category(this.categoryGroup) : type = HomeItemType.category, banner = null;
+}
 
 class HomeScreen extends StatefulHookConsumerWidget {
   const HomeScreen({super.key});
@@ -155,15 +166,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   const SizedBox(height: 8),
                   const ActiveOrderBanner(),
                   const SizedBox(height: 4),
+                  
                   _buildSearchBar(context),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
                   _buildHeroBanner(),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 24),
                   _buildDailySavings(),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 24),
                   _buildShopByCategory(ref),
-                  _buildBannerSection(ref, 'categories'),
-                  _buildGroupedProducts(ref),
+                  const SizedBox(height: 32),
+                  _buildDynamicFeed(ref),
+                  
                   const SizedBox(height: 120), // Spacing for bottom nav
                 ],
               ),
@@ -283,6 +296,29 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 }
 
   Widget _buildHeroBanner() {
+    final bannersAsync = ref.watch(bannersProvider);
+    return bannersAsync.when(
+      data: (allBanners) {
+        // Filter banners marked for the 'hero' position (top of page)
+        final heroBanners = allBanners
+            .where((b) =>
+                b['placement_after']?.toString().toLowerCase() == 'hero')
+            .toList();
+
+        // If admin has hero banners, show a live carousel
+        if (heroBanners.isNotEmpty) {
+          return _DynamicHeroCarousel(banners: heroBanners, onTap: _handleBannerTap);
+        }
+
+        // Fallback: static hero
+        return _buildStaticHero();
+      },
+      loading: () => _buildStaticHero(),
+      error: (_, __) => _buildStaticHero(),
+    );
+  }
+
+  Widget _buildStaticHero() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Container(
@@ -449,6 +485,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     ));
   }
 
+
+
   Widget _buildShopByCategory(WidgetRef ref) {
     final categoriesAsync = ref.watch(homeCategoriesProvider);
 
@@ -457,7 +495,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Shop by Category', style: GoogleFonts.plusJakartaSans(fontSize: 20, fontWeight: FontWeight.w800, color: const Color(0xFF180331))),
+          Text(
+            'Shop by Category',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+              color: const Color(0xFF180331),
+            ),
+          ),
           const SizedBox(height: 16),
           categoriesAsync.when(
             data: (categories) {
@@ -485,83 +530,165 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3, crossAxisSpacing: 12, mainAxisSpacing: 16, childAspectRatio: 0.65
+                  crossAxisCount: 3,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 16,
+                  childAspectRatio: 0.65,
                 ),
-                itemCount: 4,
+                itemCount: 6,
                 itemBuilder: (context, index) => Container(
-                  decoration: BoxDecoration(color: Colors.grey.shade200, borderRadius: BorderRadius.circular(24)),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade200,
+                    borderRadius: BorderRadius.circular(24),
+                  ),
                 ),
               ),
             ),
-            error: (err, _) => const Text('Failed to load categories', style: TextStyle(color: Colors.red)),
+            error: (err, _) => const Text(
+              'Failed to load categories',
+              style: TextStyle(color: Colors.red),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildGroupedProducts(WidgetRef ref) {
+  Widget _buildDynamicFeed(WidgetRef ref) {
     final groupedAsync = ref.watch(groupedProductsProvider);
+    final bannersAsync = ref.watch(bannersProvider);
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: groupedAsync.when(
-        data: (groupedCategories) {
-          if (groupedCategories.isEmpty) return const SizedBox.shrink();
+    return groupedAsync.when(
+      data: (groupedCategories) {
+        if (groupedCategories.isEmpty) return const SizedBox.shrink();
+        
+        final banners = bannersAsync.maybeWhen(data: (d) => d, orElse: () => <Map<String, dynamic>>[]);
+        
+        final List<HomeItem> feed = [];
+        final Set<String> placedBannerIds = {};
+
+        // 1. Add banners placed at the very top (or null/empty)
+        for (final banner in banners) {
+          final p = banner['placement_after']?.toString().toLowerCase();
           
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: groupedCategories.map((group) {
-              final category = group['category'];
-              final products = group['products'] as List<dynamic>;
-              final catName = category['name']?.toString() ?? '';
+          if (p == 'hero') continue;
+          
+          if (p == null || p == '' || p == 'top') {
+            feed.add(HomeItem.banner(banner));
+            placedBannerIds.add(banner['id'].toString());
+          }
+        }
+
+        // 2. Walk through categories in order
+        for (final group in groupedCategories) {
+          feed.add(HomeItem.category(group));
+          final category = group['category'];
+          final catId = category['id'];
+
+          // 3. After category banners
+          for (final banner in banners) {
+            if (placedBannerIds.contains(banner['id'].toString())) continue;
+            if (banner['placement_after']?.toString().toLowerCase() == 'hero') continue;
+            if (banner['placement_after'] == 'after_category_$catId') {
+              feed.add(HomeItem.banner(banner));
+              placedBannerIds.add(banner['id'].toString());
+            }
+          }
+        }
+
+        // 4. Handle banners placed after other banners
+        bool changed = true;
+        while (changed) {
+          changed = false;
+          for (final banner in banners) {
+            if (placedBannerIds.contains(banner['id'].toString())) continue;
+            if (banner['placement_after']?.toString().toLowerCase() == 'hero') continue;
+            final p = banner['placement_after']?.toString();
+            if (p != null && p.startsWith('after_banner_')) {
+              final refId = p.replaceFirst('after_banner_', '');
               
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(catName, style: GoogleFonts.plusJakartaSans(fontSize: 20, fontWeight: FontWeight.w800, color: const Color(0xFF180331))),
-                      GestureDetector(
-                        onTap: () {
-                           context.push('/CategoryModel/${category['id']}', extra: catName);
-                        },
-                        child: const Text('See all', style: TextStyle(color: Color(0xFF006B5C), fontWeight: FontWeight.bold, fontSize: 14)),
-                      )
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  GridView.builder(
-                    padding: EdgeInsets.zero,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3,
-                      crossAxisSpacing: 8,
-                      mainAxisSpacing: 16,
-                      mainAxisExtent: 320,
-                    ),
-                    itemCount: products.length,
-                    itemBuilder: (context, index) {
-                      return ProductCard(product: products[index] as Map<String, dynamic>);
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  _buildBannerSection(ref, catName),
-                ],
+              final refIndex = feed.indexWhere(
+                (item) => item.type == HomeItemType.banner && item.banner!['id'].toString() == refId
               );
-            }).toList(),
-          );
-        },
-        loading: () => Skeletonizer(
-          enabled: true,
+              
+              if (refIndex != -1) {
+                feed.insert(refIndex + 1, HomeItem.banner(banner));
+                placedBannerIds.add(banner['id'].toString());
+                changed = true;
+              }
+            }
+          }
+        }
+
+        // 5. Unplaced banners at the end
+        for (final banner in banners) {
+          if (!placedBannerIds.contains(banner['id'].toString())) {
+            feed.add(HomeItem.banner(banner));
+          }
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: feed.map((item) {
+            if (item.type == HomeItemType.banner) {
+               return Padding(
+                 padding: const EdgeInsets.only(bottom: 24, left: 16, right: 16),
+                 child: _buildGenericBanner(item.banner!),
+               );
+            } else {
+               final group = item.categoryGroup!;
+               final category = group['category'];
+               return Padding(
+                 padding: const EdgeInsets.only(left: 24, right: 24, bottom: 24),
+                 child: Column(
+                   crossAxisAlignment: CrossAxisAlignment.start,
+                   children: [
+                     Row(
+                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                       children: [
+                         Text(category['name']?.toString() ?? '', style: GoogleFonts.plusJakartaSans(fontSize: 20, fontWeight: FontWeight.w800, color: const Color(0xFF180331))),
+                         GestureDetector(
+                           onTap: () {
+                              context.push('/CategoryModel/${category['id']}', extra: category['name']?.toString() ?? '');
+                           },
+                           child: const Text('See all', style: TextStyle(color: Color(0xFF006B5C), fontWeight: FontWeight.bold, fontSize: 14)),
+                         )
+                       ],
+                     ),
+                     const SizedBox(height: 16),
+                     GridView.builder(
+                       padding: EdgeInsets.zero,
+                       shrinkWrap: true,
+                       physics: const NeverScrollableScrollPhysics(),
+                       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                         crossAxisCount: 3,
+                         crossAxisSpacing: 8,
+                         mainAxisSpacing: 16,
+                         mainAxisExtent: 320,
+                       ),
+                       itemCount: (group['products'] as List).length,
+                       itemBuilder: (context, index) {
+                         return ProductCard(product: (group['products'] as List)[index] as Map<String, dynamic>);
+                       },
+                     ),
+                   ],
+                 ),
+               );
+            }
+          }).toList(),
+        );
+      },
+      loading: () => Skeletonizer(
+        enabled: true,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
           child: GridView.builder(
             padding: EdgeInsets.zero,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 3, crossAxisSpacing: 8, mainAxisSpacing: 16, mainAxisExtent: 320
+
             ),
             itemCount: 6,
             itemBuilder: (context, index) => Container(
@@ -569,8 +696,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ),
         ),
-        error: (err, _) => const Text('Failed to load products', style: TextStyle(color: Colors.red)),
       ),
+      error: (err, _) => const Padding(padding: EdgeInsets.all(24), child: Text('Failed to load products', style: TextStyle(color: Colors.red))),
     );
   }
 
@@ -606,185 +733,72 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return Colors.indigo;
   }
 
-  Widget _buildBannerSection(WidgetRef ref, String position) {
-    final bannersAsync = ref.watch(bannersProvider);
-    return bannersAsync.when(
-      data: (allBanners) {
-        final positionBanners = allBanners
-            .where((b) => (b['position_after'] ?? '').toString().toLowerCase() == position.toLowerCase())
-            .toList();
-            
-        if (positionBanners.isEmpty) return const SizedBox(height: 16);
-        
-        Widget render;
-        if (position.toLowerCase() == 'categories') {
-           render = _buildSaleBanner(positionBanners.first);
-        } else if (positionBanners.length >= 3) {
-           render = _buildEventsBanner(positionBanners);
-        } else {
-           render = _buildGenericBanner(positionBanners.first);
-        }
-        return Padding(padding: const EdgeInsets.only(bottom: 24), child: render);
-      },
-      loading: () => const SizedBox(height: 16),
-      error: (err, stack) => const SizedBox(height: 16),
-    );
-  }
-
-  Widget _buildSaleBanner(Map<String, dynamic> banner) {
-    return GestureDetector(
-      onTap: () => context.push('/flash-deals'),
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 16),
-        padding: const EdgeInsets.symmetric(vertical: 24),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(colors: [Color(0xFFFF9A44), Color(0xFFFC6076)]),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        children: [
-          Text(banner['title'] ?? 'SALE', style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900, fontStyle: FontStyle.italic)),
-          if (banner['subtitle'] != null) ...[
-            const SizedBox(height: 4),
-            Text(banner['subtitle'], style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
-          ],
-          const SizedBox(height: 20),
-          SizedBox(
-            height: 110,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: 4,
-              itemBuilder: (context, index) {
-                 final mocks = [
-                   {"discount": "50% OFF", "name": "Cooking", "img": "https://loremflickr.com/200/200/oil?lock=200"},
-                   {"discount": "FLAT ₹50", "name": "Snacks", "img": "https://loremflickr.com/200/200/snack?lock=201"},
-                   {"discount": "30% OFF", "name": "Cleaning", "img": "https://loremflickr.com/200/200/soap?lock=202"},
-                   {"discount": "BUY 1 GET 1", "name": "Dairy", "img": "https://loremflickr.com/200/200/milk?lock=203"},
-                 ];
-                 return Container(
-                   width: 90,
-                   margin: const EdgeInsets.only(right: 12),
-                   decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
-                   child: Column(
-                     mainAxisAlignment: MainAxisAlignment.center,
-                     children: [
-                       Container(
-                         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                         decoration: BoxDecoration(color: Colors.red, borderRadius: BorderRadius.circular(4)),
-                         child: Text(mocks[index]['discount']!, style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold)),
-                       ),
-                       const SizedBox(height: 6),
-                       ClipRRect(borderRadius: BorderRadius.circular(8), child: AppNetworkImage(imageUrl: mocks[index]['img']!, width: 40, height: 40, fit: BoxFit.cover)),
-                       const SizedBox(height: 6),
-                       Text(mocks[index]['name']!, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
-                     ],
-                   ),
-                 );
-              }
-            ),
-          )
-        ],
-      )
-    ));
-  }
-
-  Widget _buildEventsBanner(List<Map<String, dynamic>> banners) {
-    if (banners.length < 3) return const SizedBox.shrink();
-    final big = banners[0];
-    final small1 = banners[1];
-    final small2 = banners[2];
-
-    Widget buildCard(Map<String, dynamic> b, double height) {
-      Color bg = _parseColor(b['background_color']); 
-      return GestureDetector(
-        onTap: () => _handleBannerTap(context, b),
-        child: Container(
-          height: height,
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(16)),
-          child: Stack(
-            children: [
-               Column(
-                 crossAxisAlignment: CrossAxisAlignment.start,
-                 children: [
-                   if (b['badge_text'] != null)
-                     Container(
-                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                       decoration: BoxDecoration(color: Colors.black, borderRadius: BorderRadius.circular(4)),
-                       child: Text(b['badge_text'], style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold)),
-                     ),
-                   const SizedBox(height: 8),
-                   Text(b['title'] ?? '', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16)),
-                   if (b['subtitle'] != null) Text(b['subtitle'], style: const TextStyle(color: Colors.white, fontSize: 11)),
-                 ],
-               ),
-               if (b['image_url'] != null && b['image_url'].toString().isNotEmpty)
-                 Positioned(
-                   bottom: 0, right: 0,
-                   child: ClipRRect(
-                     borderRadius: BorderRadius.circular(8),
-                     child: AppNetworkImage(imageUrl: b['image_url'], width: height * 0.6, height: height * 0.6, fit: BoxFit.cover),
-                   ),
-                 )
-            ]
-          )
-        ),
-      );
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text('Events this week', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(flex: 5, child: buildCard(big, 240)),
-            const SizedBox(width: 12),
-            Expanded(
-              flex: 4, 
-              child: Column(
-                children: [
-                  buildCard(small1, 114),
-                  const SizedBox(height: 12),
-                  buildCard(small2, 114),
-                ]
-              )
-            )
-          ]
-        )
-      ],
-    );
-  }
-
   Widget _buildGenericBanner(Map<String, dynamic> b) {
       Color bg = _parseColor(b['background_color']); 
+      final String alignRaw = b['text_alignment']?.toString() ?? 'left';
+      final String colorRaw = b['text_color']?.toString() ?? 'white';
+      
+      CrossAxisAlignment crossAlign = CrossAxisAlignment.start;
+      TextAlign textAlign = TextAlign.left;
+      if (alignRaw == 'center') {
+        crossAlign = CrossAxisAlignment.center;
+        textAlign = TextAlign.center;
+      } else if (alignRaw == 'right') {
+        crossAlign = CrossAxisAlignment.end;
+        textAlign = TextAlign.right;
+      }
+      
+      Color titleColor = colorRaw == 'dark' ? Colors.black87 : Colors.white;
+      Color subtitleColor = colorRaw == 'dark' ? Colors.black54 : Colors.white;
+
       return GestureDetector(
         onTap: () => _handleBannerTap(context, b),
         child: Container(
+          width: double.infinity,
+          height: 140,
           margin: const EdgeInsets.symmetric(vertical: 8),
-          height: 120,
           decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(16)),
-          child: Row(
-            children: [
-              Expanded(
-                child: Padding(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                if (b['image_url'] != null && b['image_url'].toString().isNotEmpty)
+                  AppNetworkImage(
+                    imageUrl: b['image_url'],
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                    height: double.infinity,
+                  ),
+                if (b['image_url'] != null && b['image_url'].toString().isNotEmpty)
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: alignRaw == 'right' ? Alignment.centerRight : Alignment.centerLeft,
+                        end: alignRaw == 'right' ? Alignment.centerLeft : Alignment.centerRight,
+                        colors: [
+                          Colors.black.withValues(alpha: 0.65),
+                          Colors.transparent,
+                        ],
+                      ),
+                    ),
+                  ),
+                Padding(
                   padding: const EdgeInsets.all(20),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: crossAlign,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(b['title'] ?? '', style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 6),
-                      if (b['subtitle'] != null) Text(b['subtitle'], style: const TextStyle(color: Colors.white, fontSize: 13)),
+                      Text(b['title'] ?? '', textAlign: textAlign, style: TextStyle(color: titleColor, fontSize: 20, fontWeight: FontWeight.bold)),
+                      if (b['subtitle'] != null) ...[
+                        const SizedBox(height: 4),
+                        Text(b['subtitle'], textAlign: textAlign, style: TextStyle(color: subtitleColor, fontSize: 14)),
+                      ],
                     ]
                   )
                 )
-              ),
-              if (b['image_url'] != null)
-                ClipRRect(borderRadius: const BorderRadius.only(topRight: Radius.circular(16), bottomRight: Radius.circular(16)), child: AppNetworkImage(imageUrl: b['image_url'], width: 120, height: 120, fit: BoxFit.cover)),
-            ]
+              ]
+            )
           )
         )
       );
@@ -1131,5 +1145,232 @@ class ProductCard extends StatelessWidget {
         ],
       ),
     ));
+  }
+}
+
+// ─── Dynamic Hero Carousel ───────────────────────────────────────────────────
+
+class _DynamicHeroCarousel extends StatefulWidget {
+  final List<Map<String, dynamic>> banners;
+  final void Function(BuildContext, Map<String, dynamic>) onTap;
+
+  const _DynamicHeroCarousel({required this.banners, required this.onTap});
+
+  @override
+  State<_DynamicHeroCarousel> createState() => _DynamicHeroCarouselState();
+}
+
+class _DynamicHeroCarouselState extends State<_DynamicHeroCarousel> {
+  final PageController _controller = PageController();
+  int _currentPage = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.banners.length > 1) {
+      // Auto-scroll every 4 s
+      Future.delayed(const Duration(seconds: 4), _autoScroll);
+    }
+  }
+
+  void _autoScroll() {
+    if (!mounted) return;
+    final next = (_currentPage + 1) % widget.banners.length;
+    _controller.animateToPage(
+      next,
+      duration: const Duration(milliseconds: 500),
+      curve: Curves.easeInOut,
+    );
+    Future.delayed(const Duration(seconds: 4), _autoScroll);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        children: [
+          SizedBox(
+            height: 200,
+            child: PageView.builder(
+              controller: _controller,
+              itemCount: widget.banners.length,
+              onPageChanged: (i) => setState(() => _currentPage = i),
+              itemBuilder: (context, index) {
+                final b = widget.banners[index];
+                final hasImage =
+                    b['image_url'] != null && b['image_url'].toString().isNotEmpty;
+
+                final String alignRaw = b['text_alignment']?.toString() ?? 'left';
+                final String colorRaw = b['text_color']?.toString() ?? 'white';
+                final String sizeRaw = b['banner_size']?.toString() ?? 'full_width';
+
+                CrossAxisAlignment crossAlign = CrossAxisAlignment.start;
+                TextAlign textAlign = TextAlign.left;
+                if (alignRaw == 'center') {
+                  crossAlign = CrossAxisAlignment.center;
+                  textAlign = TextAlign.center;
+                } else if (alignRaw == 'right') {
+                  crossAlign = CrossAxisAlignment.end;
+                  textAlign = TextAlign.right;
+                }
+
+                Color textColorPrimary = colorRaw == 'dark' ? Colors.black87 : Colors.white;
+                Color textColorSecondary = colorRaw == 'dark' ? Colors.black54 : Colors.white70;
+
+                double? explicitWidth;
+                if (sizeRaw == 'half_width') {
+                  explicitWidth = MediaQuery.of(context).size.width * 0.5;
+                } else if (sizeRaw == 'square') {
+                  explicitWidth = 200.0; // constrained by PageView 200 height
+                }
+
+                return GestureDetector(
+                  onTap: () => widget.onTap(context, b),
+                  child: Align(
+                    alignment: Alignment.center,
+                    child: Container(
+                      width: explicitWidth,
+                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(28),
+                      color: const Color(0xFFFFB870),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: hasImage
+                        ? Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              CachedNetworkImage(
+                                imageUrl: b['image_url'],
+                                fit: BoxFit.cover,
+                                errorWidget: (_, __, ___) =>
+                                    Container(color: const Color(0xFFFFB870)),
+                              ),
+                              // Gradient overlay for text legibility
+                              Container(
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.centerRight,
+                                    end: Alignment.centerLeft,
+                                    colors: [
+                                      Colors.transparent,
+                                      Colors.black.withValues(alpha: 0.55),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              Positioned(
+                                left: alignRaw == 'right' ? null : 24,
+                                right: alignRaw == 'left' ? null : 24,
+                                bottom: 24,
+                                child: Column(
+                                  crossAxisAlignment: crossAlign,
+                                  children: [
+                                    if (b['badge_text'] != null)
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 8, vertical: 3),
+                                        margin: const EdgeInsets.only(bottom: 6),
+                                        decoration: BoxDecoration(
+                                          color: Colors.red,
+                                          borderRadius: BorderRadius.circular(6),
+                                        ),
+                                        child: Text(
+                                          b['badge_text'],
+                                          style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.bold),
+                                        ),
+                                      ),
+                                    Text(
+                                      b['title'] ?? '',
+                                      textAlign: textAlign,
+                                      style: GoogleFonts.plusJakartaSans(
+                                        color: textColorPrimary,
+                                        fontWeight: FontWeight.w900,
+                                        fontSize: 22,
+                                        letterSpacing: -0.5,
+                                      ),
+                                    ),
+                                    if (b['subtitle'] != null)
+                                      Text(
+                                        b['subtitle'],
+                                        textAlign: textAlign,
+                                        style: TextStyle(
+                                          color: textColorSecondary,
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          )
+                        // No image: gradient card with text
+                        : Padding(
+                            padding: const EdgeInsets.all(24),
+                            child: Column(
+                              crossAxisAlignment: crossAlign,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  b['title'] ?? '',
+                                  textAlign: textAlign,
+                                  style: GoogleFonts.plusJakartaSans(
+                                    color: colorRaw == 'dark' ? const Color(0xFF180331) : Colors.white,
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 28,
+                                  ),
+                                ),
+                                if (b['subtitle'] != null) ...[
+                                  const SizedBox(height: 6),
+                                  Text(b['subtitle'],
+                                      textAlign: textAlign,
+                                      style: TextStyle(
+                                          color: colorRaw == 'dark' ? const Color(0xFF693C00) : Colors.white70,
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 14)),
+                                ],
+                              ],
+                            ),
+                          ),
+                  ),
+                ));
+              },
+            ),
+          ),
+          // Dot indicators — only shown when > 1 banner
+          if (widget.banners.length > 1) ...[
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(widget.banners.length, (i) {
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  width: i == _currentPage ? 20 : 6,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: i == _currentPage
+                        ? const Color(0xFF006B5C)
+                        : Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                );
+              }),
+            ),
+          ],
+        ],
+      ),
+    );
   }
 }
