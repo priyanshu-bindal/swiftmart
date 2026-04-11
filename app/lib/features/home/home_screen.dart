@@ -9,7 +9,9 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../shared/widgets/app_network_image.dart';
 import '../orders/widgets/active_order_banner.dart';
 import '../../shared/providers/nav_visibility_provider.dart';
-
+import '../deals/providers/flash_deals_provider.dart';
+import '../deals/widgets/deal_countdown_timer.dart';
+import '../deals/widgets/flash_deal_product_card.dart';
 
 // Provider to fetch banners
 final bannersProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
@@ -156,6 +158,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ref.invalidate(homeCategoriesProvider);
               ref.invalidate(groupedProductsProvider);
               ref.invalidate(bannersProvider);
+              ref.invalidate(flashDealsFutureProvider);
             },
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
@@ -170,6 +173,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   _buildSearchBar(context),
                   const SizedBox(height: 16),
                   _buildHeroBanner(),
+                  const SizedBox(height: 24),
+                  _buildFlashDealsSection(ref),
                   const SizedBox(height: 24),
                   _buildDailySavings(),
                   const SizedBox(height: 24),
@@ -394,6 +399,71 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildFlashDealsSection(WidgetRef ref) {
+    final state = ref.watch(flashDealsFutureProvider);
+    
+    return state.when(
+      data: (deals) {
+        if (deals.isEmpty) return const SizedBox.shrink();
+        // Since there might be multiple live deals, 
+        // we'll just show the first active one, or we could list all of them.
+        final deal = deals.first; 
+        final dealColor = _parseColor(deal['badge_color']?.toString());
+        final productsList = deal['flash_deal_products'] as List? ?? [];
+        final validProducts = productsList.where((p) => p['products'] != null).toList();
+
+        if (validProducts.isEmpty) return const SizedBox.shrink();
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.bolt, color: Colors.amber, size: 28),
+                      const SizedBox(width: 8),
+                      Text('Flash Deals', style: GoogleFonts.plusJakartaSans(fontSize: 20, fontWeight: FontWeight.w800, color: const Color(0xFF180331))),
+                    ],
+                  ),
+                  if (deal['end_time'] != null)
+                     DealCountdownTimer(endTime: DateTime.parse(deal['end_time'].toString())),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Container(
+                decoration: BoxDecoration(
+                  color: dealColor.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: dealColor.withOpacity(0.2)),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                height: 220,
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  scrollDirection: Axis.horizontal,
+                  itemCount: validProducts.length,
+                  itemBuilder: (context, idx) {
+                      final p = validProducts[idx];
+                      return FlashDealProductCard(
+                        item: p,
+                        baseDiscountPercent: num.tryParse(deal['discount_percent']?.toString() ?? '0'),
+                      );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
     );
   }
 

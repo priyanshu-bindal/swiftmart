@@ -24,7 +24,7 @@ const navItems = [
   { label: "Orders", href: "/orders", icon: ShoppingCart },
   { label: "Products", href: "/products", icon: Package },
   { label: "Categories", href: "/categories", icon: Tag },
-  { label: "Deals", href: "/deals", icon: Zap },
+  { label: "Deals", href: "/deals/flash-deals", icon: Zap },
   { label: "Banners", href: "/banners", icon: ImageIcon },
   { label: "Users", href: "/users", icon: Users },
   { label: "Delivery", href: "/delivery", icon: Truck },

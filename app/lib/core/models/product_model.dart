@@ -1,3 +1,5 @@
+import 'combo_deal_model.dart';
+
 class ProductModel {
   final String id;
   final String name;
@@ -18,9 +20,10 @@ class ProductModel {
   final bool isOrganic;
   final bool isAvailable;
   final DateTime? createdAt;
-
-  // To handle joining with CategoryModel table
   final String? categoryName;
+
+  /// Optional combo deal — if set, this product participates in a combo.
+  final ComboDeal? comboDeal;
 
   ProductModel({
     required this.id,
@@ -43,6 +46,7 @@ class ProductModel {
     this.isAvailable = true,
     this.createdAt,
     this.categoryName,
+    this.comboDeal,
   });
 
   int get discountPercent =>
