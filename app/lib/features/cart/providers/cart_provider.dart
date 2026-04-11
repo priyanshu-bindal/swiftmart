@@ -195,7 +195,7 @@ final cartItemPricingProvider = Provider<Map<String, CartItemPricing>>((ref) {
   });
 
   // Build a quick quantity lookup
-  final qtyMap = {for (final i in items) i.productId: i.quantity};
+
 
   final Map<String, CartItemPricing> result = {};
 
@@ -368,10 +368,45 @@ final comboSavingsProvider = Provider<double>((ref) {
 
 final cartDeliveryFeeProvider = Provider<double>((ref) => 40.0);
 
+/// Free delivery progress tracker.
+final cartFreeDeliveryProvider =
+    Provider<({double threshold, double remaining, double progress, bool isFree})>((ref) {
+  const threshold = 499.0;
+  final subtotal = ref.watch(cartSubtotalProvider);
+  final remaining = (threshold - subtotal).clamp(0.0, double.infinity);
+  final progress = (subtotal / threshold).clamp(0.0, 1.0);
+  final isFree = subtotal >= threshold;
+  return (threshold: threshold, remaining: remaining, progress: progress, isFree: isFree);
+});
+
 final cartTotalProvider = Provider<double>((ref) {
   final subtotal = ref.watch(cartSubtotalProvider);
   final discount = ref.watch(cartDiscountProvider);
   final delivery = ref.watch(cartDeliveryFeeProvider);
-  final total = subtotal - discount + delivery;
+  final freeDelivery = ref.watch(cartFreeDeliveryProvider);
+  final effectiveDelivery = freeDelivery.isFree ? 0.0 : delivery;
+  final total = subtotal - discount + effectiveDelivery;
   return total < 0 ? 0 : total;
+});
+
+final cartSuggestedProductsProvider = FutureProvider<List<ProductModel>>((ref) async {
+  try {
+    final cartItems = ref.watch(cartProvider).asData?.value ?? [];
+    final cartProductIds = cartItems.map((item) => item.productId).toList();
+    
+    var query = Supabase.instance.client.from('products')
+        .select('*, categories(name)')
+        .eq('is_active', true);
+        
+    if (cartProductIds.isNotEmpty) {
+      query = query.not('id', 'in', cartProductIds);
+    }
+    
+    final response = await query.order('sale_price', ascending: false).limit(6);
+    
+    return (response as List).map((data) => ProductModel.fromJson(data)).toList();
+  } catch (e) {
+    print('Error in cartSuggestedProductsProvider: $e');
+    return [];
+  }
 });

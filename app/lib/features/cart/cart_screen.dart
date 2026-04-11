@@ -10,6 +10,7 @@ import 'package:app/shared/widgets/app_network_image.dart';
 
 
 import 'package:app/core/models/cart_item_model.dart';
+import 'package:app/core/models/product_model.dart';
 import 'providers/cart_provider.dart';
 import 'widgets/promo_code_bottom_sheet.dart';
 
@@ -289,6 +290,11 @@ class _CartBody extends HookConsumerWidget {
 
                   const SizedBox(height: 12),
 
+                  // ── Free delivery banner ────────────────────────────────
+                  const _FreeDeliveryBanner(),
+
+                  const SizedBox(height: 12),
+
                   // ── Promo code row ─────────────────────────────────────
                   _PromoRow(
                     appliedCode: appliedCode,
@@ -308,6 +314,11 @@ class _CartBody extends HookConsumerWidget {
                     discount: discount,
                     total: total,
                   ),
+
+                  const SizedBox(height: 16),
+                  
+                  // ── Upsell suggested items ────────────────────────────────
+                  const _UpsellSection(),
 
                   const SizedBox(height: 120),
                 ],
@@ -1378,4 +1389,278 @@ class _Particle {
     required this.sway,
     required this.rotation,
   });
+}
+
+// ── Free Delivery Banner ──────────────────────────────────────────────────────
+
+class _FreeDeliveryBanner extends ConsumerWidget {
+  const _FreeDeliveryBanner();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final freeStatus = ref.watch(cartFreeDeliveryProvider);
+
+    if (freeStatus.isFree) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: _kPrimary.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: _kPrimary.withValues(alpha: 0.2)),
+        ),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(LucideIcons.checkCircle, color: _kPrimary, size: 18),
+            SizedBox(width: 8),
+            Text(
+              "You've unlocked free delivery! 🎉",
+              style: TextStyle(
+                color: _kPrimary,
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
+                fontFamily: 'Manrope',
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _kCard,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Row(
+                children: [
+                  Icon(LucideIcons.truck, color: _kMuted, size: 18),
+                ],
+              ),
+              Text(
+                'Add ₹${freeStatus.remaining.toStringAsFixed(0)} more for FREE delivery',
+                style: const TextStyle(
+                  color: _kText,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  fontFamily: 'Manrope',
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Container(
+            height: 6,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.circular(30),
+            ),
+            alignment: Alignment.centerLeft,
+            child: TweenAnimationBuilder<double>(
+              tween: Tween<double>(begin: 0.0, end: freeStatus.progress),
+              duration: const Duration(milliseconds: 600),
+              curve: Curves.easeOut,
+              builder: (context, value, _) {
+                return FractionallySizedBox(
+                  widthFactor: value,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: _kPrimary,
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Upsell Section ────────────────────────────────────────────────────────────
+
+class _UpsellSection extends ConsumerWidget {
+  const _UpsellSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final suggestedAsync = ref.watch(cartSuggestedProductsProvider);
+
+    return suggestedAsync.when(
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (products) {
+        if (products.isEmpty) return const SizedBox.shrink();
+        final count = min(6, products.length);
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 18),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Add More Items',
+                    style: TextStyle(
+                      fontFamily: 'Manrope',
+                      fontWeight: FontWeight.w800,
+                      fontSize: 13,
+                      color: _kMuted,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () => context.go('/home'),
+                    style: TextButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      minimumSize: const Size(0, 0),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: const Text(
+                      'See All',
+                      style: TextStyle(
+                        color: _kPrimary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        fontFamily: 'Manrope',
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 10),
+            SizedBox(
+              height: 154,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 18),
+                itemCount: count,
+                itemBuilder: (context, index) {
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 10),
+                    child: _UpsellCard(product: products[index])
+                        .animate(delay: (index * 60).ms)
+                        .fadeIn(duration: 250.ms)
+                        .slideY(begin: 0.05),
+                  );
+                },
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _UpsellCard extends ConsumerWidget {
+  final ProductModel product;
+
+  const _UpsellCard({required this.product});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Container(
+      width: 110,
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: _kCard,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: SizedBox(
+              height: 64,
+              width: double.infinity,
+              child: product.primaryImage?.isNotEmpty == true
+                  ? AppNetworkImage(
+                      imageUrl: product.primaryImage!,
+                      fit: BoxFit.cover,
+                    )
+                  : const Icon(LucideIcons.image, color: _kMuted),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            product.name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontFamily: 'Manrope',
+              fontWeight: FontWeight.w700,
+              fontSize: 10,
+              color: _kText,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            '₹${product.salePrice.toStringAsFixed(0)}',
+            style: const TextStyle(
+              fontFamily: 'Manrope',
+              fontWeight: FontWeight.w900,
+              fontSize: 11,
+              color: _kPrimary,
+            ),
+          ),
+          const Spacer(),
+          GestureDetector(
+            onTap: () async {
+              try {
+                await ref.read(cartProvider.notifier).addToCart(product.id);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Added to cart')),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Failed to add')),
+                  );
+                }
+              }
+            },
+            child: Container(
+              height: 26,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: _kPrimary,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              alignment: Alignment.center,
+              child: const Icon(LucideIcons.plus, size: 13, color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

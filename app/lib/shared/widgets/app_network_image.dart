@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
@@ -41,6 +42,29 @@ class AppNetworkImage extends StatelessWidget {
       return errorWidget != null
           ? errorWidget!(context, imageUrl, null)
           : const Icon(Icons.broken_image);
+    }
+    
+    if (imageUrl.startsWith('data:image')) {
+      try {
+        final base64String = imageUrl.split(',').last;
+        final bytes = base64Decode(base64String);
+        return Image.memory(
+          bytes,
+          fit: fit,
+          width: width,
+          height: height,
+          color: color,
+          colorBlendMode: colorBlendMode,
+          errorBuilder: (context, error, stackTrace) =>
+              errorWidget != null
+                  ? errorWidget!(context, imageUrl, error)
+                  : const Center(child: Icon(Icons.broken_image, color: Colors.grey)),
+        );
+      } catch (e) {
+        return errorWidget != null
+            ? errorWidget!(context, imageUrl, e)
+            : const Center(child: Icon(Icons.broken_image, color: Colors.grey));
+      }
     }
     return CachedNetworkImage(
       imageUrl: imageUrl,
