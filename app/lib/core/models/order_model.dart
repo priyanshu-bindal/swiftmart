@@ -85,7 +85,6 @@ class OrderModel {
 
   static const _steps = [
     'CONFIRMED',
-    'PREPARING',
     'OUT_FOR_DELIVERY',
     'DELIVERED',
   ];
@@ -105,8 +104,6 @@ class OrderModel {
     switch (status) {
       case 'CONFIRMED':
         return 'Confirmed';
-      case 'PREPARING':
-        return 'Preparing';
       case 'OUT_FOR_DELIVERY':
         return 'Out for Delivery';
       case 'DELIVERED':
@@ -144,7 +141,7 @@ class OrderModel {
     return OrderModel(
       id: json['id']?.toString() ?? '',
       userId: json['user_id']?.toString(),
-      status: json['status']?.toString() ?? 'CONFIRMED',
+      status: json['status']?.toString().toUpperCase() ?? 'CONFIRMED',
       items: parsedItems,
       subtotal: (json['subtotal'] as num?)?.toDouble() ?? 0.0,
       deliveryFee: (json['delivery_fee'] as num?)?.toDouble() ?? 40.0,

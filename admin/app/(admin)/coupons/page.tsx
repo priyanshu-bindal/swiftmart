@@ -167,7 +167,7 @@ export default function CouponsPage() {
           </div>
           <button onClick={() => {
             setEditingCouponId(null);
-            setNewCoupon({ code: "", discount_type: "percentage", value: "", min_order_value: "", valid_until: "", is_active: true });
+            setNewCoupon({ code: "", discount_type: "percentage", discount_value: "", min_order_value: "", valid_from: "", valid_to: "", is_active: true });
             setIsModalOpen(true);
           }} className="bg-gradient-to-br from-primary to-primary-container text-white px-5 py-2.5 rounded-xl font-semibold flex items-center gap-2 shadow-lg shadow-indigo-500/10 hover:shadow-indigo-500/20 transition-all">
             <Plus size={18} />

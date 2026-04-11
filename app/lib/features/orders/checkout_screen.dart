@@ -58,6 +58,7 @@ class CheckoutScreen extends HookConsumerWidget {
           'discount_amount': discount,
           'total': total,
           'coupon_code': appliedCode,
+          'created_at': DateTime.now().toUtc().toIso8601String(),
           'delivery_address': {
             'lat': selectedAddress.lat,
             'lng': selectedAddress.lng,

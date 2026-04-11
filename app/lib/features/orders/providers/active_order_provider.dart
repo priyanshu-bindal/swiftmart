@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../../core/models/order_model.dart';
 
-/// Streams the most recent active order (CONFIRMED, PREPARING, OUT_FOR_DELIVERY)
+/// Streams the most recent active order (CONFIRMED, OUT_FOR_DELIVERY)
 /// for the current user. Returns null when no active order exists.
 final activeOrderProvider = StreamProvider<OrderModel?>((ref) {
   final supabase = Supabase.instance.client;
@@ -18,7 +18,7 @@ final activeOrderProvider = StreamProvider<OrderModel?>((ref) {
           .from('orders')
           .select('*, order_items(*)')
           .eq('user_id', uid)
-          .inFilter('status', ['CONFIRMED', 'PREPARING', 'OUT_FOR_DELIVERY', 'confirmed', 'preparing', 'packed', 'out_for_delivery'])
+          .inFilter('status', ['CONFIRMED', 'OUT_FOR_DELIVERY', 'confirmed', 'out_for_delivery'])
           .order('created_at', ascending: false)
           .limit(1)
           .maybeSingle();

@@ -44,11 +44,12 @@ class OrderRepository {
         .from('orders')
         .insert({
           'user_id': uid,
-          'status': 'confirmed',
+          'status': 'CONFIRMED',
           'subtotal': subtotal,
           'discount': discount,
           'total': total,
           'coupon_code': couponCode,
+          'created_at': DateTime.now().toUtc().toIso8601String(),
           'delivery_address': {
             'lat': lat,
             'lng': lng,

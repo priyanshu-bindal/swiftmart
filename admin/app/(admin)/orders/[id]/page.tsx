@@ -68,9 +68,14 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
 
   const handleStatusUpdate = async (newStatus: string) => {
     setIsSaving(true);
-    let dbStatus = newStatus.toUpperCase();
-    if (newStatus === 'pending') dbStatus = 'PREPARING';
-    if (newStatus === 'in_transit') dbStatus = 'OUT_FOR_DELIVERY';
+    const statusMap: Record<string, string> = {
+      confirmed:  'CONFIRMED',
+      in_transit: 'OUT_FOR_DELIVERY',
+      delivered:  'DELIVERED',
+      cancelled:  'CANCELLED',
+    };
+
+    const dbStatus = statusMap[newStatus] ?? newStatus.toUpperCase();
 
     const { error } = await supabase
       .from('orders')
@@ -93,8 +98,6 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
   const getStatusLabel = (status: string) => {
     if (!status) return 'Unknown';
     const labels: Record<string, string> = {
-      pending: 'Pending',
-      preparing: 'Pending',
       confirmed: 'Confirmed', 
       in_transit: 'Out for Delivery',
       out_for_delivery: 'Out for Delivery',
@@ -107,8 +110,6 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
   const getStatusStyles = (status: string) => {
     if (!status) return "bg-slate-100 text-slate-700";
     switch(status.toLowerCase()) {
-      case 'pending':
-      case 'preparing': return "bg-amber-100 text-amber-700";
       case 'confirmed': return "bg-blue-100 text-blue-700";
       case 'in_transit':
       case 'out_for_delivery': return "bg-purple-100 text-purple-700";
@@ -120,16 +121,16 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
 
   const isStepReached = (currentStatus: string, step: string) => {
     if (!currentStatus) return false;
-    const orderSteps = ['pending', 'confirmed', 'in_transit', 'delivered'];
+    const orderSteps = ['confirmed', 'in_transit', 'delivered'];
     const cs = currentStatus.toLowerCase();
-    const norm = cs === 'preparing' ? 'pending' : (cs === 'out_for_delivery' ? 'in_transit' : cs);
+    const norm = (cs === 'out_for_delivery' ? 'in_transit' : cs);
     return orderSteps.indexOf(norm) >= orderSteps.indexOf(step.toLowerCase());
   };
 
   const isStepCurrent = (currentStatus: string, step: string) => {
     if (!currentStatus) return false;
     const cs = currentStatus.toLowerCase();
-    const norm = cs === 'preparing' ? 'pending' : (cs === 'out_for_delivery' ? 'in_transit' : cs);
+    const norm = (cs === 'out_for_delivery' ? 'in_transit' : cs);
     return norm === step.toLowerCase();
   };
 
@@ -176,7 +177,7 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
 
   const normStatus = (() => {
     const cs = currentStatus?.toLowerCase() || '';
-    return cs === 'preparing' ? 'pending' : (cs === 'out_for_delivery' ? 'in_transit' : cs);
+    return (cs === 'out_for_delivery' ? 'in_transit' : cs);
   })();
 
   const memberSinceStr = profile?.created_at 
@@ -224,7 +225,6 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
                   disabled={isSaving}
                   className={`appearance-none px-4 py-2.5 rounded-xl text-sm font-bold uppercase tracking-wider outline-none cursor-pointer border-2 transition-all ${getStatusStyles(currentStatus)} focus:ring-4 focus:ring-indigo-500/20 disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
-                  <option value="pending">Pending</option>
                   <option value="confirmed">Confirmed</option>
                   <option value="in_transit">Out for Delivery</option>
                   <option value="delivered">Delivered</option>
@@ -301,8 +301,7 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
                 <div className="absolute left-[27px] top-4 bottom-4 w-0.5 bg-slate-100 -z-10"></div>
                 
                 {[
-                  { id: 'pending', label: 'Order Placed', time: order.created_at, icon: Package },
-                  { id: 'confirmed', label: 'Confirmed', time: order.confirmed_at, icon: CheckCircle },
+                  { id: 'confirmed', label: 'Order Placed', time: order.created_at, icon: Package },
                   { id: 'in_transit', label: 'Out for Delivery', time: order.dispatched_at, icon: Truck },
                   { id: 'delivered', label: 'Delivered', time: order.delivered_at, icon: MapPin }
                 ].map((step, idx) => {
@@ -333,7 +332,7 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
                   }
 
                   // Force "Placed" to always show the created_at date nicely
-                  if (step.id === 'pending' && step.time) {
+                  if (step.id === 'confirmed' && step.time) {
                     subLabel = formatDate(step.time);
                   }
 

@@ -106,7 +106,6 @@ export default function OrdersPage() {
   };
 
   const statusMap: Record<string, string> = {
-    "Pending": "pending",
     "Confirmed": "confirmed",
     "In Transit": "in_transit", 
     "Delivered": "delivered",
@@ -116,8 +115,6 @@ export default function OrdersPage() {
   const getStatusStyles = (status: string) => {
     if (!status) return "bg-slate-100 text-slate-700 border border-slate-300";
     switch(status.toLowerCase()) {
-      case 'pending':
-      case 'preparing': return "bg-amber-50 text-amber-600 border border-amber-300 hover:bg-amber-100";
       case 'confirmed': return "bg-blue-50 text-blue-700 border border-blue-300 hover:bg-blue-100";
       case 'in_transit':
       case 'out_for_delivery': return "bg-purple-50 text-purple-700 border border-purple-300 hover:bg-purple-100";
@@ -130,8 +127,6 @@ export default function OrdersPage() {
   const getStatusLabel = (status: string) => {
     if (!status) return 'Unknown';
     const labels: Record<string, string> = {
-      pending: 'Pending',
-      preparing: 'Pending',
       confirmed: 'Confirmed', 
       in_transit: 'Out for Delivery',
       out_for_delivery: 'Out for Delivery',
@@ -143,17 +138,21 @@ export default function OrdersPage() {
 
   const isStepReached = (currentStatus: string, step: string) => {
     if (!currentStatus) return false;
-    const order = ['pending', 'confirmed', 'in_transit', 'delivered'];
+    const order = ['confirmed', 'in_transit', 'delivered'];
     const cs = currentStatus.toLowerCase();
-    const norm = cs === 'preparing' ? 'pending' : (cs === 'out_for_delivery' ? 'in_transit' : cs);
+    const norm = (cs === 'out_for_delivery' ? 'in_transit' : cs);
     return order.indexOf(norm) >= order.indexOf(step.toLowerCase());
   };
 
   const handleStatusUpdate = async (orderId: string, newStatus: string) => {
-    // Map UI statuses back to DB enum values
-    let dbStatus = newStatus.toUpperCase();
-    if (newStatus === 'pending') dbStatus = 'PREPARING';
-    if (newStatus === 'in_transit') dbStatus = 'OUT_FOR_DELIVERY';
+    const statusMap: Record<string, string> = {
+      confirmed:  'CONFIRMED',
+      in_transit: 'OUT_FOR_DELIVERY',
+      delivered:  'DELIVERED',
+      cancelled:  'CANCELLED',
+    };
+
+    const dbStatus = statusMap[newStatus] ?? newStatus.toUpperCase();
 
     // 1. Optimistic UI update
     setOrders(prev =>
@@ -192,7 +191,7 @@ export default function OrdersPage() {
       const targetStatus = statusMap[statusFilter];
       result = result.filter(o => {
         const cs = o.status?.toLowerCase();
-        const norm = (cs === "preparing" ? "pending" : (cs === "out_for_delivery" ? "in_transit" : cs));
+        const norm = (cs === "out_for_delivery" ? "in_transit" : cs);
         return norm === targetStatus;
       });
     }
@@ -280,7 +279,7 @@ export default function OrdersPage() {
 
         {/* Status Filter Tabs */}
         <div className="flex gap-2 mb-6 bg-surface-container-lowest rounded-xl p-2 shadow-sm w-fit overflow-x-auto max-w-full">
-          {["All Orders", "Pending", "Confirmed", "In Transit", "Delivered", "Cancelled"].map(
+          {["All Orders", "Confirmed", "In Transit", "Delivered", "Cancelled"].map(
             (tab, i) => (
               <button
                 key={tab}
@@ -387,13 +386,12 @@ export default function OrdersPage() {
                           <select
                             value={(() => {
                               const cs = order.status?.toLowerCase();
-                              return cs === 'preparing' ? 'pending' : (cs === 'out_for_delivery' ? 'in_transit' : cs);
+                              return (cs === 'out_for_delivery' ? 'in_transit' : cs);
                             })()}
                             onChange={(e) => handleStatusUpdate(order.id, e.target.value)}
                             onClick={(e) => e.stopPropagation()}
                             className={`appearance-none px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider outline-none cursor-pointer ${getStatusStyles(order.status)} transition-colors focus:ring-2 focus:ring-primary/40`}
                           >
-                            <option value="pending">Pending</option>
                             <option value="confirmed">Confirmed</option>
                             <option value="in_transit">Out for Delivery</option>
                             <option value="delivered">Delivered</option>
