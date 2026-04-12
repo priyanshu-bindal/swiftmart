@@ -49,6 +49,23 @@ class CheckoutScreen extends HookConsumerWidget {
         final user = supabase.auth.currentUser;
         if (user == null) throw Exception('Not authenticated');
 
+        // 0. Validate stock live before order
+        for (final item in cartAsync.value!) {
+          final pRes = await supabase
+              .from('products')
+              .select('stock_qty, name')
+              .eq('id', item.productId)
+              .maybeSingle();
+
+          if (pRes != null) {
+            final int stock = pRes['stock_qty'] ?? 0;
+            if (stock < item.quantity) {
+              throw Exception(
+                  'Insufficient stock for ${pRes['name']}. Only $stock left.');
+            }
+          }
+        }
+
         // 1. Direct insert to orders table
         final orderResponse = await supabase.from('orders').insert({
           'user_id': user.id,

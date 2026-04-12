@@ -406,12 +406,25 @@ class ProductCard extends HookConsumerWidget {
           const SizedBox(width: 4),
           InkWell(
             onTap: () {
-              HapticFeedback.lightImpact();
-              ref.read(cartProvider.notifier).addToCart(product.id);
-              ref.read(cartToastProvider.notifier).show(
-                productName: product.name,
-                productImage: product.primaryImage,
-              );
+              if (quantity < product.stockQty) {
+                HapticFeedback.lightImpact();
+                ref.read(cartProvider.notifier).addToCart(product.id);
+                ref.read(cartToastProvider.notifier).show(
+                  productName: product.name,
+                  productImage: product.primaryImage,
+                );
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                        'Sorry, only ${product.stockQty} items available in stock.'),
+                    backgroundColor: AppColors.error,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                  ),
+                );
+              }
             },
             child: const Padding(
               padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),

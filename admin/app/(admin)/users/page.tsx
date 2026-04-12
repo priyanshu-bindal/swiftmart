@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { Download, UserPlus, MoreVertical, RefreshCw, Edit2, Trash2, X } from "lucide-react";
 import { useEffect, useState, useMemo } from "react";
@@ -18,7 +18,7 @@ export default function UsersPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [editProfile, setEditProfile] = useState({ full_name: "", role: "user" });
+  const [editProfile, setEditProfile] = useState({ full_name: "" });
 
   useEffect(() => {
     fetchData();
@@ -27,41 +27,65 @@ export default function UsersPage() {
   const fetchData = async () => {
     setLoading(true);
 
-    const { data, error } = await supabase
+    const { data: profiles, error } = await supabase
       .from("profiles")
-      .select(`
-        *,
-        orders (id, delivery_address, created_at)
-      `)
+      .select("id, full_name, email, avatar_url, created_at")
       .order("created_at", { ascending: false });
 
     if (error) {
       toast.error(`Database Error: ${error.message} - Please run the SQL fix script.`);
       console.error("profiles fetch error:", error);
-    } else if (data) {
-       const formatted = data.map((p) => {
-          let lastActive = new Date(p.created_at);
-          let recentOrder = null;
-          if (p.orders && p.orders.length > 0) {
-             const sortedOrders = [...p.orders].sort((a,b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-             lastActive = new Date(sortedOrders[0].created_at);
-             recentOrder = sortedOrders[0];
-          }
-
-          let location = "Unknown Location";
-          if (recentOrder && recentOrder.delivery_address && recentOrder.delivery_address.city) {
-             location = `${recentOrder.delivery_address.city}, ${recentOrder.delivery_address.state || 'Unknown'}`;
-          }
-
-          return {
-             ...p,
-             total_orders: p.orders?.length || 0,
-             location,
-             lastActiveDate: lastActive
-          };
-       });
-       setUsers(formatted);
+      setLoading(false);
+      return;
     }
+
+    const { data: orders } = await supabase
+      .from("orders")
+      .select("user_id, total, status, created_at, delivery_address");
+
+    const countMap: Record<string, number> = {};
+    const spendMap: Record<string, number> = {};
+    const recentOrderMap: Record<string, any> = {};
+
+    (orders || []).forEach((o) => {
+      countMap[o.user_id] = (countMap[o.user_id] || 0) + 1;
+      
+      if (o.status === "DELIVERED") {
+        spendMap[o.user_id] = (spendMap[o.user_id] || 0) + (o.total || 0);
+      }
+
+      const currRecent = recentOrderMap[o.user_id];
+      if (
+        !currRecent ||
+        new Date(o.created_at).getTime() > new Date(currRecent.created_at).getTime()
+      ) {
+        recentOrderMap[o.user_id] = o;
+      }
+    });
+
+    const formatted = (profiles || []).map((p) => {
+      const recentOrder = recentOrderMap[p.id];
+      let location = "Unknown Location";
+
+      if (
+        recentOrder &&
+        recentOrder.delivery_address &&
+        recentOrder.delivery_address.city
+      ) {
+        location = `${recentOrder.delivery_address.city}, ${
+          recentOrder.delivery_address.state || "Unknown"
+        }`;
+      }
+
+      return {
+        ...p,
+        order_count: countMap[p.id] || 0,
+        total_spent: spendMap[p.id] || 0,
+        location,
+      };
+    });
+
+    setUsers(formatted);
     setLoading(false);
   };
 
@@ -113,18 +137,7 @@ export default function UsersPage() {
   const totalPages = Math.ceil(filteredUsers.length / itemsPerPage) || 1;
   const paginatedUsers = filteredUsers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  const formatLastActive = (date: Date) => {
-     const now = new Date();
-     const diff = now.getTime() - date.getTime();
-     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-     if (days === 0) {
-        const hrs = Math.floor(diff / (1000 * 60 * 60));
-        if (hrs === 0) return "Just now";
-        return `${hrs} hours ago`;
-     }
-     if (days === 1) return "Yesterday";
-     return `${days} days ago`;
-  };
+
 
   return (
     <>
@@ -202,7 +215,7 @@ export default function UsersPage() {
              <table className="w-full text-left border-collapse">
                <thead>
                  <tr className="bg-surface-container-high/50 border-b border-slate-100">
-                   {["User", "Contact Info", "Location", "Total Orders", "Last Active", "Status", ""].map((h, i) => (
+                   {["User", "Contact Info", "Location", "Orders", "Total Spent", "Joined", ""].map((h, i) => (
                      <th key={h} className={`px-6 py-4 text-[11px] font-bold text-on-surface-variant uppercase tracking-wider ${i === 3 ? "text-center" : ""}`}>
                        {h}
                      </th>
@@ -245,13 +258,22 @@ export default function UsersPage() {
                        <td className="px-6 py-4">
                          <div className="flex flex-col">
                            <span className="text-xs font-medium text-slate-900 line-clamp-1">{user.email || "No email"}</span>
-                           <span className="text-[11px] text-slate-500">{user.phone || "No phone"}</span>
                          </div>
                        </td>
                        <td className="px-6 py-4"><span className="text-xs text-slate-700 whitespace-nowrap">{user.location}</span></td>
-                       <td className="px-6 py-4 text-center"><span className="text-xs font-bold px-3 py-1 bg-surface-container-low rounded-full text-slate-700">{user.total_orders}</span></td>
-                       <td className="px-6 py-4"><span className="text-[11px] text-slate-500 font-medium whitespace-nowrap">{formatLastActive(user.lastActiveDate)}</span></td>
-                       <td className="px-6 py-4"><span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-700 border border-emerald-200">Active</span></td>
+                       <td className="px-6 py-4 text-center">
+                         <span className="text-xs font-medium px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full border border-indigo-100">
+                           {user.order_count} order{user.order_count !== 1 ? 's' : ''}
+                         </span>
+                       </td>
+                       <td className="px-6 py-4">
+                         <span className="text-sm font-bold text-slate-800">₹{user.total_spent.toFixed(2)}</span>
+                       </td>
+                       <td className="px-6 py-4">
+                         <span className="text-[11px] text-slate-500 font-medium whitespace-nowrap">
+                           {new Date(user.created_at).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' })}
+                         </span>
+                       </td>
                        <td className="px-6 py-4 text-right relative group/menu">
                          <button className="p-2 hover:bg-slate-200 rounded-lg transition-all text-slate-500">
                            <MoreVertical size={16} />

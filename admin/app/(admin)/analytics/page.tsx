@@ -63,7 +63,9 @@ export default function AnalyticsPage() {
           orderItems.forEach(item => {
              const pid = item.product_id;
              if (!productCounts[pid]) {
-                productCounts[pid] = { name: item.products?.name || "Unknown", units: 0 };
+                const prod = item.products as any;
+                const prodName = Array.isArray(prod) ? prod[0]?.name : prod?.name;
+                productCounts[pid] = { name: prodName || "Unknown", units: 0 };
              }
              productCounts[pid].units += item.quantity || 0;
           });
