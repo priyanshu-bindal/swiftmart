@@ -1,11 +1,13 @@
-﻿"use client";
+"use client";
 
 import { Download, UserPlus, MoreVertical, RefreshCw, Edit2, Trash2, X } from "lucide-react";
 import { useEffect, useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import toast from "react-hot-toast";
 
 export default function UsersPage() {
+  const router = useRouter();
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -18,7 +20,7 @@ export default function UsersPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [editProfile, setEditProfile] = useState({ full_name: "" });
+  const [editProfile, setEditProfile] = useState({ full_name: "", role: "user" });
 
   useEffect(() => {
     fetchData();
@@ -239,7 +241,11 @@ export default function UsersPage() {
                     <tr><td colSpan={7} className="text-center py-8 text-sm text-slate-500">No users found.</td></tr>
                  ) : (
                    paginatedUsers.map((user, rowIdx) => (
-                     <tr key={user.id} className={`group hover:bg-slate-50 transition-colors ${rowIdx % 2 === 0 ? "bg-white" : "bg-[#f7f9ff]"}`}>
+                     <tr 
+                       key={user.id} 
+                       onClick={() => router.push(`/users/${user.id}`)}
+                       className={`group hover:bg-slate-50 transition-colors cursor-pointer ${rowIdx % 2 === 0 ? "bg-white" : "bg-[#f7f9ff]"}`}
+                     >
                        <td className="px-6 py-4">
                          <div className="flex items-center gap-3">
                            {user.avatar_url ? (
@@ -274,7 +280,7 @@ export default function UsersPage() {
                            {new Date(user.created_at).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' })}
                          </span>
                        </td>
-                       <td className="px-6 py-4 text-right relative group/menu">
+                       <td className="px-6 py-4 text-right relative group/menu" onClick={(e) => e.stopPropagation()}>
                          <button className="p-2 hover:bg-slate-200 rounded-lg transition-all text-slate-500">
                            <MoreVertical size={16} />
                          </button>

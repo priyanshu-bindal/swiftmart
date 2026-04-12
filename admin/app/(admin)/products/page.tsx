@@ -18,7 +18,7 @@ const EMPTY_FORM = {
   unit: "pcs",
   mrp: "",
   stock_quantity: "",
-  tags: [],
+  tags: [] as string[],
   is_organic: false,
   is_available: true,
   is_featured: false,

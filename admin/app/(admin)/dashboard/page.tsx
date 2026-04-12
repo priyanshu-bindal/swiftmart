@@ -11,10 +11,10 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
-import { motion } from "framer-motion";
+import { motion, Variants } from "framer-motion";
 
 // For the Bar Chart Container
-const containerVariants = {
+const containerVariants: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
@@ -25,7 +25,7 @@ const containerVariants = {
 };
 
 // For individual Bars
-const barVariants = {
+const barVariants: Variants = {
   hidden: { scaleY: 0, originY: 1 },
   visible: {
     scaleY: 1,
